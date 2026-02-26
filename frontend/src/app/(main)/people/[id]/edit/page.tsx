@@ -37,14 +37,16 @@ export default function EditPersonPage({ params }: PageProps) {
       toast.error('Bạn cần đăng nhập với quyền admin hoặc editor để chỉnh sửa');
       return;
     }
-    try {
-      await updateMutation.mutateAsync({ id, input: data });
-      toast.success('Đã cập nhật thành công');
-      router.push(`/people/${id}`);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Lỗi khi cập nhật';
-      toast.error(msg);
-    }
+    updateMutation.mutate({ id, input: data }, {
+      onSuccess: () => {
+        toast.success('Đã cập nhật thành công');
+        router.replace(`/people/${id}`);
+      },
+      onError: (err) => {
+        const msg = err instanceof Error ? err.message : 'Lỗi khi cập nhật';
+        toast.error(msg);
+      },
+    });
   };
 
   if (authLoading || isLoading) {
