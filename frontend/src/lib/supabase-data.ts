@@ -520,7 +520,7 @@ export interface FullTreeData {
   children: { family_id: string; person_id: string; sort_order: number }[];
 }
 
-const TREE_PERSON_COLUMNS = 'id, display_name, gender, generation, is_living, chi, avatar_url';
+const TREE_PERSON_COLUMNS = 'id, display_name, gender, generation, is_living, is_patrilineal, chi, avatar_url, birth_year, death_year';
 const TREE_FAMILY_COLUMNS = 'id, father_id, mother_id';
 const SEARCH_PERSON_COLUMNS = 'id, display_name, gender, generation, birth_year, avatar_url, is_living';
 
