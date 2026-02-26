@@ -333,25 +333,46 @@ const NodeContextMenu = memo(function NodeContextMenu({
   const style = getCardStyle(person);
   const initials = getInitials(person.display_name);
 
+  // Year/status display: "1945 - nay" or "1920 - 1995" or "Còn sống" or "Đã mất"
+  const birthYear = person.birth_year;
+  const deathYear = person.death_year;
+  const isLiving = person.is_living !== false;
+  let statusText: string;
+  if (birthYear && deathYear) {
+    statusText = `${birthYear} - ${deathYear}`;
+  } else if (birthYear && isLiving) {
+    statusText = `${birthYear} - nay`;
+  } else if (birthYear && !isLiving) {
+    statusText = `${birthYear} - ?`;
+  } else if (!birthYear && deathYear) {
+    statusText = `? - ${deathYear}`;
+  } else {
+    statusText = isLiving ? 'Còn sống' : 'Đã mất';
+  }
+
   const menuItems = [
     {
       icon: <Eye className="h-3.5 w-3.5" />,
       label: 'Xem chi tiết',
+      desc: 'Mở trang cá nhân',
       href: `/people/${person.id}`,
     },
     {
       icon: <ArrowDownFromLine className="h-3.5 w-3.5" />,
       label: 'Hậu duệ từ đây',
+      desc: 'Hiển thị cây con cháu',
       onClick: () => { onViewDescendants(person); onClose(); },
     },
     {
       icon: <ArrowUpFromLine className="h-3.5 w-3.5" />,
       label: 'Tổ tiên',
+      desc: 'Hiển thị dòng tổ tiên',
       onClick: () => { onViewAncestors(person); onClose(); },
     },
     {
       icon: <Crosshair className="h-3.5 w-3.5" />,
       label: 'Căn giữa',
+      desc: 'Di chuyển tới vị trí',
       onClick: () => { onCenter(x + CARD_W / 2, y + CARD_H / 2); onClose(); },
     },
   ];
@@ -369,18 +390,17 @@ const NodeContextMenu = memo(function NodeContextMenu({
         animate={{ opacity: 1, scale: 1, x: 0 }}
         exit={{ opacity: 0, scale: 0.9, x: -8 }}
         transition={{ duration: 0.15 }}
-        className="bg-background/95 backdrop-blur-sm border rounded-xl shadow-lg w-48 overflow-hidden"
+        className="bg-background/95 backdrop-blur-lg border rounded-xl shadow-xl min-w-[200px] overflow-hidden"
       >
         {/* Header */}
-        <div className="flex items-center gap-2 px-3 py-2.5 border-b bg-muted/30">
-          <div className={`w-7 h-7 rounded-full ${style.avatar} flex items-center justify-center text-[10px] font-bold shrink-0`}>
+        <div className="flex items-center gap-2.5 px-3 py-2.5 border-b bg-muted/30">
+          <div className={`w-8 h-8 rounded-full ${style.avatar} flex items-center justify-center text-[10px] font-bold shrink-0`}>
             {initials}
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-xs font-semibold truncate">{person.display_name}</p>
             <p className="text-[10px] text-muted-foreground">
-              Đời {person.generation}
-              {!person.is_living && ' · Đã mất'}
+              Đời {person.generation} · {statusText}
             </p>
           </div>
           <button
@@ -394,27 +414,34 @@ const NodeContextMenu = memo(function NodeContextMenu({
 
         {/* Menu items */}
         <div className="py-1">
-          {menuItems.map((item) =>
-            item.href ? (
+          {menuItems.map((item) => {
+            const content = (
+              <div className="flex items-center gap-2.5 group">
+                <span className="text-muted-foreground group-hover:text-primary transition-colors">{item.icon}</span>
+                <div>
+                  <p className="text-xs font-medium">{item.label}</p>
+                  <p className="text-[10px] text-muted-foreground">{item.desc}</p>
+                </div>
+              </div>
+            );
+            return item.href ? (
               <Link
                 key={item.label}
                 href={item.href}
-                className="flex items-center gap-2.5 px-3 py-2 text-xs hover:bg-muted transition-colors"
+                className="block px-3 py-2 hover:bg-muted transition-colors group"
               >
-                {item.icon}
-                {item.label}
+                {content}
               </Link>
             ) : (
               <button
                 key={item.label}
                 onClick={item.onClick}
-                className="w-full flex items-center gap-2.5 px-3 py-2 text-xs hover:bg-muted transition-colors text-left"
+                className="w-full px-3 py-2 hover:bg-muted transition-colors text-left group"
               >
-                {item.icon}
-                {item.label}
+                {content}
               </button>
-            )
-          )}
+            );
+          })}
         </div>
       </motion.div>
     </div>
