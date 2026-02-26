@@ -239,7 +239,7 @@ const PersonCard = memo(function PersonCard({
                 {person.display_name}
               </span>
               {/* Living/Deceased indicator */}
-              <span className={`text-[10px] shrink-0 mt-0.5 ${person.is_living !== false ? 'text-emerald-500' : 'text-muted-foreground'}`}>
+              <span className={`text-[10px] shrink-0 mt-0.5 ${person.is_living !== false ? 'text-emerald-500' : 'text-amber-600'}`}>
                 {person.is_living !== false ? '●' : '☸'}
               </span>
             </div>
