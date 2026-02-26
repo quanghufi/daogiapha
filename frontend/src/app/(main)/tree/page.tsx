@@ -10,7 +10,6 @@
 
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useTreeData } from '@/hooks/use-families';
@@ -75,27 +74,7 @@ export default function TreePage() {
         </Button>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Hướng dẫn</CardTitle>
-          <CardDescription className="space-y-1">
-            <span className="block sm:inline">
-              • <span className="text-blue-500">Viền xanh</span> = Nam
-              • <span className="text-pink-500">Viền hồng</span> = Nữ
-            </span>
-            <span className="block sm:inline">
-              • <span className="text-pink-400">Đường hồng</span> = Vợ chồng
-              • <span className="text-amber-600">☸</span> = Đã mất
-            </span>
-            <span className="block text-xs mt-1">
-              💡 Trên mobile: kéo để di chuyển, dùng nút +/- để zoom
-            </span>
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <FamilyTree />
-        </CardContent>
-      </Card>
+      <FamilyTree />
     </div>
   );
 }

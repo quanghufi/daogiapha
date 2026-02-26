@@ -275,7 +275,7 @@ function AddRelationDialog({
         generation: data.generation,
         birth_year: data.birth_year ? Number(data.birth_year) : undefined,
         is_living: true,
-        is_patrilineal: data.gender === GENDER.MALE,
+        is_patrilineal: mode === 'child',
         privacy_level: 0,
       });
 
