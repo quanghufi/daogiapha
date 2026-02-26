@@ -65,7 +65,7 @@ export default function RegisterPage() {
               <Input
                 id="fullName"
                 type="text"
-                placeholder="Nguyễn Văn A"
+                placeholder="Đào Văn A"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 required
