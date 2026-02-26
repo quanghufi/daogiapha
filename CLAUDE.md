@@ -1,199 +1,241 @@
----
-project: AncestorTree
-path: CLAUDE.md
-type: agent-guidelines
-version: 1.5.0
-updated: 2026-02-25
----
-
 # CLAUDE.md
-
-This file provides guidance to AI assistants (Claude, GPT, etc.) when working with code in this repository.
 
 ## Project Overview
 
-**AncestorTree** (Gia Pha Dien Tu) is a digital family tree management system for Chi toc Dang Dinh, Thach Lam, Ha Tinh.
+**AncestorTree** — Gia phả điện tử Họ Đặng làng Kỷ Các, Thạch Lâm, Hà Tĩnh.
 
-- **Repository:** https://github.com/Minh-Tam-Solution/AncestorTree
-- **Current Version:** v1.5.0 (Sprint 7.5 complete)
-- **SDLC Tier:** LITE (5 stages)
-- **Tech Stack:** Next.js 16, React 19, Tailwind CSS 4, Supabase
-- **Built with:** [TinySDLC](https://github.com/Minh-Tam-Solution/tinysdlc) + [MTS-SDLC-Lite](https://github.com/Minh-Tam-Solution/MTS-SDLC-Lite)
+- **Tech Stack:** Next.js 16, React 19, TypeScript 5, Tailwind CSS 4, Supabase, TanStack Query v5
+- **Package Manager:** pnpm (do NOT use npm or yarn)
+- **Dev Port:** localhost:4000
 
-## SDLC Framework v6.1.0 - LITE Tier
+## Agent Workflow Rules
 
-This project follows MTS SDLC Framework with 5 stages:
+### Core Principles
+- **Simplicity First** — Make every change as simple as possible; minimize code impact
+- **No Laziness** — Find root causes; no temporary fixes; hold to senior developer standards
+- **Minimal Impact** — Touch only what's necessary; avoid introducing new bugs
 
+### Workflow Orchestration
+- Enter plan mode for any non-trivial task (3+ steps or architectural decisions)
+- If things go sideways, stop and re-plan — don't keep pushing
+- Use subagents liberally to keep the main context window clean; one task per subagent
+- For non-trivial changes, pause and ask if a more elegant approach exists
+- If a fix feels hacky: *"Knowing everything I know now, implement the elegant solution"*
+- Skip elegance checks for simple, obvious fixes — don't over-engineer
+
+### Verification Before Done
+- Never mark a task complete without proving it works
+- Run `pnpm build` to verify compilation, run tests, check logs
+- Ask: *"Would a staff engineer approve this?"*
+- Diff behavior between main and your changes when relevant
+
+### Autonomous Bug Fixing
+- When given a bug report: just fix it — no hand-holding
+- Point at logs, errors, failing tests — then resolve them
+- Zero context switching required from the user
+
+### Self-Improvement Loop
+- After any user correction: update `tasks/lessons.md` with the pattern
+- Write rules to prevent repeating the same mistake
+- Review lessons at session start
+
+### Task Management
+1. Write plan to `tasks/todo.md` with checkable items before implementation
+2. Check in with user before implementation begins
+3. Mark items complete as you go
+4. Provide high-level summary at each step
+5. Add a review section to `tasks/todo.md` when done
+6. Capture lessons in `tasks/lessons.md` after corrections
+
+## Quick Reference
+
+```bash
+cd frontend
+pnpm install          # Install dependencies
+pnpm dev              # Dev server → localhost:4000
+pnpm build            # Production build (use to verify changes)
+pnpm lint             # ESLint
 ```
-docs/
-├── 00-foundation/     # Vision, scope, requirements, community
-│   └── 06-Community/  # Community launch posts (7 platform-specific)
-├── 01-planning/       # Roadmap, sprints, milestones
-├── 02-design/         # Architecture, UI/UX, data models
-├── 04-build/          # Implementation guidelines
-└── 05-test/           # Test plans, QA
-```
 
-**DO NOT** use generic 6-stage or 11-stage SDLC structure.
-**ALWAYS** use the structure defined in `.sdlc-config.json`.
-
-## File Header Standard
-
-All documentation files MUST include YAML front matter:
-
-```yaml
----
-project: AncestorTree
-path: docs/XX-stage/filename.md
-type: document-type
-version: X.X.X
-updated: YYYY-MM-DD
-owner: team/person
-status: draft|review|approved
----
-```
-
-All code files MUST include header comment:
-
-```typescript
-/**
- * @project AncestorTree
- * @file src/path/to/file.ts
- * @description Brief description
- * @version 1.0.0
- * @updated 2026-02-25
- */
-```
+Environment variables (no .env.local.example exists — create manually):
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
 
 ## Project Structure
 
 ```
-AncestorTree/
-├── docs/                           # SDLC Documentation
-│   ├── 00-foundation/              # Vision, requirements
-│   │   └── 06-Community/           # Community launch posts
-│   ├── 01-planning/                # Sprints, roadmap
-│   ├── 02-design/                  # Architecture, UI/UX
-│   ├── 04-build/                   # Implementation
-│   └── 05-test/                    # Testing
-├── frontend/                       # Next.js application
-│   ├── src/app/                    # App router (route groups)
-│   │   ├── (auth)/                 # Auth pages (login, register, forgot-password, reset-password)
-│   │   └── (main)/                 # Main app with sidebar
-│   │       ├── achievements/       # Vinh danh (Sprint 6)
-│   │       ├── cau-duong/          # Lich Cau duong (Sprint 7)
-│   │       ├── charter/            # Huong uoc (Sprint 6)
-│   │       ├── contributions/      # Dong gop (Sprint 4)
-│   │       ├── directory/          # Thu muc thanh vien (Sprint 4)
-│   │       ├── documents/book/     # Gia pha sach (Sprint 5)
-│   │       ├── events/             # Lich su kien (Sprint 4)
-│   │       ├── fund/               # Quy khuyen hoc (Sprint 6)
-│   │       ├── people/             # Quan ly thanh vien
-│   │       ├── tree/               # Cay gia pha
-│   │       └── admin/              # Admin panel
-│   │           ├── achievements/   # QL Vinh danh (Sprint 6)
-│   │           ├── cau-duong/      # QL Cau duong (Sprint 7)
-│   │           ├── charter/        # QL Huong uoc (Sprint 6)
-│   │           ├── contributions/  # QL Dong gop (Sprint 4)
-│   │           ├── fund/           # QL Quy & Hoc bong (Sprint 6)
-│   │           ├── settings/       # Cai dat
-│   │           └── users/          # QL Nguoi dung
-│   ├── src/components/             # React components
-│   │   ├── ui/                     # shadcn/ui components
-│   │   ├── layout/                 # Layout components (sidebar, header)
-│   │   ├── home/                   # Homepage components (featured-charter)
-│   │   └── people/                 # People components (person-form, family-relations-card)
-│   ├── src/hooks/                  # Custom React hooks
-│   │   ├── use-achievements.ts     # Achievement CRUD hooks (Sprint 6)
-│   │   ├── use-cau-duong.ts        # Cau duong rotation hooks (Sprint 7)
-│   │   ├── use-clan-articles.ts    # Charter CRUD hooks (Sprint 6)
-│   │   ├── use-contributions.ts    # Contribution hooks (Sprint 4)
-│   │   ├── use-events.ts           # Event hooks (Sprint 4)
-│   │   ├── use-families.ts         # Family relations hooks (Sprint 7.5)
-│   │   └── use-fund.ts             # Fund & scholarship hooks (Sprint 6)
-│   ├── src/lib/                    # Utilities, Supabase client
-│   │   ├── supabase.ts             # Supabase client init
-│   │   ├── supabase-data.ts        # Core data layer (people, families)
-│   │   ├── supabase-data-achievements.ts  # Achievement data (Sprint 6)
-│   │   ├── supabase-data-cau-duong.ts     # Cau duong + DFS algorithm (Sprint 7)
-│   │   ├── supabase-data-charter.ts       # Charter data (Sprint 6)
-│   │   ├── supabase-data-fund.ts          # Fund & scholarship data (Sprint 6)
-│   │   └── lunar-calendar.ts       # Lunar-solar conversion (Sprint 4)
-│   ├── src/types/                  # TypeScript types
-│   │   └── index.ts                # All type definitions
-│   └── supabase/                   # Database migrations
-│       ├── database-setup.sql      # Core tables (7): people, families, children, profiles, contributions, events, media
-│       ├── sprint6-migration.sql   # v1.3 tables (4): achievements, fund_transactions, scholarships, clan_articles
-│       └── cau-duong-migration.sql # v1.4 tables (2): cau_duong_pools, cau_duong_assignments
-├── .sdlc-config.json               # SDLC configuration
-├── CLAUDE.md                       # AI assistant guidelines
-└── README.md                       # Project overview
+frontend/src/
+├── proxy.ts                        # Auth middleware (Next.js 16 convention, NOT middleware.ts)
+├── app/
+│   ├── globals.css                 # Tailwind v4 config (no tailwind.config.js)
+│   ├── layout.tsx                  # Root: AuthProvider + QueryProvider
+│   ├── (auth)/                     # Public auth (login, register, forgot-password, reset-password)
+│   └── (main)/                     # Authenticated app with sidebar
+│       ├── layout.tsx              # SidebarProvider + AppSidebar
+│       ├── page.tsx                # Homepage
+│       ├── people/                 # /people, /people/new, /people/[id] (UUID, not handle)
+│       ├── tree/                   # Cây gia phả
+│       ├── directory/              # Danh bạ thành viên
+│       ├── events/                 # Lịch sự kiện
+│       ├── contributions/          # Đề xuất chỉnh sửa
+│       ├── achievements/           # Vinh danh
+│       ├── fund/                   # Quỹ khuyến học
+│       ├── charter/                # Hương ước
+│       ├── cau-duong/              # Cầu đương
+│       ├── documents/              # Tài liệu + /documents/book (gia phả sách)
+│       └── admin/                  # Admin panel (admin/editor only)
+│           ├── users/              # QL Người dùng
+│           ├── contributions/      # QL Đề xuất
+│           ├── achievements/       # QL Vinh danh
+│           ├── fund/               # QL Quỹ & Học bổng
+│           ├── charter/            # QL Hương ước
+│           └── cau-duong/          # QL Cầu đương
+├── components/
+│   ├── ui/                         # shadcn/ui (new-york style, neutral base)
+│   ├── layout/app-sidebar.tsx      # Main navigation sidebar
+│   ├── auth/auth-provider.tsx      # AuthContext + useAuth hook
+│   ├── providers/query-provider.tsx
+│   ├── people/                     # person-form, family-relations-card, avatar-upload, photo-gallery
+│   ├── tree/family-tree.tsx
+│   ├── home/                       # featured-charter, stats-card
+│   ├── events/                     # add-event-dialog, calendar-grid
+│   └── shared/                     # error-boundary, route-error
+├── hooks/
+│   ├── use-people.ts               # People CRUD
+│   ├── use-families.ts             # Family relations (Sprint 7.5)
+│   ├── use-achievements.ts         # Achievement CRUD
+│   ├── use-fund.ts                 # Fund & scholarships
+│   ├── use-clan-articles.ts        # Charter/hương ước
+│   ├── use-cau-duong.ts            # Cầu đương rotation
+│   ├── use-contributions.ts        # Contribution suggestions
+│   ├── use-events.ts               # Events
+│   ├── use-media.ts                # Media/photos
+│   ├── use-profiles.ts             # User profiles
+│   ├── use-can-edit.ts             # Subtree edit permission (FR-508/510)
+│   └── use-mobile.ts               # Mobile viewport detection
+├── lib/
+│   ├── supabase.ts                 # Supabase client (browser + server)
+│   ├── supabase-data.ts            # Core data: people, families, children, profiles, events, contributions, media
+│   ├── supabase-data-achievements.ts
+│   ├── supabase-data-cau-duong.ts  # Includes DFS algorithm for rotation order
+│   ├── supabase-data-charter.ts    # clan_articles CRUD
+│   ├── supabase-data-fund.ts       # fund_transactions + scholarships
+│   ├── supabase-storage.ts         # Storage upload/delete (bucket: 'media', 5MB limit)
+│   ├── book-generator.ts           # Printable book data (used directly, no hook)
+│   ├── gedcom-export.ts            # GEDCOM 5.5.1 export (used directly, no hook)
+│   ├── lunar-calendar.ts           # Lunar-solar date conversion
+│   ├── format.ts                   # Formatting utilities
+│   ├── utils.ts                    # cn() helper (clsx + tailwind-merge)
+│   └── validations/person.ts       # Zod schema for person form
+├── types/
+│   └── index.ts                    # All TypeScript type definitions (single file)
 ```
 
-## Database Schema
-
-13 tables across 4 layers:
-
-| Layer | Tables | Migration File |
-|-------|--------|----------------|
-| **Core Genealogy** | `people`, `families`, `children` | `database-setup.sql` |
-| **Platform** | `profiles`, `contributions`, `media`, `events` | `database-setup.sql` |
-| **Culture (v1.3)** | `achievements`, `fund_transactions`, `scholarships`, `clan_articles` | `sprint6-migration.sql` |
-| **Ceremony (v1.4)** | `cau_duong_pools`, `cau_duong_assignments` | `cau-duong-migration.sql` |
-
-All tables have RLS policies with 4 roles: `admin`, `editor`, `viewer`, `guest`.
-
-## Development Commands
-
-```bash
-cd frontend
-
-# Install dependencies
-pnpm install
-
-# Development
-pnpm dev              # Start dev server (localhost:4000)
-
-# Build & Test
-pnpm build            # Production build
-pnpm lint             # ESLint check
-pnpm test             # Run tests (when configured)
-
-# Type checking
-pnpm tsc --noEmit     # TypeScript check
+Database migrations (run in Supabase SQL Editor, in order):
 ```
+frontend/supabase/
+├── database-setup.sql              # Core 7 tables: people, families, children, profiles, contributions, events, media
+├── sprint6-migration.sql           # 4 tables: achievements, fund_transactions, scholarships, clan_articles
+├── cau-duong-migration.sql         # 2 tables: cau_duong_pools, cau_duong_assignments
+├── sprint75-migration.sql          # ALTER profiles + is_person_in_subtree() function
+└── storage-setup.sql               # Supabase Storage bucket 'media'
+```
+
+SDLC docs:
+```
+docs/
+├── 00-foundation/                  # VISION.md, problem-statement.md, market-research.md, business-case.md
+├── 01-planning/                    # BRD.md, roadmap.md
+├── 02-design/                      # technical-design.md, ui-ux-design.md, review-report.md
+├── 04-build/                       # SPRINT-PLAN.md
+└── 05-test/                        # TEST-PLAN.md
+```
+
+## Architecture Patterns
+
+### Feature Module Pattern (follow for all new features)
+
+```
+1. Types       → src/types/index.ts (add interfaces)
+2. Data layer  → src/lib/supabase-data-{module}.ts (async CRUD functions)
+3. Hooks       → src/hooks/use-{module}.ts (React Query useQuery/useMutation)
+4. Public page → src/app/(main)/{module}/page.tsx + error.tsx + loading.tsx
+5. Admin page  → src/app/(main)/admin/{module}/page.tsx + error.tsx + loading.tsx
+6. Navigation  → src/components/layout/app-sidebar.tsx
+```
+
+### Auth & Permissions
+
+- Auth middleware is `src/proxy.ts` (Next.js 16 `proxy()` convention, NOT `middleware.ts`)
+- 4 roles: `admin`, `editor`, `viewer`, `guest`
+- `isEditor` = role is `admin` OR `editor` (admin is superset)
+- Admin routes require `admin` or `editor` role
+- Subtree editing: editors with `edit_root_person_id` can only edit their subtree (via `is_person_in_subtree` RPC)
+- Self-service: users with `linked_person` can edit their own person record
+
+### Supabase Client
+
+- Browser client created via `createBrowserClient` with cookie auth and 25-second fetch timeout (free tier cold start)
+- Server client via `createServerClient()` with service role key for admin operations
+- All tables have Row Level Security (RLS) policies
+
+### React Query Caching
+
+- People list/stats: 5 min staleTime
+- Tree data: 5 min staleTime
+- Person relations: 5 min staleTime (heavy 3-phase query)
+- Other queries: default staleTime
+
+### Database (15 tables, 4 layers)
+
+| Layer | Tables |
+|-------|--------|
+| Core Genealogy | `people`, `families`, `children` |
+| Platform | `profiles`, `contributions`, `media`, `events` |
+| Culture (v1.3) | `achievements`, `fund_transactions`, `scholarships`, `clan_articles` |
+| Ceremony (v1.4) | `cau_duong_pools`, `cau_duong_assignments` |
+
+Key DB details:
+- `people.gender`: 1 = Male, 2 = Female
+- `people.privacy_level`: 0 = public, 1 = members only, 2 = private
+- `profiles.role`: default `viewer`, auto-created on auth.users INSERT via trigger
+- Storage path pattern: `people/{personId}/{timestamp}.{ext}`
 
 ## Coding Conventions
-
-### TypeScript
-- Strict mode enabled
-- Use explicit types (avoid `any`)
-- Prefer interfaces over types for objects
-
-### React/Next.js
-- Use functional components with hooks
-- Server Components by default, `'use client'` only when needed
-- Use route groups: `(auth)` for public, `(main)` for authenticated
-- React Query for server state (no global client state library needed)
-- Each feature module has: data layer (`src/lib/`) + hooks (`src/hooks/`) + pages (`src/app/`)
-
-### Styling
-- Tailwind CSS 4 with WindCSS
-- shadcn/ui component library
-- Mobile-first responsive design
 
 ### Naming
 - **Files:** kebab-case (`user-profile.tsx`)
 - **Components:** PascalCase (`UserProfile`)
 - **Functions/vars:** camelCase (`getUserData`)
 - **Constants:** SCREAMING_SNAKE (`MAX_RETRY_COUNT`)
-- **Data layer files:** `supabase-data-{module}.ts`
-- **Hook files:** `use-{module}.ts`
+- **Data layer:** `supabase-data-{module}.ts`
+- **Hooks:** `use-{module}.ts`
 
-## Git Workflow
+### TypeScript
+- Strict mode enabled
+- Use explicit types, avoid `any`
+- All types in single file `src/types/index.ts`
+- Path alias: `@/*` → `./src/*`
 
-### Commit Messages
-Follow Conventional Commits:
+### React/Next.js
+- Server Components by default, `'use client'` only when needed
+- Route groups: `(auth)` for public, `(main)` for authenticated
+- Every page should have `error.tsx` and `loading.tsx` boundaries
+- React Query for server state, no global client state library
+
+### Styling
+- Tailwind CSS v4 (config in `globals.css`, no `tailwind.config.js`)
+- shadcn/ui with new-york style and neutral base color
+- Mobile-first responsive design
+
+### Language
+- Vietnamese for user-facing content
+- English for code, comments, and variable names
+
+## Git Conventions
+
+Commit messages follow Conventional Commits:
 ```
 feat: add family tree visualization
 fix: resolve date picker timezone issue
@@ -201,68 +243,17 @@ docs: update API documentation
 chore: upgrade dependencies
 ```
 
-### Branch Naming
+Branch naming:
 ```
 feature/tree-visualization
 fix/auth-session-bug
 docs/api-reference
-chore/upgrade-deps
 ```
 
-## Key Files Reference
+## Important Notes
 
-| Purpose | Location |
-|---------|----------|
-| SDLC Config | `.sdlc-config.json` |
-| Vision & Scope | `docs/00-foundation/VISION.md` |
-| Business Requirements | `docs/01-planning/BRD.md` |
-| Technical Design | `docs/02-design/technical-design.md` |
-| UI/UX Design | `docs/02-design/ui-ux-design.md` |
-| Core DB Schema | `frontend/supabase/database-setup.sql` |
-| Sprint 6 Migration | `frontend/supabase/sprint6-migration.sql` |
-| Sprint 7 Migration | `frontend/supabase/cau-duong-migration.sql` |
-| Sprint Plan | `docs/04-build/SPRINT-PLAN.md` |
-| Test Plan | `docs/05-test/TEST-PLAN.md` |
-| Community Launch | `docs/00-foundation/06-Community/Community-Launch-Strategy.md` |
-
-## Common Tasks
-
-### Adding a New Page
-1. Create page in appropriate route group (`(auth)` or `(main)`)
-2. Add error.tsx and loading.tsx boundaries
-3. Add navigation link in `app-sidebar.tsx` if needed
-4. Update `docs/02-design/ui-ux-design.md`
-
-### Adding a Database Table
-1. For core tables: add SQL to `frontend/supabase/database-setup.sql`
-2. For feature tables: create separate migration file (e.g., `sprint6-migration.sql`)
-3. Add RLS policies in the same migration file
-4. Update types in `src/types/index.ts`
-5. Create data layer in `src/lib/supabase-data-{module}.ts`
-6. Create hooks in `src/hooks/use-{module}.ts`
-7. Update `docs/02-design/technical-design.md`
-
-### Adding a Feature Module (Sprint 6 Pattern)
-1. **Types:** Add interfaces to `src/types/index.ts`
-2. **Data layer:** Create `src/lib/supabase-data-{module}.ts` with CRUD functions
-3. **Hooks:** Create `src/hooks/use-{module}.ts` with React Query hooks
-4. **Public page:** Create `src/app/(main)/{module}/page.tsx` + error.tsx + loading.tsx
-5. **Admin page:** Create `src/app/(main)/admin/{module}/page.tsx`
-6. **Navigation:** Add items to `src/components/layout/app-sidebar.tsx`
-
-### Adding a Component
-1. Create in appropriate folder under `src/components/`
-2. Use shadcn/ui primitives when possible
-
-## Notes for AI Assistants
-
-- Always check `.sdlc-config.json` for project tier and stages
-- Include proper file headers when creating/modifying files
-- Follow existing code patterns in the codebase (especially Sprint 6 module pattern)
-- Run `pnpm build` to verify changes compile
-- Update relevant documentation when making changes
-- Use Vietnamese for user-facing content, English for code/comments
-- Data layer functions return typed results using Supabase client
-- React Query hooks handle caching, invalidation, and optimistic updates
-- Admin pages require editor role guard
-- All pages should have error.tsx and loading.tsx boundaries
+- Always run `pnpm build` after changes to verify compilation
+- People routes use UUID `[id]` param, not `[handle]`
+- DFS algorithm for Cầu đương rotation is in TypeScript (`supabase-data-cau-duong.ts`), not in PostgreSQL
+- `book-generator.ts` and `gedcom-export.ts` are used directly in pages (no hook layer)
+- SDLC follows LITE tier (5 stages) defined in `.sdlc-config.json` — do NOT use generic 6-stage or 11-stage structure
