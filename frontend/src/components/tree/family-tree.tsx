@@ -104,6 +104,10 @@ function TreeNode({ node, onSelect, onToggleCollapse, isSelected }: TreeNodeProp
   const genderColor = person.gender === GENDER.MALE ? 'border-blue-400' : 'border-pink-400';
   const selectedRing = isSelected ? 'ring-2 ring-primary ring-offset-2' : '';
 
+  // Auto-shrink font for long names to fit within node
+  const nameLen = person.display_name.length;
+  const nameFontSize = nameLen > 18 ? 9 : nameLen > 12 ? 10 : 12;
+
   return (
     <motion.g
       initial={{ opacity: 0, scale: 0.8 }}
@@ -113,16 +117,19 @@ function TreeNode({ node, onSelect, onToggleCollapse, isSelected }: TreeNodeProp
     >
       <foreignObject x={x} y={y} width={NODE_WIDTH} height={NODE_HEIGHT}>
         <div
-          className={`h-full bg-card border-2 ${genderColor} ${selectedRing} rounded-lg shadow-sm cursor-pointer hover:shadow-md transition-all p-2 flex flex-col items-center justify-center relative`}
+          className={`h-full bg-card border-2 ${genderColor} ${selectedRing} rounded-lg shadow-sm cursor-pointer hover:shadow-md transition-all p-2 flex flex-col items-center justify-center relative overflow-hidden`}
           onClick={() => onSelect(person)}
         >
-          <Avatar className="h-8 w-8 mb-1">
+          <Avatar className="h-8 w-8 mb-1 shrink-0">
             <AvatarImage src={person.avatar_url} />
             <AvatarFallback className="text-xs">
               {initials || <User className="h-3 w-3" />}
             </AvatarFallback>
           </Avatar>
-          <span className="text-xs font-medium text-center line-clamp-2 leading-tight">
+          <span
+            className="font-medium text-center line-clamp-2 leading-tight w-full break-words"
+            style={{ fontSize: `${nameFontSize}px` }}
+          >
             {person.display_name}
           </span>
           {!person.is_living && (
