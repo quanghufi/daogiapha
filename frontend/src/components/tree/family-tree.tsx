@@ -48,10 +48,10 @@ import { GENDER } from '@/lib/constants';
 // Constants
 // ═══════════════════════════════════════════════════════════════════════════
 
-const NODE_WIDTH = 120;
-const NODE_HEIGHT = 80;
-const LEVEL_HEIGHT = 140;
-const SIBLING_GAP = 20;
+const NODE_WIDTH = 150;
+const NODE_HEIGHT = 88;
+const LEVEL_HEIGHT = 150;
+const SIBLING_GAP = 24;
 const MINIMAP_WIDTH = 160;
 const MINIMAP_HEIGHT = 100;
 
@@ -104,10 +104,6 @@ function TreeNode({ node, onSelect, onToggleCollapse, isSelected }: TreeNodeProp
   const genderColor = person.gender === GENDER.MALE ? 'border-blue-400' : 'border-pink-400';
   const selectedRing = isSelected ? 'ring-2 ring-primary ring-offset-2' : '';
 
-  // Auto-shrink font for long names to fit within node
-  const nameLen = person.display_name.length;
-  const nameFontSize = nameLen > 18 ? 9 : nameLen > 12 ? 10 : 12;
-
   return (
     <motion.g
       initial={{ opacity: 0, scale: 0.8 }}
@@ -126,10 +122,7 @@ function TreeNode({ node, onSelect, onToggleCollapse, isSelected }: TreeNodeProp
               {initials || <User className="h-3 w-3" />}
             </AvatarFallback>
           </Avatar>
-          <span
-            className="font-medium text-center line-clamp-2 leading-tight w-full break-words"
-            style={{ fontSize: `${nameFontSize}px` }}
-          >
+          <span className="text-[11px] font-medium text-center line-clamp-2 leading-tight w-full">
             {person.display_name}
           </span>
           {!person.is_living && (
