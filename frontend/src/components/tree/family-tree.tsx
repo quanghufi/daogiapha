@@ -29,6 +29,8 @@ import {
   GitBranch,
   ChevronsDownUp,
   ChevronsUpDown,
+  Crosshair,
+  Eye,
 } from 'lucide-react';
 import type { TreePerson } from '@/types';
 import type { TreeData } from '@/lib/supabase-data';
@@ -138,7 +140,7 @@ interface PersonCardProps {
   node: TreeNodeData;
   zoomLevel: ZoomLevel;
   isSelected: boolean;
-  onSelect: (person: TreePerson) => void;
+  onSelect: (person: TreePerson, nodeX: number, nodeY: number) => void;
   onToggleCollapse: (personId: string) => void;
   branchSummary?: BranchSummary;
 }
@@ -175,7 +177,7 @@ const PersonCard = memo(function PersonCard({
       <div
         className={`absolute w-3 h-3 rounded-full ${dotColor} cursor-pointer hover:scale-150 transition-transform ${!person.is_living ? 'opacity-60' : ''}`}
         style={{ left: x + CARD_W / 2 - 6, top: y + CARD_H / 2 - 6 }}
-        onClick={() => onSelect(person)}
+        onClick={() => onSelect(person, x, y)}
         title={`${person.display_name} — Đời ${person.generation}`}
       />
     );
@@ -186,7 +188,7 @@ const PersonCard = memo(function PersonCard({
       <div
         className={`absolute bg-gradient-to-br ${style.card} rounded-lg border-[1.5px] cursor-pointer hover:shadow-md transition-all ${selectedRing}`}
         style={{ left: x, top: y, width: CARD_W, height: 40 }}
-        onClick={() => onSelect(person)}
+        onClick={() => onSelect(person, x, y)}
       >
         <div className="flex items-center gap-1.5 px-2 h-full">
           <div className={`w-5 h-5 rounded-full ${style.avatar} flex items-center justify-center text-[9px] font-bold shrink-0`}>
@@ -222,7 +224,7 @@ const PersonCard = memo(function PersonCard({
       <div
         className={`absolute bg-gradient-to-br ${style.card} rounded-xl border-[1.5px] cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all ${selectedRing}`}
         style={{ left: x, top: y, width: CARD_W, height: CARD_H }}
-        onClick={() => onSelect(person)}
+        onClick={() => onSelect(person, x, y)}
       >
         <div className="flex items-start gap-2.5 p-2.5 h-full">
           {/* Avatar */}
@@ -303,8 +305,121 @@ const PersonCard = memo(function PersonCard({
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Connections — SVG overlay with bus-line pattern
+// NodeContextMenu — popup next to clicked node
 // ═══════════════════════════════════════════════════════════════════════════
+
+interface ContextMenuData {
+  person: TreePerson;
+  x: number;
+  y: number;
+}
+
+interface NodeContextMenuProps {
+  menu: ContextMenuData;
+  onClose: () => void;
+  onViewAncestors: (person: TreePerson) => void;
+  onViewDescendants: (person: TreePerson) => void;
+  onCenter: (x: number, y: number) => void;
+}
+
+const NodeContextMenu = memo(function NodeContextMenu({
+  menu,
+  onClose,
+  onViewAncestors,
+  onViewDescendants,
+  onCenter,
+}: NodeContextMenuProps) {
+  const { person, x, y } = menu;
+  const style = getCardStyle(person);
+  const initials = getInitials(person.display_name);
+
+  const menuItems = [
+    {
+      icon: <Eye className="h-3.5 w-3.5" />,
+      label: 'Xem chi tiết',
+      href: `/people/${person.id}`,
+    },
+    {
+      icon: <ArrowDownFromLine className="h-3.5 w-3.5" />,
+      label: 'Hậu duệ từ đây',
+      onClick: () => { onViewDescendants(person); onClose(); },
+    },
+    {
+      icon: <ArrowUpFromLine className="h-3.5 w-3.5" />,
+      label: 'Tổ tiên',
+      onClick: () => { onViewAncestors(person); onClose(); },
+    },
+    {
+      icon: <Crosshair className="h-3.5 w-3.5" />,
+      label: 'Căn giữa',
+      onClick: () => { onCenter(x + CARD_W / 2, y + CARD_H / 2); onClose(); },
+    },
+  ];
+
+  return (
+    <div
+      className="absolute z-50"
+      style={{ left: x + CARD_W + 8, top: y }}
+      onClick={(e) => e.stopPropagation()}
+      onMouseDown={(e) => e.stopPropagation()}
+      onTouchStart={(e) => e.stopPropagation()}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9, x: -8 }}
+        animate={{ opacity: 1, scale: 1, x: 0 }}
+        exit={{ opacity: 0, scale: 0.9, x: -8 }}
+        transition={{ duration: 0.15 }}
+        className="bg-background/95 backdrop-blur-sm border rounded-xl shadow-lg w-48 overflow-hidden"
+      >
+        {/* Header */}
+        <div className="flex items-center gap-2 px-3 py-2.5 border-b bg-muted/30">
+          <div className={`w-7 h-7 rounded-full ${style.avatar} flex items-center justify-center text-[10px] font-bold shrink-0`}>
+            {initials}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-semibold truncate">{person.display_name}</p>
+            <p className="text-[10px] text-muted-foreground">
+              Đời {person.generation}
+              {!person.is_living && ' · Đã mất'}
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
+            aria-label="Đóng"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+
+        {/* Menu items */}
+        <div className="py-1">
+          {menuItems.map((item) =>
+            item.href ? (
+              <Link
+                key={item.label}
+                href={item.href}
+                className="flex items-center gap-2.5 px-3 py-2 text-xs hover:bg-muted transition-colors"
+              >
+                {item.icon}
+                {item.label}
+              </Link>
+            ) : (
+              <button
+                key={item.label}
+                onClick={item.onClick}
+                className="w-full flex items-center gap-2.5 px-3 py-2 text-xs hover:bg-muted transition-colors text-left"
+              >
+                {item.icon}
+                {item.label}
+              </button>
+            )
+          )}
+        </div>
+      </motion.div>
+    </div>
+  );
+});
 
 interface ConnectionsLayerProps {
   connections: TreeConnectionData[];
@@ -893,6 +1008,7 @@ export function FamilyTree() {
   );
   const [filterSearch, setFilterSearch] = useState('');
   const [filterDropdownOpen, setFilterDropdownOpen] = useState(false);
+  const [contextMenu, setContextMenu] = useState<ContextMenuData | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerSize, setContainerSize] = useState({ width: 800, height: 600 });
@@ -991,6 +1107,24 @@ export function FamilyTree() {
     setPan({ x: 0, y: 0 });
   }, []);
 
+  const handleNodeSelect = useCallback((person: TreePerson, nodeX: number, nodeY: number) => {
+    setSelectedPerson(person);
+    setContextMenu({ person, x: nodeX, y: nodeY });
+  }, []);
+
+  const handleCloseContextMenu = useCallback(() => {
+    setContextMenu(null);
+  }, []);
+
+  const handleCenterOnNode = useCallback((nodeX: number, nodeY: number) => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    setPan({
+      x: rect.width / 2 - nodeX * scale,
+      y: rect.height / 2 - nodeY * scale,
+    });
+  }, [scale]);
+
   const handleToggleCollapse = useCallback((personId: string) => {
     setCollapsedNodes((prev) => {
       const next = new Set(prev);
@@ -1028,6 +1162,7 @@ export function FamilyTree() {
     if (e.button === 0) {
       setIsPanning(true);
       setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
+      setContextMenu(null);
     }
   }, [pan.x, pan.y]);
 
@@ -1052,6 +1187,7 @@ export function FamilyTree() {
         x: e.touches[0].clientX - pan.x,
         y: e.touches[0].clientY - pan.y,
       });
+      setContextMenu(null);
     }
   }, [pan.x, pan.y]);
 
@@ -1076,6 +1212,7 @@ export function FamilyTree() {
       e.preventDefault();
       const delta = e.deltaY > 0 ? -0.05 : 0.05;
       setScale((s) => Math.max(0.2, Math.min(2, s + delta)));
+      setContextMenu(null);
     };
     node.addEventListener('wheel', onWheel, { passive: false });
     return () => node.removeEventListener('wheel', onWheel);
@@ -1348,11 +1485,30 @@ export function FamilyTree() {
                   node={node}
                   zoomLevel={zoomLevel}
                   isSelected={selectedPerson?.id === node.person.id}
-                  onSelect={setSelectedPerson}
+                  onSelect={handleNodeSelect}
                   onToggleCollapse={handleToggleCollapse}
                   branchSummary={branchSummaries.get(node.person.id)}
                 />
               ))}
+
+              {/* Context menu popup */}
+              <AnimatePresence>
+                {contextMenu && (
+                  <NodeContextMenu
+                    menu={contextMenu}
+                    onClose={handleCloseContextMenu}
+                    onViewAncestors={(person) => {
+                      setSelectedPerson(person);
+                      handleViewModeChange('ancestors');
+                    }}
+                    onViewDescendants={(person) => {
+                      setSelectedPerson(person);
+                      handleViewModeChange('descendants');
+                    }}
+                    onCenter={handleCenterOnNode}
+                  />
+                )}
+              </AnimatePresence>
             </div>
           </div>
 
@@ -1371,56 +1527,6 @@ export function FamilyTree() {
         {/* Legend */}
         <LegendBar />
       </div>
-
-      {/* Selected person info */}
-      <AnimatePresence>
-        {selectedPerson && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-          >
-            <Card className="border-2">
-              <CardContent className="p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-full ${getCardStyle(selectedPerson).avatar} flex items-center justify-center text-sm font-bold`}>
-                    {getInitials(selectedPerson.display_name)}
-                  </div>
-                  <div>
-                    <h3 className="font-semibold">{selectedPerson.display_name}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Đời {selectedPerson.generation}
-                      {selectedPerson.chi && ` · Chi ${selectedPerson.chi}`}
-                      {!selectedPerson.is_living && ' · Đã mất'}
-                      {selectedPerson.birth_year && ` · ${selectedPerson.birth_year}`}
-                      {selectedPerson.death_year && ` - ${selectedPerson.death_year}`}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  {viewMode === 'all' && (
-                    <>
-                      <Button variant="outline" size="sm" onClick={() => handleViewModeChange('ancestors')}>
-                        <ArrowUpFromLine className="h-4 w-4 mr-1" />
-                        <span className="hidden sm:inline">Tổ tiên</span>
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => handleViewModeChange('descendants')}>
-                        <ArrowDownFromLine className="h-4 w-4 mr-1" />
-                        <span className="hidden sm:inline">Hậu duệ</span>
-                      </Button>
-                    </>
-                  )}
-                  <Button asChild size="sm">
-                    <Link href={`/people/${selectedPerson.id}`}>
-                      Xem chi tiết
-                    </Link>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
