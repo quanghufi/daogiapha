@@ -6,9 +6,10 @@
  * @updated 2026-02-25
  */
 
-import type { TreeData } from './supabase-data';
+import type { FullTreeData } from './supabase-data';
 import type { Person } from '@/types';
 import { getZodiacYear } from '@/types';
+import { PRIVACY } from '@/lib/constants';
 
 export interface BookPerson {
   person: Person;
@@ -30,7 +31,7 @@ export interface BookChapter {
   branches: BookBranch[];
 }
 
-export function generateBookData(data: TreeData): BookChapter[] {
+export function generateBookData(data: FullTreeData): BookChapter[] {
   const peopleMap = new Map<string, Person>();
   for (const p of data.people) {
     peopleMap.set(p.id, p);
@@ -91,7 +92,7 @@ export function generateBookData(data: TreeData): BookChapter[] {
   // Group people by generation
   const generationMap = new Map<number, Person[]>();
   for (const person of data.people) {
-    if (person.privacy_level === 2) continue; // Skip private
+    if (person.privacy_level === PRIVACY.PRIVATE) continue; // Skip private
     const gen = person.generation;
     const list = generationMap.get(gen) || [];
     list.push(person);

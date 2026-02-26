@@ -12,16 +12,16 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useTreeData } from '@/hooks/use-families';
-import { generateGedcom, validateGedcom, downloadGedcom } from '@/lib/gedcom-export';
+import { useFullTreeData } from '@/hooks/use-families';
+import type { FullTreeData } from '@/lib/supabase-data';
 import { Download, FileText, BookOpen, Loader2, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function DocumentsPage() {
-  const { data: treeData, isLoading: isTreeLoading } = useTreeData();
+  const { data: treeData, isLoading: isTreeLoading } = useFullTreeData();
   const [isExporting, setIsExporting] = useState(false);
 
-  const handleExportGedcom = () => {
+  const handleExportGedcom = async () => {
     if (!treeData) {
       toast.error('Chưa có dữ liệu gia phả để xuất');
       return;
@@ -29,7 +29,8 @@ export default function DocumentsPage() {
 
     setIsExporting(true);
     try {
-      const content = generateGedcom(treeData);
+      const { generateGedcom, validateGedcom, downloadGedcom } = await import('@/lib/gedcom-export');
+      const content = generateGedcom(treeData as FullTreeData);
       const validation = validateGedcom(content);
 
       if (!validation.valid) {

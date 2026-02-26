@@ -94,7 +94,6 @@ export function useCauDuongAssignments(poolId: string | undefined, year?: number
     queryKey: cauDuongKeys.assignments(poolId!, year),
     queryFn: () => getCauDuongAssignmentsWithPeople(poolId!, year),
     enabled: !!poolId,
-    staleTime: 5 * 60 * 1000,
   });
 }
 
@@ -218,7 +217,6 @@ export function useEligibleMembers(poolId: string | undefined, year: number) {
     queryKey: cauDuongKeys.eligible(poolId!, year),
     queryFn: () => getEligibleMembersInDFSOrder(poolId!, year),
     enabled: !!poolId,
-    staleTime: 5 * 60 * 1000,
   });
 }
 
@@ -228,6 +226,5 @@ export function useNextHostInRotation(poolId: string | undefined) {
     queryKey: cauDuongKeys.nextHost(poolId!),
     queryFn: () => getNextHostInRotation(poolId!, currentYear),
     enabled: !!poolId,
-    staleTime: 5 * 60 * 1000,
   });
 }

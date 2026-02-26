@@ -42,6 +42,7 @@ import {
   type CauDuongCeremonyType,
   type CauDuongStatus,
 } from '@/types';
+import { formatDate } from '@/lib/format';
 
 const currentYear = new Date().getFullYear();
 const YEAR_OPTIONS = Array.from({ length: 5 }, (_, i) => currentYear - 1 + i);
@@ -523,7 +524,7 @@ export default function AdminCauDuongPage() {
                             {assignment.reason && <p className="italic">{assignment.reason}</p>}
                             {assignment.actual_date && (
                               <p>
-                                Ngày: {new Date(assignment.actual_date).toLocaleDateString('vi-VN')}
+                                Ngày: {formatDate(assignment.actual_date)}
                               </p>
                             )}
                           </div>

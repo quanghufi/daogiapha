@@ -36,6 +36,7 @@ import {
 } from 'lucide-react';
 import type { ContributionStatus, ChangeType } from '@/types';
 import { toast } from 'sonner';
+import { formatDate } from '@/lib/format';
 
 const STATUS_CONFIG: Record<ContributionStatus, { label: string; color: string }> = {
   pending: { label: 'Chờ duyệt', color: 'text-amber-600' },
@@ -192,13 +193,7 @@ export default function AdminContributionsPage() {
                       </Badge>
                     </div>
                     <span className="text-xs text-muted-foreground">
-                      {new Date(c.created_at).toLocaleDateString('vi-VN', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
+                      {formatDate(c.created_at, { year: 'numeric', month: 'long', day: 'numeric' })}
                     </span>
                   </div>
                   <CardTitle className="text-base mt-2">
@@ -283,7 +278,7 @@ export default function AdminContributionsPage() {
                     <div className="border-t pt-3 text-sm text-muted-foreground">
                       {reviewer && <span>Duyệt bởi: {reviewer.full_name || reviewer.email}</span>}
                       {c.reviewed_at && (
-                        <span> · {new Date(c.reviewed_at).toLocaleDateString('vi-VN')}</span>
+                        <span> · {formatDate(c.reviewed_at)}</span>
                       )}
                       {c.review_notes && <p className="mt-1">Ghi chú: {c.review_notes}</p>}
                     </div>

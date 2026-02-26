@@ -9,7 +9,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useTreeData } from '@/hooks/use-families';
+import { useFullTreeData } from '@/hooks/use-families';
 import { generateBookData } from '@/lib/book-generator';
 import type { BookChapter, BookPerson } from '@/lib/book-generator';
 import { Card, CardContent } from '@/components/ui/card';
@@ -17,6 +17,8 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, Printer, User, Users, Heart } from 'lucide-react';
+import { formatDate } from '@/lib/format';
+import { GENDER } from '@/lib/constants';
 
 function PersonEntry({ entry }: { entry: BookPerson }) {
   const { person, father, mother, spouses, children, zodiacYear } = entry;
@@ -25,9 +27,9 @@ function PersonEntry({ entry }: { entry: BookPerson }) {
     <div className="book-person py-4">
       <div className="flex items-start gap-3">
         <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-medium ${
-          person.gender === 1 ? 'bg-blue-100 text-blue-800' : 'bg-pink-100 text-pink-800'
+          person.gender === GENDER.MALE ? 'bg-blue-100 text-blue-800' : 'bg-pink-100 text-pink-800'
         }`}>
-          {person.gender === 1 ? '♂' : '♀'}
+          {person.gender === GENDER.MALE ? '♂' : '♀'}
         </div>
         <div className="flex-1 min-w-0">
           <h4 className="font-semibold text-base">
@@ -65,7 +67,7 @@ function PersonEntry({ entry }: { entry: BookPerson }) {
             {spouses.length > 0 && (
               <p className="flex items-center gap-1">
                 <Heart className="h-3 w-3" />
-                {person.gender === 1 ? 'Vợ' : 'Chồng'}: {spouses.map(s => s.display_name).join(', ')}
+                {person.gender === GENDER.MALE ? 'Vợ' : 'Chồng'}: {spouses.map(s => s.display_name).join(', ')}
               </p>
             )}
 
@@ -119,7 +121,7 @@ function ChapterSection({ chapter }: { chapter: BookChapter }) {
 }
 
 export default function BookPage() {
-  const { data: treeData, isLoading, error } = useTreeData();
+  const { data: treeData, isLoading, error } = useFullTreeData();
 
   if (isLoading) {
     return (
@@ -189,7 +191,7 @@ export default function BookPage() {
           <Separator className="max-w-xs mx-auto" />
           <div className="mt-6 text-sm text-muted-foreground space-y-1">
             <p>{totalPeople} thành viên · {chapters.length} đời</p>
-            <p>Xuất bản: {new Date().toLocaleDateString('vi-VN')}</p>
+            <p>Xuất bản: {formatDate(new Date())}</p>
           </div>
         </div>
 

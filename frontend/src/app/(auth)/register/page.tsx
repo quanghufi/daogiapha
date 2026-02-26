@@ -27,8 +27,8 @@ export default function RegisterPage() {
       return;
     }
     
-    if (password.length < 6) {
-      toast.error('Mật khẩu phải có ít nhất 6 ký tự');
+    if (password.length < 8) {
+      toast.error('Mật khẩu phải có ít nhất 8 ký tự');
       return;
     }
     

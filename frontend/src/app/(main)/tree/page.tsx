@@ -14,7 +14,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useTreeData } from '@/hooks/use-families';
-import { generateGedcom, downloadGedcom } from '@/lib/gedcom-export';
+import { downloadGedcom } from '@/lib/gedcom-export';
 import { GitBranchPlus, Download, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -30,14 +30,15 @@ export default function TreePage() {
   const { data: treeData } = useTreeData();
   const [isExporting, setIsExporting] = useState(false);
 
-  const handleExport = () => {
-    if (!treeData) {
-      toast.error('Chưa có dữ liệu để xuất');
-      return;
-    }
+  const handleExport = async () => {
     setIsExporting(true);
     try {
-      const content = generateGedcom(treeData);
+      const [{ getFullTreeData }, { generateGedcom }] = await Promise.all([
+        import('@/lib/supabase-data'),
+        import('@/lib/gedcom-export'),
+      ]);
+      const fullData = await getFullTreeData();
+      const content = generateGedcom(fullData);
       downloadGedcom(content);
       toast.success('Xuất file GEDCOM thành công');
     } catch {

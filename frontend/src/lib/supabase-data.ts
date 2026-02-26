@@ -2,7 +2,7 @@ import { supabase } from './supabase';
 import type {
   Person, Family, Profile, Contribution, Event, Media,
   CreatePersonInput, UpdatePersonInput, CreateMediaInput, ContributionStatus, EventType,
-  PersonRelations,
+  PersonRelations, TreePerson, TreeFamily, SearchPerson,
 } from '@/types';
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -25,20 +25,6 @@ export async function getPerson(id: string): Promise<Person | null> {
     .from('people')
     .select('*')
     .eq('id', id)
-    .single();
-  
-  if (error) {
-    if (error.code === 'PGRST116') return null;
-    throw error;
-  }
-  return data;
-}
-
-export async function getPersonByHandle(handle: string): Promise<Person | null> {
-  const { data, error } = await supabase
-    .from('people')
-    .select('*')
-    .eq('handle', handle)
     .single();
   
   if (error) {
@@ -90,12 +76,12 @@ export async function deletePerson(id: string): Promise<void> {
   if (error) throw error;
 }
 
-export async function searchPeople(query: string): Promise<Person[]> {
+export async function searchPeople(query: string): Promise<SearchPerson[]> {
   // Escape LIKE special characters to prevent pattern injection
   const escaped = query.replace(/[%_\\]/g, '\\$&');
   const { data, error } = await supabase
     .from('people')
-    .select('*')
+    .select(SEARCH_PERSON_COLUMNS)
     .ilike('display_name', `%${escaped}%`)
     .order('display_name', { ascending: true })
     .limit(20);
@@ -481,7 +467,7 @@ export async function checkPersonInSubtree(
   });
 
   if (error) {
-    console.error('is_person_in_subtree RPC error:', error);
+    console.error('[RPC] is_person_in_subtree failed — defaulting to false');
     return false;
   }
   return data as boolean;
@@ -523,22 +509,50 @@ export async function getStats(): Promise<{
 // ═══════════════════════════════════════════════════════════════════════════
 
 export interface TreeData {
+  people: TreePerson[];
+  families: TreeFamily[];
+  children: { family_id: string; person_id: string; sort_order: number }[];
+}
+
+export interface FullTreeData {
   people: Person[];
   families: Family[];
   children: { family_id: string; person_id: string; sort_order: number }[];
 }
 
+const TREE_PERSON_COLUMNS = 'id, display_name, gender, generation, is_living, chi, avatar_url';
+const TREE_FAMILY_COLUMNS = 'id, father_id, mother_id';
+const SEARCH_PERSON_COLUMNS = 'id, display_name, gender, generation, birth_year, avatar_url, is_living';
+
 export async function getTreeData(): Promise<TreeData> {
+  const [peopleRes, familiesRes, childrenRes] = await Promise.all([
+    supabase.from('people').select(TREE_PERSON_COLUMNS),
+    supabase.from('families').select(TREE_FAMILY_COLUMNS),
+    supabase.from('children').select('family_id, person_id, sort_order'),
+  ]);
+
+  if (peopleRes.error) throw peopleRes.error;
+  if (familiesRes.error) throw familiesRes.error;
+  if (childrenRes.error) throw childrenRes.error;
+
+  return {
+    people: peopleRes.data || [],
+    families: familiesRes.data || [],
+    children: childrenRes.data || [],
+  };
+}
+
+export async function getFullTreeData(): Promise<FullTreeData> {
   const [peopleRes, familiesRes, childrenRes] = await Promise.all([
     supabase.from('people').select('*'),
     supabase.from('families').select('*'),
     supabase.from('children').select('family_id, person_id, sort_order'),
   ]);
-  
+
   if (peopleRes.error) throw peopleRes.error;
   if (familiesRes.error) throw familiesRes.error;
   if (childrenRes.error) throw childrenRes.error;
-  
+
   return {
     people: peopleRes.data || [],
     families: familiesRes.data || [],
@@ -676,7 +690,7 @@ export async function reviewContribution(
   // First, get the contribution to access changes and target person
   const { data: contribution, error: fetchError } = await supabase
     .from('contributions')
-    .select('*')
+    .select('change_type, target_person, changes')
     .eq('id', id)
     .single();
 

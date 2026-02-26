@@ -179,6 +179,18 @@ export async function createCauDuongAssignment(
   return data;
 }
 
+export async function batchCreateCauDuongAssignments(
+  inputs: Array<Omit<CauDuongAssignment, 'id' | 'created_at' | 'updated_at'>>,
+): Promise<CauDuongAssignment[]> {
+  if (inputs.length === 0) return [];
+  const { data, error } = await supabase
+    .from('cau_duong_assignments')
+    .insert(inputs)
+    .select();
+  if (error) throw error;
+  return data || [];
+}
+
 export async function updateCauDuongAssignment(
   id: string,
   input: Partial<Omit<CauDuongAssignment, 'id' | 'created_at' | 'updated_at'>>,
@@ -208,8 +220,9 @@ export async function getEligibleMembersInDFSOrder(
   if (!pool) throw new Error('Không tìm thấy nhóm Cầu đương');
 
   // 2. Lấy tất cả dữ liệu cần thiết song song
+  const ELIGIBLE_PERSON_COLUMNS = 'id, display_name, gender, generation, birth_year, is_living, avatar_url';
   const [peopleRes, familiesRes, childrenRes] = await Promise.all([
-    supabase.from('people').select('*'),
+    supabase.from('people').select(ELIGIBLE_PERSON_COLUMNS),
     supabase.from('families').select('id, father_id, sort_order'),
     supabase.from('children').select('family_id, person_id, sort_order'),
   ]);

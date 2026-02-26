@@ -42,6 +42,5 @@ export function useCanEditPerson(personId: string | undefined) {
       return false;
     },
     enabled: !!personId && !!profile,
-    staleTime: 5 * 60 * 1000,
   });
 }

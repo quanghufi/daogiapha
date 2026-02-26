@@ -7,9 +7,8 @@
  */
 
 import { supabase } from './supabase';
+import { STORAGE_BUCKET, MAX_UPLOAD_SIZE_BYTES } from '@/lib/constants';
 
-const BUCKET_NAME = 'media';
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
 export class StorageError extends Error {
@@ -20,7 +19,7 @@ export class StorageError extends Error {
 }
 
 export async function uploadFile(file: File, personId: string): Promise<string> {
-  if (file.size > MAX_FILE_SIZE) {
+  if (file.size > MAX_UPLOAD_SIZE_BYTES) {
     throw new StorageError('File quá lớn. Tối đa 5MB.');
   }
 
@@ -33,7 +32,7 @@ export async function uploadFile(file: File, personId: string): Promise<string> 
   const path = `people/${personId}/${timestamp}.${ext}`;
 
   const { error } = await supabase.storage
-    .from(BUCKET_NAME)
+    .from(STORAGE_BUCKET)
     .upload(path, file, {
       cacheControl: '3600',
       upsert: false,
@@ -42,7 +41,7 @@ export async function uploadFile(file: File, personId: string): Promise<string> 
   if (error) throw new StorageError(error.message);
 
   const { data: urlData } = supabase.storage
-    .from(BUCKET_NAME)
+    .from(STORAGE_BUCKET)
     .getPublicUrl(path);
 
   return urlData.publicUrl;
@@ -50,16 +49,16 @@ export async function uploadFile(file: File, personId: string): Promise<string> 
 
 export async function deleteFile(url: string): Promise<void> {
   // Extract path from public URL
-  const bucketUrl = `/storage/v1/object/public/${BUCKET_NAME}/`;
+  const bucketUrl = `/storage/v1/object/public/${STORAGE_BUCKET}/`;
   const idx = url.indexOf(bucketUrl);
   if (idx === -1) {
-    console.warn(`[Storage] Cannot parse storage path from URL: ${url}`);
+    console.warn('[Storage] Cannot parse storage path — skipping delete');
     return;
   }
 
   const path = decodeURIComponent(url.slice(idx + bucketUrl.length));
   const { error } = await supabase.storage
-    .from(BUCKET_NAME)
+    .from(STORAGE_BUCKET)
     .remove([path]);
 
   if (error) throw new StorageError(error.message);

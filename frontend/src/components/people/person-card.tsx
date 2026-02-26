@@ -14,6 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { type Person, getZodiacYear } from '@/types';
 import { User, MapPin, Calendar } from 'lucide-react';
+import { GENDER } from '@/lib/constants';
 
 interface PersonCardProps {
   person: Person;
@@ -28,7 +29,7 @@ export function PersonCard({ person, showDetails = true }: PersonCardProps) {
     .join('')
     .toUpperCase();
 
-  const genderColor = person.gender === 1 ? 'bg-blue-100 text-blue-800' : 'bg-pink-100 text-pink-800';
+  const genderColor = person.gender === GENDER.MALE ? 'bg-blue-100 text-blue-800' : 'bg-pink-100 text-pink-800';
   const statusColor = person.is_living ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600';
 
   return (

@@ -10,9 +10,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 
-const publicPaths = ['/login', '/register', '/forgot-password', '/reset-password'];
-// Routes that require authentication (redirect to login if not logged in)
-const authRequiredPaths = ['/admin', '/contributions'];
+const publicPaths = ['/', '/login', '/register', '/forgot-password', '/reset-password'];
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -58,11 +56,9 @@ export async function proxy(request: NextRequest) {
     user = null;
   }
 
-  // Redirect unauthenticated users from protected pages
-  if (!user && authRequiredPaths.some(path => pathname.startsWith(path))) {
-    const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('redirect', pathname);
-    return NextResponse.redirect(loginUrl);
+  // Redirect unauthenticated users from all non-public pages
+  if (!user && !publicPaths.some(path => pathname === path)) {
+    return NextResponse.redirect(new URL('/login', request.url));
   }
 
   // Admin routes require admin or editor role

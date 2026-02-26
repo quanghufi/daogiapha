@@ -15,6 +15,7 @@ import { uploadFile } from '@/lib/supabase-storage';
 import { useUpdatePerson } from '@/hooks/use-people';
 import { toast } from 'sonner';
 import type { Person } from '@/types';
+import { GENDER } from '@/lib/constants';
 
 interface AvatarUploadProps {
   person: Person;
@@ -38,7 +39,7 @@ export function AvatarUpload({ person, canEdit, size = 'lg' }: AvatarUploadProps
     .join('')
     .toUpperCase();
 
-  const genderColor = person.gender === 1 ? 'bg-blue-100 text-blue-800' : 'bg-pink-100 text-pink-800';
+  const genderColor = person.gender === GENDER.MALE ? 'bg-blue-100 text-blue-800' : 'bg-pink-100 text-pink-800';
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

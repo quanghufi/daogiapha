@@ -31,7 +31,8 @@ import {
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Users, Plus, Search, UserPlus } from 'lucide-react';
-import type { Person, PersonRelations } from '@/types';
+import type { Person, PersonRelations, SearchPerson } from '@/types';
+import { GENDER } from '@/lib/constants';
 
 // ─── PersonLink ───────────────────────────────────────────────────────────────
 
@@ -43,7 +44,7 @@ function PersonLink({ person }: { person: Person }) {
     >
       <div
         className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium ${
-          person.gender === 1
+          person.gender === GENDER.MALE
             ? 'bg-blue-100 text-blue-700'
             : 'bg-pink-100 text-pink-700'
         }`}
@@ -119,7 +120,7 @@ function QuickPersonForm({
               type="button"
               onClick={() => setGender(1)}
               className={`flex-1 py-1.5 rounded text-sm border ${
-                gender === 1
+                gender === GENDER.MALE
                   ? 'bg-blue-50 border-blue-400 text-blue-700 font-medium'
                   : 'border-muted-foreground/30'
               }`}
@@ -130,7 +131,7 @@ function QuickPersonForm({
               type="button"
               onClick={() => setGender(2)}
               className={`flex-1 py-1.5 rounded text-sm border ${
-                gender === 2
+                gender === GENDER.FEMALE
                   ? 'bg-pink-50 border-pink-400 text-pink-700 font-medium'
                   : 'border-muted-foreground/30'
               }`}
@@ -172,7 +173,7 @@ function QuickPersonForm({
 
 interface PersonSearchSelectProps {
   excludeIds?: string[];
-  onSelect: (person: Person) => Promise<void>;
+  onSelect: (person: SearchPerson) => Promise<void>;
   isLoading: boolean;
 }
 
@@ -208,7 +209,7 @@ function PersonSearchSelect({ excludeIds = [], onSelect, isLoading }: PersonSear
           >
             <div
               className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium shrink-0 ${
-                person.gender === 1 ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700'
+                person.gender === GENDER.MALE ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700'
               }`}
             >
               {person.display_name.slice(-1)}
@@ -254,7 +255,7 @@ function AddRelationDialog({
   const addChildMutation = useAddChildToFamilyMutation(currentPerson.id);
 
   const defaultGender: 1 | 2 = mode === 'spouse'
-    ? (currentPerson.gender === 1 ? 2 : 1)
+    ? (currentPerson.gender === GENDER.MALE ? GENDER.FEMALE : GENDER.MALE)
     : 1;
   const defaultGeneration = mode === 'spouse'
     ? currentPerson.generation
@@ -274,7 +275,7 @@ function AddRelationDialog({
         generation: data.generation,
         birth_year: data.birth_year ? Number(data.birth_year) : undefined,
         is_living: true,
-        is_patrilineal: data.gender === 1,
+        is_patrilineal: data.gender === GENDER.MALE,
         privacy_level: 0,
       });
 
@@ -304,7 +305,7 @@ function AddRelationDialog({
     }
   };
 
-  const handleSelectExisting = async (person: Person) => {
+  const handleSelectExisting = async (person: SearchPerson) => {
     setIsSaving(true);
     try {
       if (mode === 'spouse') {
@@ -334,7 +335,7 @@ function AddRelationDialog({
   };
 
   const title = mode === 'spouse'
-    ? `Thêm ${currentPerson.gender === 1 ? 'vợ' : 'chồng'} cho ${currentPerson.display_name}`
+    ? `Thêm ${currentPerson.gender === GENDER.MALE ? 'vợ' : 'chồng'} cho ${currentPerson.display_name}`
     : `Thêm con cho ${currentPerson.display_name}`;
 
   return (
@@ -396,7 +397,7 @@ function OwnFamilySection({
   onAddChild,
 }: OwnFamilySectionProps) {
   const { family, spouse, children } = familyEntry;
-  const spouseLabel = currentPerson.gender === 1 ? 'Vợ' : 'Chồng';
+  const spouseLabel = currentPerson.gender === GENDER.MALE ? 'Vợ' : 'Chồng';
 
   return (
     <div className="space-y-3">

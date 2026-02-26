@@ -17,6 +17,7 @@ import {
   addChildToFamily,
   removeChildFromFamily,
   getTreeData,
+  getFullTreeData,
   getPersonRelations,
   addPersonToParentFamily,
   createSpouseFamily,
@@ -32,6 +33,7 @@ export const familyKeys = {
   children: (id: string) => [...familyKeys.all, 'children', id] as const,
   relations: (id: string) => [...familyKeys.all, 'relations', id] as const,
   tree: () => ['tree'] as const,
+  fullTree: () => ['fullTree'] as const,
 };
 
 // ─── Queries ──────────────────────────────────────────────────────────────────
@@ -63,7 +65,13 @@ export function useTreeData() {
   return useQuery({
     queryKey: familyKeys.tree(),
     queryFn: getTreeData,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+}
+
+export function useFullTreeData() {
+  return useQuery({
+    queryKey: familyKeys.fullTree(),
+    queryFn: getFullTreeData,
   });
 }
 
@@ -116,7 +124,6 @@ export function usePersonRelations(personId: string | undefined) {
     queryKey: familyKeys.relations(personId!),
     queryFn: () => getPersonRelations(personId!),
     enabled: !!personId,
-    staleTime: 5 * 60 * 1000, // 5 minutes — 3-phase query is heavy
   });
 }
 

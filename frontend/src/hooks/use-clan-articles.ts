@@ -36,7 +36,6 @@ export function useFeaturedArticles() {
   return useQuery({
     queryKey: clanArticleKeys.featured(),
     queryFn: getFeaturedArticles,
-    staleTime: 5 * 60 * 1000,
   });
 }
 

@@ -6,8 +6,9 @@
  * @updated 2026-02-25
  */
 
-import type { TreeData } from './supabase-data';
+import type { FullTreeData } from './supabase-data';
 import type { Person, Family } from '@/types';
+import { GENDER, PRIVACY } from '@/lib/constants';
 
 const GEDCOM_MONTHS = [
   'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
@@ -97,7 +98,7 @@ function buildPersonRecord(
   if (surname) lines.push(gedcomLine(2, 'SURN', surname));
 
   // Sex
-  lines.push(gedcomLine(1, 'SEX', person.gender === 1 ? 'M' : 'F'));
+  lines.push(gedcomLine(1, 'SEX', person.gender === GENDER.MALE ? 'M' : 'F'));
 
   // Birth
   const birthDate = formatGedcomDate(person.birth_date, person.birth_year);
@@ -182,9 +183,9 @@ function buildFamilyRecord(
   return lines.join('\n');
 }
 
-export function generateGedcom(data: TreeData): string {
+export function generateGedcom(data: FullTreeData): string {
   // Filter out private people (privacy_level === 2)
-  const people = data.people.filter(p => p.privacy_level !== 2);
+  const people = data.people.filter(p => p.privacy_level !== PRIVACY.PRIVATE);
   const peopleSet = new Set(people.map(p => p.id));
 
   // Build family lookup maps

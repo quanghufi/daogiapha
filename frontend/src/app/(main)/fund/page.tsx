@@ -21,7 +21,8 @@ import {
   BookOpen, Wallet, ArrowDownCircle, ArrowUpCircle,
   GraduationCap, Award, Printer, Download,
 } from 'lucide-react';
-import { formatVND } from '@/lib/format';
+import { formatVND, formatDate } from '@/lib/format';
+import { ScholarshipStatusBadge } from '@/components/shared/scholarship-status-badge';
 import type { Person, FundTransaction, Scholarship, ScholarshipStatus, FundBalance } from '@/types';
 
 function exportFundReport(
@@ -32,7 +33,7 @@ function exportFundReport(
 ) {
   const lines: string[] = [];
   lines.push('BÁO CÁO QUỸ KHUYẾN HỌC - CHI TỘC ĐẶNG ĐÌNH');
-  lines.push(`Ngày xuất: ${new Date().toLocaleDateString('vi-VN')}`);
+  lines.push(`Ngày xuất: ${formatDate(new Date())}`);
   lines.push('');
   lines.push('=== TỔNG QUAN ===');
   lines.push(`Tổng thu: ${formatVND(balance?.income || 0)}`);
@@ -51,8 +52,7 @@ function exportFundReport(
   lines.push('=== LỊCH SỬ GIAO DỊCH ===');
   lines.push('Ngày,Loại,Người/Mô tả,Số tiền,Năm học');
   for (const tx of transactions) {
-    const date = new Date(tx.transaction_date).toLocaleDateString('vi-VN');
-    const type = tx.type === 'income' ? 'Thu' : 'Chi';
+    const date = formatDate(tx.transaction_date);    const type = tx.type === 'income' ? 'Thu' : 'Chi';
     const desc = tx.donor_name || tx.description || '';
     lines.push(`"${date}","${type}","${desc}",${tx.amount},"${tx.academic_year || ''}"`);
   }
@@ -64,15 +64,6 @@ function exportFundReport(
   a.download = `bao-cao-quy-khuyen-hoc-${new Date().toISOString().slice(0, 10)}.csv`;
   a.click();
   URL.revokeObjectURL(url);
-}
-
-function getStatusBadge(status: ScholarshipStatus) {
-  switch (status) {
-    case 'pending': return <Badge variant="outline" className="text-xs">Chờ duyệt</Badge>;
-    case 'approved': return <Badge className="bg-blue-100 text-blue-800 text-xs">Đã duyệt</Badge>;
-    case 'paid': return <Badge className="bg-green-100 text-green-800 text-xs">Đã cấp</Badge>;
-    default: return <Badge variant="outline" className="text-xs">{status}</Badge>;
-  }
 }
 
 export default function FundPage() {
@@ -212,7 +203,7 @@ export default function FundPage() {
                         </div>
                         <div className="text-right">
                           <p className="font-semibold text-sm">{formatVND(s.amount)}</p>
-                          {getStatusBadge(s.status)}
+                          {<ScholarshipStatusBadge status={s.status} />}
                         </div>
                       </CardContent>
                     </Card>
@@ -249,7 +240,7 @@ export default function FundPage() {
                         </div>
                         <div className="text-right">
                           <p className="font-semibold text-sm">{formatVND(s.amount)}</p>
-                          {getStatusBadge(s.status)}
+                          {<ScholarshipStatusBadge status={s.status} />}
                         </div>
                       </CardContent>
                     </Card>
@@ -285,7 +276,7 @@ export default function FundPage() {
                       <div className="text-right">
                         <p className="font-semibold text-sm text-emerald-600">+{formatVND(tx.amount)}</p>
                         <p className="text-xs text-muted-foreground">
-                          {new Date(tx.transaction_date).toLocaleDateString('vi-VN')}
+                          {formatDate(tx.transaction_date)}
                         </p>
                       </div>
                     </CardContent>
@@ -321,7 +312,7 @@ export default function FundPage() {
                           {tx.donor_name || tx.description || (tx.type === 'income' ? 'Thu' : 'Chi')}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {new Date(tx.transaction_date).toLocaleDateString('vi-VN')}
+                          {formatDate(tx.transaction_date)}
                           {tx.academic_year && ` · ${tx.academic_year}`}
                         </p>
                       </div>

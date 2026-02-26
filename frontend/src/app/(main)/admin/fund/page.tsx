@@ -33,17 +33,9 @@ import {
 import { Plus, Trash2, CheckCircle, Wallet } from 'lucide-react';
 import { toast } from 'sonner';
 import Link from 'next/link';
-import { formatVND } from '@/lib/format';
+import { formatVND, formatDate } from '@/lib/format';
+import { ScholarshipStatusBadge } from '@/components/shared/scholarship-status-badge';
 import type { Person, CreateFundTransactionInput, CreateScholarshipInput, ScholarshipStatus } from '@/types';
-
-function getStatusBadge(status: ScholarshipStatus) {
-  switch (status) {
-    case 'pending': return <Badge variant="outline" className="text-xs">Chờ duyệt</Badge>;
-    case 'approved': return <Badge className="bg-blue-100 text-blue-800 text-xs">Đã duyệt</Badge>;
-    case 'paid': return <Badge className="bg-green-100 text-green-800 text-xs">Đã cấp</Badge>;
-    default: return <Badge variant="outline" className="text-xs">{status}</Badge>;
-  }
-}
 
 export default function AdminFundPage() {
   const { profile, isEditor } = useAuth();
@@ -241,7 +233,7 @@ export default function AdminFundPage() {
                       {tx.donor_name || tx.description || (tx.type === 'income' ? 'Thu' : 'Chi')}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {new Date(tx.transaction_date).toLocaleDateString('vi-VN')}
+                      {formatDate(tx.transaction_date)}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -352,7 +344,7 @@ export default function AdminFundPage() {
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
-                      {getStatusBadge(s.status)}
+                      {<ScholarshipStatusBadge status={s.status} />}
                       {s.status === 'pending' && (
                         <Button size="sm" variant="outline" onClick={() => handleApprove(s.id, 'approved')}>
                           <CheckCircle className="h-3 w-3 mr-1" />Duyệt

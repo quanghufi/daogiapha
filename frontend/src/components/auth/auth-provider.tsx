@@ -25,7 +25,7 @@ async function fetchProfile(userId: string): Promise<Profile | null> {
   try {
     return await getProfile(userId);
   } catch (error) {
-    console.error('Error fetching profile:', error);
+    console.error('[Auth] Failed to load profile');
     return null;
   }
 }

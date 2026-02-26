@@ -39,9 +39,10 @@ import {
   X,
   GitBranch,
 } from 'lucide-react';
-import type { Person } from '@/types';
+import type { TreePerson } from '@/types';
 import type { TreeData } from '@/lib/supabase-data';
 import Link from 'next/link';
+import { GENDER } from '@/lib/constants';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Constants
@@ -61,7 +62,7 @@ const MINIMAP_HEIGHT = 100;
 type ViewMode = 'all' | 'ancestors' | 'descendants';
 
 interface TreeNodeData {
-  person: Person;
+  person: TreePerson;
   x: number;
   y: number;
   isCollapsed: boolean;
@@ -85,7 +86,7 @@ interface TreeConnectionData {
 
 interface TreeNodeProps {
   node: TreeNodeData;
-  onSelect: (person: Person) => void;
+  onSelect: (person: TreePerson) => void;
   onToggleCollapse: (personId: string) => void;
   isSelected: boolean;
 }
@@ -100,7 +101,7 @@ function TreeNode({ node, onSelect, onToggleCollapse, isSelected }: TreeNodeProp
     .join('')
     .toUpperCase();
 
-  const genderColor = person.gender === 1 ? 'border-blue-400' : 'border-pink-400';
+  const genderColor = person.gender === GENDER.MALE ? 'border-blue-400' : 'border-pink-400';
   const selectedRing = isSelected ? 'ring-2 ring-primary ring-offset-2' : '';
 
   return (
@@ -132,6 +133,7 @@ function TreeNode({ node, onSelect, onToggleCollapse, isSelected }: TreeNodeProp
           {hasChildren && (
             <button
               className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-6 h-6 bg-background border rounded-full flex items-center justify-center shadow-sm hover:bg-muted transition-colors z-10"
+              aria-label={isCollapsed ? 'Mở rộng' : 'Thu gọn'}
               onClick={(e) => {
                 e.stopPropagation();
                 onToggleCollapse(person.id);
@@ -236,7 +238,7 @@ function Minimap({ nodes, viewBox, treeWidth, treeHeight, onViewportClick }: Min
               cx={node.x + NODE_WIDTH / 2}
               cy={node.y + NODE_HEIGHT / 2}
               r={4 / scale}
-              className={node.person.gender === 1 ? 'fill-blue-400' : 'fill-pink-400'}
+              className={node.person.gender === GENDER.MALE ? 'fill-blue-400' : 'fill-pink-400'}
             />
           ))}
           
@@ -394,7 +396,7 @@ function buildTreeLayout(
   // Wives will be positioned adjacent to husband — mark them
   const positionedAsWife = new Set<string>();
   for (const p of visiblePeople) {
-    if (p.gender === 2) {
+    if (p.gender === GENDER.FEMALE) {
       const fams = motherToFamilies.get(p.id) || [];
       if (fams.some((f) => f.father_id && visibleIds.has(f.father_id))) {
         positionedAsWife.add(p.id);
@@ -555,7 +557,7 @@ export function FamilyTree() {
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
-  const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
+  const [selectedPerson, setSelectedPerson] = useState<TreePerson | null>(null);
   const [collapsedNodes, setCollapsedNodes] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<ViewMode>('all');
   const [showMinimap, setShowMinimap] = useState(true);
@@ -568,7 +570,7 @@ export function FamilyTree() {
   const [filterSearch, setFilterSearch] = useState('');
   const [filterDropdownOpen, setFilterDropdownOpen] = useState(false);
 
-  const handleSetFilterRoot = useCallback((person: Person | null) => {
+  const handleSetFilterRoot = useCallback((person: TreePerson | null) => {
     setFilterRootId(person?.id ?? null);
     setFilterSearch('');
     setFilterDropdownOpen(false);
@@ -756,6 +758,7 @@ export function FamilyTree() {
             <button
               onClick={() => handleSetFilterRoot(null)}
               className="ml-1 text-muted-foreground hover:text-foreground"
+              aria-label="Xóa bộ lọc nhánh"
             >
               <X className="h-3 w-3" />
             </button>
@@ -793,7 +796,7 @@ export function FamilyTree() {
                     >
                       <div
                         className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium shrink-0 ${
-                          person.gender === 1 ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700'
+                          person.gender === GENDER.MALE ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700'
                         }`}
                       >
                         {person.display_name.slice(-1)}
@@ -823,14 +826,14 @@ export function FamilyTree() {
       <div className="flex flex-wrap items-center gap-2">
         {/* Zoom controls */}
         <div className="flex items-center gap-1 border rounded-lg p-1">
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleZoomOut}>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleZoomOut} aria-label="Thu nhỏ">
             <ZoomOut className="h-4 w-4" />
           </Button>
           <span className="text-sm w-12 text-center">{Math.round(scale * 100)}%</span>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleZoomIn}>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleZoomIn} aria-label="Phóng to">
             <ZoomIn className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleReset}>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleReset} aria-label="Đặt lại">
             <RotateCcw className="h-4 w-4" />
           </Button>
         </div>

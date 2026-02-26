@@ -57,6 +57,13 @@ export interface Person {
 export type CreatePersonInput = Omit<Person, 'id' | 'created_at' | 'updated_at'>;
 export type UpdatePersonInput = Partial<CreatePersonInput>;
 
+// Lightweight projections for tree rendering (7 columns instead of 30)
+export type TreePerson = Pick<Person, 'id' | 'display_name' | 'gender' | 'generation' | 'is_living' | 'chi' | 'avatar_url'>;
+export type TreeFamily = Pick<Family, 'id' | 'father_id' | 'mother_id'>;
+
+// Lightweight projection for search results (7 columns)
+export type SearchPerson = Pick<Person, 'id' | 'display_name' | 'gender' | 'generation' | 'birth_year' | 'avatar_url' | 'is_living'>;
+
 // ─── Family ───────────────────────────────────────────────────────────────────
 
 export interface Family {

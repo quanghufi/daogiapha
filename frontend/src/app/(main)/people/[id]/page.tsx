@@ -10,7 +10,7 @@
 
 import { use } from 'react';
 import { usePerson, useDeletePerson } from '@/hooks/use-people';
-import { useAuth } from '@/components/auth/auth-provider';
+import { useCanEditPerson } from '@/hooks/use-can-edit';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { AvatarUpload } from '@/components/people/avatar-upload';
@@ -56,8 +56,7 @@ export default function PersonDetailPage({ params }: PageProps) {
   const router = useRouter();
   const { data: person, isLoading, error } = usePerson(id);
   const deleteMutation = useDeletePerson();
-  const { isAdmin, profile } = useAuth();
-  const canEdit = isAdmin || profile?.role === 'editor';
+  const { data: canEdit = false } = useCanEditPerson(id);
 
   const handleDelete = async () => {
     try {

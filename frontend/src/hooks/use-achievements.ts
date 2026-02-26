@@ -46,7 +46,6 @@ export function useFeaturedAchievements() {
   return useQuery({
     queryKey: achievementKeys.featured(),
     queryFn: getFeaturedAchievements,
-    staleTime: 5 * 60 * 1000,
   });
 }
 

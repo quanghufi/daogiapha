@@ -9,14 +9,14 @@
 'use client';
 
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useProfiles, useUpdateUserRole, useUpdateLinkedPerson, useUpdateEditRootPerson } from '@/hooks/use-profiles';
-import { useSearchPeople, usePerson } from '@/hooks/use-people';
+import { usePerson } from '@/hooks/use-people';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Input } from '@/components/ui/input';
 import {
   Table,
   TableBody,
@@ -50,7 +50,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
 import {
   Users,
   ArrowLeft,
@@ -59,14 +58,14 @@ import {
   Loader2,
   CheckCircle,
   Link2,
-  Search,
-  X,
   GitBranch,
 } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
+import { formatDate } from '@/lib/format';
+import { PersonCombobox } from '@/components/shared/person-combobox';
 import type { UserRole } from '@/types';
-import type { Person, Profile } from '@/types';
+import type { SearchPerson, Profile } from '@/types';
 
 // ─── Role config ──────────────────────────────────────────────────────────────
 
@@ -87,99 +86,6 @@ const roleLabels: Record<UserRole, { label: string; color: string; description: 
     description: 'Chỉ xem thông tin, không chỉnh sửa',
   },
 };
-
-// ─── PersonCombobox ───────────────────────────────────────────────────────────
-
-interface PersonComboboxProps {
-  label: string;
-  hint?: string;
-  selected: Person | null;
-  onSelect: (person: Person | null) => void;
-  excludeId?: string;
-}
-
-function PersonCombobox({ label, hint, selected, onSelect, excludeId }: PersonComboboxProps) {
-  const [query, setQuery] = useState('');
-  const [open, setOpen] = useState(false);
-  const { data: results, isFetching } = useSearchPeople(query);
-
-  const filtered = (results || []).filter((p) => p.id !== excludeId);
-
-  return (
-    <div className="space-y-1.5">
-      <Label className="text-sm font-medium">{label}</Label>
-      {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
-      {selected ? (
-        <div className="flex items-center gap-2 p-2 rounded-md border bg-muted/50">
-          <div
-            className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium shrink-0 ${
-              selected.gender === 1 ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700'
-            }`}
-          >
-            {selected.display_name.slice(-1)}
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">{selected.display_name}</p>
-            <p className="text-xs text-muted-foreground">Đời {selected.generation}</p>
-          </div>
-          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 shrink-0" onClick={() => onSelect(null)}>
-            <X className="h-3 w-3" />
-          </Button>
-        </div>
-      ) : (
-        <div className="relative">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder={`Tìm ${label.toLowerCase()}...`}
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              setOpen(e.target.value.length > 0);
-            }}
-            onFocus={() => query.length > 0 && setOpen(true)}
-            onBlur={() => setTimeout(() => setOpen(false), 150)}
-            className="pl-9"
-          />
-          {open && (
-            <div className="absolute z-50 mt-1 w-full rounded-md border bg-popover shadow-md max-h-52 overflow-y-auto">
-              {isFetching ? (
-                <p className="p-3 text-sm text-muted-foreground">Đang tìm...</p>
-              ) : filtered.length === 0 ? (
-                <p className="p-3 text-sm text-muted-foreground">Không tìm thấy</p>
-              ) : (
-                filtered.map((person) => (
-                  <button
-                    key={person.id}
-                    type="button"
-                    className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-accent transition-colors"
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      onSelect(person);
-                      setQuery('');
-                      setOpen(false);
-                    }}
-                  >
-                    <div
-                      className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium shrink-0 ${
-                        person.gender === 1 ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700'
-                      }`}
-                    >
-                      {person.display_name.slice(-1)}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium truncate">{person.display_name}</p>
-                      <p className="text-xs text-muted-foreground">Đời {person.generation}</p>
-                    </div>
-                  </button>
-                ))
-              )}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
 
 // ─── PersonName — small inline loader for showing a person's name by ID ──────
 
@@ -205,8 +111,8 @@ function TreeMappingDialog({ user, open, onOpenChange }: TreeMappingDialogProps)
   const { data: initialLinked } = usePerson(user.linked_person);
   const { data: initialEditRoot } = usePerson(user.edit_root_person_id);
 
-  const [linkedPerson, setLinkedPerson] = useState<Person | null>(null);
-  const [editRootPerson, setEditRootPerson] = useState<Person | null>(null);
+  const [linkedPerson, setLinkedPerson] = useState<SearchPerson | null>(null);
+  const [editRootPerson, setEditRootPerson] = useState<SearchPerson | null>(null);
   const [initialized, setInitialized] = useState(false);
 
   // Initialise selections from current profile values when dialog opens
@@ -306,6 +212,7 @@ function TreeMappingDialog({ user, open, onOpenChange }: TreeMappingDialogProps)
 
 export default function UsersPage() {
   const { data: profiles, isLoading, error } = useProfiles();
+  const queryClient = useQueryClient();
   const updateRole = useUpdateUserRole();
 
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -335,9 +242,6 @@ export default function UsersPage() {
       setConfirmDialog(null);
     }
   };
-
-  const formatDate = (dateStr: string) =>
-    new Date(dateStr).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
   return (
     <div className="container mx-auto p-4 space-y-6">
@@ -408,7 +312,7 @@ export default function UsersPage() {
           ) : error ? (
             <div className="py-8 text-center text-destructive">
               <p>Lỗi khi tải danh sách: {error.message}</p>
-              <Button variant="outline" className="mt-4" onClick={() => window.location.reload()}>
+              <Button variant="outline" className="mt-4" onClick={() => queryClient.invalidateQueries({ queryKey: ['profiles'] })}>
                 Thử lại
               </Button>
             </div>
@@ -466,7 +370,7 @@ export default function UsersPage() {
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className="hidden md:table-cell">{formatDate(user.created_at)}</TableCell>
+                    <TableCell className="hidden md:table-cell">{formatDate(user.created_at, { day: '2-digit', month: '2-digit', year: 'numeric' })}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
                         {/* Tree mapping button */}

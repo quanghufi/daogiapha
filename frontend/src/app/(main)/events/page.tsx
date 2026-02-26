@@ -63,6 +63,7 @@ import {
 } from 'lucide-react';
 import type { Event, Person } from '@/types';
 import { toast } from 'sonner';
+import { formatDate } from '@/lib/format';
 
 interface UpcomingEvent {
   event: Event;
@@ -251,7 +252,7 @@ export default function EventsPage() {
                         {isAuto && <span className="text-xs text-muted-foreground ml-1">(tự động)</span>}
                       </div>
                       <div className="text-xs text-muted-foreground">
-                        {nextDate.toLocaleDateString('vi-VN')} · {lunarDisplay}
+                        {formatDate(nextDate)} · {lunarDisplay}
                         {person && (
                           <>
                             {' · '}
@@ -363,7 +364,7 @@ export default function EventsPage() {
                             {event.event_date && (
                               <span>
                                 {event.event_lunar && ' · '}
-                                {new Date(event.event_date).toLocaleDateString('vi-VN')}
+                                {formatDate(event.event_date)}
                               </span>
                             )}
                             {event.location && ` · ${event.location}`}

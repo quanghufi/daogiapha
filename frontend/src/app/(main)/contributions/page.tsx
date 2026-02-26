@@ -46,6 +46,7 @@ import {
 } from 'lucide-react';
 import type { ChangeType, ContributionStatus } from '@/types';
 import { toast } from 'sonner';
+import { formatDate } from '@/lib/format';
 
 const STATUS_CONFIG: Record<ContributionStatus, { label: string; icon: typeof Clock; variant: 'default' | 'secondary' | 'destructive' }> = {
   pending: { label: 'Chờ duyệt', icon: Clock, variant: 'default' },
@@ -355,7 +356,7 @@ export default function ContributionsPage() {
                         </p>
                       )}
                       <p className="text-xs text-muted-foreground mt-2">
-                        {new Date(c.created_at).toLocaleDateString('vi-VN')}
+                        {formatDate(c.created_at)}
                       </p>
                     </div>
                   </div>

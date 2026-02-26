@@ -39,7 +39,6 @@ export function usePeople() {
   return useQuery({
     queryKey: peopleKeys.lists(),
     queryFn: getPeople,
-    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 }
 
@@ -70,7 +69,6 @@ export function useStats() {
   return useQuery({
     queryKey: peopleKeys.stats(),
     queryFn: getStats,
-    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 }
 

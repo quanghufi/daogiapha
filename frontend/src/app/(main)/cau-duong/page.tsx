@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Calendar, Users, RotateCcw, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
 import { CAU_DUONG_CEREMONY_LABELS, CAU_DUONG_CEREMONY_ORDER, type CauDuongStatus } from '@/types';
+import { formatDate } from '@/lib/format';
 
 const currentYear = new Date().getFullYear();
 const YEAR_OPTIONS = Array.from({ length: 5 }, (_, i) => currentYear - 1 + i);
@@ -165,10 +166,10 @@ export default function CauDuongPage() {
                                   <p className="text-xs italic">{assignment.reason}</p>
                                 )}
                                 {assignment.scheduled_date && (
-                                  <p className="text-xs">Dự kiến: {new Date(assignment.scheduled_date).toLocaleDateString('vi-VN')}</p>
+                                  <p className="text-xs">Dự kiến: {formatDate(assignment.scheduled_date)}</p>
                                 )}
                                 {assignment.actual_date && assignment.actual_date !== assignment.scheduled_date && (
-                                  <p className="text-xs text-orange-600">Thực hiện: {new Date(assignment.actual_date).toLocaleDateString('vi-VN')}</p>
+                                  <p className="text-xs text-orange-600">Thực hiện: {formatDate(assignment.actual_date)}</p>
                                 )}
                                 {assignment.notes && (
                                   <p className="text-xs text-muted-foreground">{assignment.notes}</p>
