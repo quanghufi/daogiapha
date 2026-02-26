@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-**AncestorTree** — Gia phả điện tử Họ Đặng làng Kỷ Các, Thạch Lâm, Hà Tĩnh.
+**AncestorTree** — Gia phả điện tử Đào tộc - Ninh thôn.
 
 - **Tech Stack:** Next.js 16, React 19, TypeScript 5, Tailwind CSS 4, Supabase, TanStack Query v5
 - **Package Manager:** pnpm (do NOT use npm or yarn)

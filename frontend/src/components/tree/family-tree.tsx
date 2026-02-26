@@ -8,7 +8,7 @@
 
 'use client';
 
-import { useMemo, useState, useRef, useCallback } from 'react';
+import { useMemo, useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTreeData } from '@/hooks/use-families';
 import { Card, CardContent } from '@/components/ui/card';
@@ -589,19 +589,18 @@ export function FamilyTree() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerSize, setContainerSize] = useState({ width: 800, height: 600 });
 
-  // Track container size via ResizeObserver (avoids reading refs during render)
-  const containerCallbackRef = useCallback((node: HTMLDivElement | null) => {
-    if (node) {
-      containerRef.current = node;
-      setContainerSize({ width: node.clientWidth, height: node.clientHeight });
-      const observer = new ResizeObserver((entries) => {
-        for (const entry of entries) {
-          setContainerSize({ width: entry.contentRect.width, height: entry.contentRect.height });
-        }
-      });
-      observer.observe(node);
-      return () => observer.disconnect();
-    }
+  // Track container size via ResizeObserver with proper cleanup
+  useEffect(() => {
+    const node = containerRef.current;
+    if (!node) return;
+    setContainerSize({ width: node.clientWidth, height: node.clientHeight });
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setContainerSize({ width: entry.contentRect.width, height: entry.contentRect.height });
+      }
+    });
+    observer.observe(node);
+    return () => observer.disconnect();
   }, []);
 
   // Layout
@@ -675,12 +674,18 @@ export function FamilyTree() {
     setIsPanning(false);
   };
 
-  // Wheel zoom
-  const handleWheel = (e: React.WheelEvent) => {
-    e.preventDefault();
-    const delta = e.deltaY > 0 ? -0.05 : 0.05;
-    setScale((s) => Math.max(0.3, Math.min(2, s + delta)));
-  };
+  // Wheel zoom — must use non-passive listener to allow preventDefault
+  useEffect(() => {
+    const node = containerRef.current;
+    if (!node) return;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? -0.05 : 0.05;
+      setScale((s) => Math.max(0.3, Math.min(2, s + delta)));
+    };
+    node.addEventListener('wheel', onWheel, { passive: false });
+    return () => node.removeEventListener('wheel', onWheel);
+  }, []);
 
   // Minimap viewport click
   const handleMinimapClick = (x: number, y: number) => {
@@ -901,7 +906,7 @@ export function FamilyTree() {
 
       {/* Tree container */}
       <div
-        ref={containerCallbackRef}
+        ref={containerRef}
         className="border rounded-lg bg-muted/30 overflow-hidden relative select-none"
         style={{ height: '60vh', cursor: isPanning ? 'grabbing' : 'grab' }}
         onMouseDown={handleMouseDown}
@@ -911,7 +916,6 @@ export function FamilyTree() {
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        onWheel={handleWheel}
       >
         <svg
           width="100%"
