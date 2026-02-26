@@ -240,20 +240,14 @@ const PersonCard = memo(function PersonCard({
 
           {/* Info */}
           <div className="flex-1 min-w-0 flex flex-col justify-center gap-0.5">
-            <div className="flex items-start gap-1">
-              <span className="text-[11px] font-semibold leading-tight line-clamp-2 flex-1">
-                {person.display_name}
-              </span>
-              {/* Living/Deceased indicator */}
-              <span className={`text-[10px] shrink-0 mt-0.5 ${person.is_living !== false ? 'text-emerald-500' : 'text-amber-600'}`}>
-                {person.is_living !== false ? '●' : '☸'}
-              </span>
-            </div>
+            <span className="text-[11px] font-semibold leading-tight line-clamp-2">
+              {person.display_name}
+            </span>
 
-            {/* Year */}
-            {yearText && (
-              <span className="text-[9px] text-muted-foreground leading-none">{yearText}</span>
-            )}
+            {/* Year + Status */}
+            <span className={`text-[9px] leading-none ${person.is_living !== false ? 'text-emerald-600' : 'text-amber-600'}`}>
+              {person.is_living !== false ? '●' : '☸'} {yearText}
+            </span>
 
             {/* Generation badge */}
             {person.generation && (
