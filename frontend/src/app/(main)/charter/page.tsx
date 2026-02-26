@@ -99,16 +99,6 @@ export default function CharterPage() {
   const [activeTab, setActiveTab] = useState<ClanArticleCategory>('gia_huan');
   const { data: articles, isLoading } = useClanArticles(activeTab);
 
-  if (isLoading) {
-    return (
-      <div className="container mx-auto px-4 py-8 max-w-3xl space-y-6">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-10 w-full" />
-        <Skeleton className="h-64 w-full" />
-      </div>
-    );
-  }
-
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl space-y-6">
       <div>
@@ -141,7 +131,15 @@ export default function CharterPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <ArticleList articles={articles || []} />
+                {isLoading ? (
+                  <div className="space-y-4">
+                    <Skeleton className="h-16 w-full" />
+                    <Skeleton className="h-16 w-full" />
+                    <Skeleton className="h-16 w-full" />
+                  </div>
+                ) : (
+                  <ArticleList articles={articles || []} />
+                )}
               </CardContent>
             </Card>
           </TabsContent>

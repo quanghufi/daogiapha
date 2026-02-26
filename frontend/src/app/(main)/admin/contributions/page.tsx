@@ -8,7 +8,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/components/auth/auth-provider';
 import { usePeople } from '@/hooks/use-people';
@@ -73,6 +73,28 @@ export default function AdminContributionsPage() {
   const [statusFilter, setStatusFilter] = useState<string>('pending');
   const [reviewNotes, setReviewNotes] = useState<Record<string, string>>({});
 
+  const peopleMap = useMemo(() => {
+    const map = new Map<string, { id: string; display_name: string }>();
+    if (people) for (const p of people) map.set(p.id, { id: p.id, display_name: p.display_name });
+    return map;
+  }, [people]);
+
+  const profilesMap = useMemo(() => {
+    const map = new Map<string, string>();
+    if (profiles) for (const p of profiles) map.set(p.id, p.full_name || p.email || '');
+    return map;
+  }, [profiles]);
+
+  const filteredContributions = useMemo(
+    () => contributions?.filter(c => statusFilter === 'all' ? true : c.status === statusFilter) || [],
+    [contributions, statusFilter]
+  );
+
+  const pendingCount = useMemo(
+    () => contributions?.filter(c => c.status === 'pending').length || 0,
+    [contributions]
+  );
+
   if (!isAdmin) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -89,12 +111,6 @@ export default function AdminContributionsPage() {
       </div>
     );
   }
-
-  const filteredContributions = contributions?.filter(c =>
-    statusFilter === 'all' ? true : c.status === statusFilter
-  ) || [];
-
-  const pendingCount = contributions?.filter(c => c.status === 'pending').length || 0;
 
   const handleReview = async (id: string, status: 'approved' | 'rejected') => {
     if (!profile) return;
@@ -171,11 +187,9 @@ export default function AdminContributionsPage() {
       ) : (
         <div className="space-y-4">
           {filteredContributions.map(c => {
-            const person = people?.find(p => p.id === c.target_person);
-            const author = profiles?.find(p => p.id === c.author_id);
-            const reviewer = c.reviewed_by
-              ? profiles?.find(p => p.id === c.reviewed_by)
-              : undefined;
+            const person = c.target_person ? peopleMap.get(c.target_person) : undefined;
+            const authorName = profilesMap.get(c.author_id || '');
+            const reviewerName = c.reviewed_by ? profilesMap.get(c.reviewed_by) : undefined;
             const statusInfo = STATUS_CONFIG[c.status];
 
             return (
@@ -205,10 +219,10 @@ export default function AdminContributionsPage() {
                       'Thành viên không xác định'
                     )}
                   </CardTitle>
-                  {author && (
+                  {authorName && (
                     <CardDescription className="flex items-center gap-1">
                       <User className="h-3 w-3" />
-                      Đề xuất bởi: {author.full_name || author.email}
+                      Đề xuất bởi: {authorName}
                     </CardDescription>
                   )}
                 </CardHeader>
@@ -276,7 +290,7 @@ export default function AdminContributionsPage() {
                   {/* Review result */}
                   {c.status !== 'pending' && (
                     <div className="border-t pt-3 text-sm text-muted-foreground">
-                      {reviewer && <span>Duyệt bởi: {reviewer.full_name || reviewer.email}</span>}
+                      {reviewerName && <span>Duyệt bởi: {reviewerName}</span>}
                       {c.reviewed_at && (
                         <span> · {formatDate(c.reviewed_at)}</span>
                       )}

@@ -8,7 +8,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/components/auth/auth-provider';
 import { usePeople } from '@/hooks/use-people';
@@ -243,9 +243,16 @@ export default function ContributionsPage() {
   const { data: people } = usePeople();
   const [dialogOpen, setDialogOpen] = useState(false);
 
+  const peopleMap = useMemo(() => {
+    const map = new Map<string, string>();
+    if (people) for (const p of people) map.set(p.id, p.display_name);
+    return map;
+  }, [people]);
+
   // Only show user's own contributions (unless admin)
-  const myContributions = contributions?.filter(c =>
-    profile?.role === 'admin' || c.author_id === profile?.id
+  const myContributions = useMemo(
+    () => contributions?.filter(c => profile?.role === 'admin' || c.author_id === profile?.id),
+    [contributions, profile?.role, profile?.id]
   );
 
   if (!user) {
@@ -318,7 +325,7 @@ export default function ContributionsPage() {
               {myContributions.map(c => {
                 const statusInfo = STATUS_CONFIG[c.status];
                 const StatusIcon = statusInfo.icon;
-                const person = people?.find(p => p.id === c.target_person);
+                const person = c.target_person ? peopleMap.get(c.target_person) : undefined;
                 return (
                   <div key={c.id} className="flex items-start gap-3 rounded-lg border p-4">
                     <StatusIcon className={`h-5 w-5 mt-0.5 ${
@@ -332,8 +339,8 @@ export default function ContributionsPage() {
                           {CHANGE_TYPE_LABELS[c.change_type]}
                         </span>
                         {person && (
-                          <Link href={`/people/${person.id}`} className="text-sm hover:underline text-muted-foreground">
-                            {person.display_name}
+                          <Link href={`/people/${c.target_person}`} className="text-sm hover:underline text-muted-foreground">
+                            {person}
                           </Link>
                         )}
                         <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>

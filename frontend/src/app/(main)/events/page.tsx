@@ -87,6 +87,12 @@ export default function EventsPage() {
 
   const isLoading = eventsLoading || peopleLoading;
 
+  const peopleMap = useMemo(() => {
+    const map = new Map<string, typeof people extends (infer T)[] | undefined ? T : never>();
+    if (people) for (const p of people) map.set(p.id, p);
+    return map;
+  }, [people]);
+
   // Compute upcoming events (next 60 days)
   const upcomingEvents = useMemo<UpcomingEvent[]>(() => {
     if (!events || !people) return [];
@@ -116,12 +122,12 @@ export default function EventsPage() {
       const daysUntil = Math.ceil((nextDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
       if (daysUntil > 60) continue;
 
-      const person = event.person_id ? people.find(p => p.id === event.person_id) : undefined;
+      const person = event.person_id ? peopleMap.get(event.person_id) : undefined;
       results.push({ event, person, nextDate, daysUntil, lunarDisplay, isAuto: false });
     }
 
     return results.sort((a, b) => a.daysUntil - b.daysUntil);
-  }, [events, people]);
+  }, [events, peopleMap]);
 
   // Auto-generate giỗ events from deceased people with death_lunar (fix m2: mark as isAuto)
   const autoGioEvents = useMemo<UpcomingEvent[]>(() => {
@@ -348,7 +354,7 @@ export default function EventsPage() {
                   {filteredEvents.map(event => {
                     const typeInfo = EVENT_TYPE_LABELS[event.event_type];
                     const TypeIcon = typeInfo.icon;
-                    const person = event.person_id ? people?.find(p => p.id === event.person_id) : undefined;
+                    const person = event.person_id ? peopleMap.get(event.person_id) : undefined;
                     return (
                       <div
                         key={event.id}

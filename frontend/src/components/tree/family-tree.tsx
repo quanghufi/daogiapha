@@ -8,7 +8,7 @@
 
 'use client';
 
-import { useMemo, useState, useRef, useCallback, useEffect } from 'react';
+import { useMemo, useState, useRef, useCallback, useEffect, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTreeData } from '@/hooks/use-families';
 import { Card, CardContent } from '@/components/ui/card';
@@ -208,7 +208,7 @@ interface MinimapProps {
   onViewportClick: (x: number, y: number) => void;
 }
 
-function Minimap({ nodes, viewBox, treeWidth, treeHeight, onViewportClick }: MinimapProps) {
+const Minimap = memo(function Minimap({ nodes, viewBox, treeWidth, treeHeight, onViewportClick }: MinimapProps) {
   const scaleX = MINIMAP_WIDTH / treeWidth;
   const scaleY = MINIMAP_HEIGHT / treeHeight;
   const scale = Math.min(scaleX, scaleY) * 0.9;
@@ -257,7 +257,7 @@ function Minimap({ nodes, viewBox, treeWidth, treeHeight, onViewportClick }: Min
       </svg>
     </div>
   );
-}
+});
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Tree Layout Builder — Hierarchical (Bottom-up subtree sizing)
@@ -610,12 +610,12 @@ export function FamilyTree() {
   }, [data, collapsedNodes, viewMode, selectedPerson?.id, filterRootId]);
 
   // Handlers
-  const handleZoomIn = () => setScale((s) => Math.min(s + 0.1, 2));
-  const handleZoomOut = () => setScale((s) => Math.max(s - 0.1, 0.3));
-  const handleReset = () => {
+  const handleZoomIn = useCallback(() => setScale((s) => Math.min(s + 0.1, 2)), []);
+  const handleZoomOut = useCallback(() => setScale((s) => Math.max(s - 0.1, 0.3)), []);
+  const handleReset = useCallback(() => {
     setScale(1);
     setPan({ x: 0, y: 0 });
-  };
+  }, []);
 
   const handleToggleCollapse = useCallback((personId: string) => {
     setCollapsedNodes((prev) => {
@@ -630,28 +630,28 @@ export function FamilyTree() {
   }, []);
 
   // Pan handlers
-  const handleMouseDown = (e: React.MouseEvent) => {
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (e.button === 0) {
       setIsPanning(true);
       setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
     }
-  };
+  }, [pan.x, pan.y]);
 
-  const handleMouseMove = (e: React.MouseEvent) => {
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (isPanning) {
       setPan({
         x: e.clientX - panStart.x,
         y: e.clientY - panStart.y,
       });
     }
-  };
+  }, [isPanning, panStart.x, panStart.y]);
 
-  const handleMouseUp = () => {
+  const handleMouseUp = useCallback(() => {
     setIsPanning(false);
-  };
+  }, []);
 
   // Touch handlers for mobile
-  const handleTouchStart = (e: React.TouchEvent) => {
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
     if (e.touches.length === 1) {
       setIsPanning(true);
       setPanStart({
@@ -659,20 +659,20 @@ export function FamilyTree() {
         y: e.touches[0].clientY - pan.y,
       });
     }
-  };
+  }, [pan.x, pan.y]);
 
-  const handleTouchMove = (e: React.TouchEvent) => {
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
     if (isPanning && e.touches.length === 1) {
       setPan({
         x: e.touches[0].clientX - panStart.x,
         y: e.touches[0].clientY - panStart.y,
       });
     }
-  };
+  }, [isPanning, panStart.x, panStart.y]);
 
-  const handleTouchEnd = () => {
+  const handleTouchEnd = useCallback(() => {
     setIsPanning(false);
-  };
+  }, []);
 
   // Wheel zoom — must use non-passive listener to allow preventDefault
   useEffect(() => {
@@ -688,22 +688,22 @@ export function FamilyTree() {
   }, []);
 
   // Minimap viewport click
-  const handleMinimapClick = (x: number, y: number) => {
+  const handleMinimapClick = useCallback((x: number, y: number) => {
     if (!containerRef.current || !layout) return;
     const rect = containerRef.current.getBoundingClientRect();
     setPan({
       x: -(x - rect.width / 2 / scale),
       y: -(y - rect.height / 2 / scale),
     });
-  };
+  }, [layout, scale]);
 
   // View mode change
-  const handleViewModeChange = (mode: ViewMode) => {
+  const handleViewModeChange = useCallback((mode: ViewMode) => {
     setViewMode(mode);
     if (mode !== 'all' && !selectedPerson && data?.people.length) {
       setSelectedPerson(data.people[0]);
     }
-  };
+  }, [selectedPerson, data?.people]);
 
   // Loading state
   if (isLoading) {
@@ -742,12 +742,18 @@ export function FamilyTree() {
     );
   }
 
-  const viewBox = {
+  const viewBox = useMemo(() => ({
     x: -pan.x / scale,
     y: -pan.y / scale,
     width: containerSize.width / scale,
     height: containerSize.height / scale,
-  };
+  }), [pan.x, pan.y, scale, containerSize.width, containerSize.height]);
+
+  const filterSearchResults = useMemo(() => {
+    if (!data?.people || filterSearch.length < 2) return [];
+    const query = filterSearch.toLowerCase();
+    return data.people.filter((p) => p.display_name.toLowerCase().includes(query)).slice(0, 10);
+  }, [data?.people, filterSearch]);
 
   return (
     <div className="space-y-4">
@@ -785,15 +791,9 @@ export function FamilyTree() {
                 className="pl-8 pr-3 py-1 text-sm border rounded-md bg-background w-48 focus:outline-none focus:ring-1 focus:ring-primary"
               />
             </div>
-            {filterDropdownOpen && data?.people && (
+            {filterDropdownOpen && filterSearchResults.length > 0 && (
               <div className="absolute z-50 top-full mt-1 bg-background border rounded-md shadow-lg w-64 max-h-48 overflow-y-auto">
-                {data.people
-                  .filter((p) =>
-                    filterSearch.length >= 2 &&
-                    p.display_name.toLowerCase().includes(filterSearch.toLowerCase())
-                  )
-                  .slice(0, 10)
-                  .map((person) => (
+                {filterSearchResults.map((person) => (
                     <button
                       key={person.id}
                       onMouseDown={() => handleSetFilterRoot(person)}

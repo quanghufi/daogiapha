@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useMemo, type ReactNode } from 'react';
 import { supabase } from '@/lib/supabase';
 import { getProfile } from '@/lib/supabase-data';
 import type { User, Session } from '@supabase/supabase-js';
@@ -54,16 +54,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(false);
     });
 
-    // Listen for auth changes
+    // Listen for auth changes (skip profile fetch on TOKEN_REFRESHED to avoid spurious DB calls)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, s) => {
+      async (event, s) => {
         setSession(s);
         setUser(s?.user ?? null);
 
-        if (s?.user) {
+        if (s?.user && event !== 'TOKEN_REFRESHED') {
           const p = await fetchProfile(s.user.id);
           setProfile(p);
-        } else {
+        } else if (!s?.user) {
           setProfile(null);
         }
       }
@@ -72,12 +72,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = useCallback(async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
-  };
+  }, []);
 
-  const signUp = async (email: string, password: string, fullName: string) => {
+  const signUp = useCallback(async (email: string, password: string, fullName: string) => {
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -86,31 +86,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
     });
     if (error) throw error;
-  };
+  }, []);
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
-  };
+  }, []);
 
   const isAdmin = profile?.role === 'admin';
   const isEditor = profile?.role === 'admin' || profile?.role === 'editor';
 
+  const value = useMemo(() => ({
+    user,
+    profile,
+    session,
+    isLoading,
+    isAdmin,
+    isEditor,
+    signIn,
+    signUp,
+    signOut,
+    refreshProfile,
+  }), [user, profile, session, isLoading, isAdmin, isEditor, signIn, signUp, signOut, refreshProfile]);
+
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        profile,
-        session,
-        isLoading,
-        isAdmin,
-        isEditor,
-        signIn,
-        signUp,
-        signOut,
-        refreshProfile,
-      }}
-    >
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

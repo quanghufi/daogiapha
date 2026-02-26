@@ -8,10 +8,10 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useProfiles, useUpdateUserRole, useUpdateLinkedPerson, useUpdateEditRootPerson } from '@/hooks/use-profiles';
-import { usePerson } from '@/hooks/use-people';
+import { usePeople, usePerson } from '@/hooks/use-people';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -87,15 +87,14 @@ const roleLabels: Record<UserRole, { label: string; color: string; description: 
   },
 };
 
-// ─── PersonName — small inline loader for showing a person's name by ID ──────
+// ─── PersonName — show person name from pre-loaded map (no N+1 queries) ──────
 
-function PersonName({ personId }: { personId?: string }) {
-  const { data: person, isLoading } = usePerson(personId);
+function PersonName({ personId, peopleMap }: { personId?: string; peopleMap: Map<string, string> }) {
   if (!personId) return <span className="text-muted-foreground text-xs">—</span>;
-  if (isLoading) return <span className="text-xs text-muted-foreground">...</span>;
-  if (!person) return <span className="text-xs text-muted-foreground">—</span>;
+  const name = peopleMap.get(personId);
+  if (!name) return <span className="text-xs text-muted-foreground">—</span>;
   return (
-    <span className="text-xs font-medium truncate max-w-[120px] block">{person.display_name}</span>
+    <span className="text-xs font-medium truncate max-w-[120px] block">{name}</span>
   );
 }
 
@@ -113,17 +112,16 @@ function TreeMappingDialog({ user, open, onOpenChange }: TreeMappingDialogProps)
 
   const [linkedPerson, setLinkedPerson] = useState<SearchPerson | null>(null);
   const [editRootPerson, setEditRootPerson] = useState<SearchPerson | null>(null);
-  const [initialized, setInitialized] = useState(false);
 
   // Initialise selections from current profile values when dialog opens
-  if (open && !initialized && (initialLinked !== undefined || !user.linked_person)) {
-    setLinkedPerson(initialLinked ?? null);
-    setEditRootPerson(initialEditRoot ?? null);
-    setInitialized(true);
-  }
+  useEffect(() => {
+    if (open && (initialLinked !== undefined || !user.linked_person)) {
+      setLinkedPerson(initialLinked ?? null);
+      setEditRootPerson(initialEditRoot ?? null);
+    }
+  }, [open, initialLinked, initialEditRoot, user.linked_person]);
 
   const handleClose = () => {
-    setInitialized(false);
     onOpenChange(false);
   };
 
@@ -212,8 +210,20 @@ function TreeMappingDialog({ user, open, onOpenChange }: TreeMappingDialogProps)
 
 export default function UsersPage() {
   const { data: profiles, isLoading, error } = useProfiles();
+  const { data: people } = usePeople();
   const queryClient = useQueryClient();
   const updateRole = useUpdateUserRole();
+
+  // Build a name lookup map from already-loaded people list (no N+1 queries)
+  const peopleMap = useMemo(() => {
+    const map = new Map<string, string>();
+    if (people) {
+      for (const p of people) {
+        map.set(p.id, p.display_name);
+      }
+    }
+    return map;
+  }, [people]);
 
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
@@ -357,7 +367,7 @@ export default function UsersPage() {
                         {user.linked_person ? (
                           <div className="flex items-center gap-1 text-xs">
                             <Link2 className="h-3 w-3 text-green-600 shrink-0" />
-                            <PersonName personId={user.linked_person} />
+                            <PersonName personId={user.linked_person} peopleMap={peopleMap} />
                           </div>
                         ) : (
                           <span className="text-xs text-muted-foreground">Chưa gắn</span>
@@ -365,7 +375,7 @@ export default function UsersPage() {
                         {user.edit_root_person_id && (
                           <div className="flex items-center gap-1 text-xs text-blue-600">
                             <GitBranch className="h-3 w-3 shrink-0" />
-                            <PersonName personId={user.edit_root_person_id} />
+                            <PersonName personId={user.edit_root_person_id} peopleMap={peopleMap} />
                           </div>
                         )}
                       </div>

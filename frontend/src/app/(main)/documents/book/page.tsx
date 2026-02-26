@@ -8,6 +8,7 @@
 
 'use client';
 
+import { useMemo } from 'react';
 import Link from 'next/link';
 import { useFullTreeData } from '@/hooks/use-families';
 import { generateBookData } from '@/lib/book-generator';
@@ -123,6 +124,16 @@ function ChapterSection({ chapter }: { chapter: BookChapter }) {
 export default function BookPage() {
   const { data: treeData, isLoading, error } = useFullTreeData();
 
+  const chapters = useMemo(
+    () => (treeData ? generateBookData(treeData) : []),
+    [treeData]
+  );
+
+  const totalPeople = useMemo(
+    () => chapters.reduce((sum, ch) => sum + ch.branches.reduce((s, b) => s + b.people.length, 0), 0),
+    [chapters]
+  );
+
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-8 max-w-3xl space-y-6">
@@ -152,12 +163,6 @@ export default function BookPage() {
       </div>
     );
   }
-
-  const chapters = generateBookData(treeData);
-  const totalPeople = chapters.reduce(
-    (sum, ch) => sum + ch.branches.reduce((s, b) => s + b.people.length, 0),
-    0
-  );
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl">
