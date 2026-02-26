@@ -85,7 +85,7 @@ export default function TreePage() {
             </span>
             <span className="block sm:inline">
               • <span className="text-pink-400">Đường hồng</span> = Vợ chồng
-              • † = Đã mất
+              • ☸ = Đã mất
             </span>
             <span className="block text-xs mt-1">
               💡 Trên mobile: kéo để di chuyển, dùng nút +/- để zoom

@@ -240,7 +240,7 @@ const PersonCard = memo(function PersonCard({
               </span>
               {/* Living/Deceased indicator */}
               <span className={`text-[10px] shrink-0 mt-0.5 ${person.is_living !== false ? 'text-emerald-500' : 'text-muted-foreground'}`}>
-                {person.is_living !== false ? '●' : '✝'}
+                {person.is_living !== false ? '●' : '☸'}
               </span>
             </div>
 
@@ -678,7 +678,7 @@ function LegendBar() {
         <span>Còn sống</span>
       </div>
       <div className="flex items-center gap-1">
-        <span>✝</span>
+        <span>☸</span>
         <span>Đã mất</span>
       </div>
     </div>
