@@ -678,7 +678,7 @@ function LegendBar() {
         <span>Còn sống</span>
       </div>
       <div className="flex items-center gap-1">
-        <span>☸</span>
+        <span className="text-amber-600">☸</span>
         <span>Đã mất</span>
       </div>
     </div>
