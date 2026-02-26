@@ -11,6 +11,7 @@ import type { NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 
 const publicPaths = ['/', '/login', '/register', '/forgot-password', '/reset-password'];
+const authPages = ['/login', '/register', '/forgot-password', '/reset-password'];
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -49,7 +50,7 @@ export async function proxy(request: NextRequest) {
   try {
     const result = await Promise.race([
       supabase.auth.getUser().then(r => r.data.user),
-      new Promise<null>(resolve => setTimeout(() => resolve(null), 5000)),
+      new Promise<null>(resolve => setTimeout(() => resolve(null), 10000)),
     ]);
     user = result;
   } catch {
@@ -79,8 +80,8 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  // Redirect authenticated users away from auth pages
-  if (user && publicPaths.some(path => pathname.startsWith(path))) {
+  // Redirect authenticated users away from auth pages (not homepage)
+  if (user && authPages.some(path => pathname === path)) {
     return NextResponse.redirect(new URL('/', request.url));
   }
 
