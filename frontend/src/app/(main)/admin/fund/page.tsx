@@ -215,7 +215,7 @@ export default function AdminFundPage() {
                 </div>
                 <div>
                   <Label>Người đóng góp</Label>
-                  <Input value={txDonorName} onChange={e => setTxDonorName(e.target.value)} placeholder="Ông Đặng Văn A" />
+                  <Input value={txDonorName} onChange={e => setTxDonorName(e.target.value)} placeholder="Ông Đào Văn A" />
                 </div>
                 <div>
                   <Label>Ngày</Label>
@@ -326,7 +326,7 @@ export default function AdminFundPage() {
                 </div>
                 <div>
                   <Label>Trường</Label>
-                  <Input value={schSchool} onChange={e => setSchSchool(e.target.value)} placeholder="THPT Hà Tĩnh" />
+                  <Input value={schSchool} onChange={e => setSchSchool(e.target.value)} placeholder="THPT Nam Định" />
                 </div>
                 <div>
                   <Label>Lý do</Label>

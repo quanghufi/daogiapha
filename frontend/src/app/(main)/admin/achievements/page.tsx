@@ -110,7 +110,7 @@ function AchievementForm({
       </div>
       <div>
         <Label>Trao bởi</Label>
-        <Input value={awardedBy} onChange={e => setAwardedBy(e.target.value)} placeholder="Sở GD&ĐT Hà Tĩnh" />
+        <Input value={awardedBy} onChange={e => setAwardedBy(e.target.value)} placeholder="Sở GD&ĐT Nam Định" />
       </div>
       <div>
         <Label>Mô tả</Label>

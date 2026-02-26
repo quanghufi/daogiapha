@@ -101,7 +101,7 @@ function PoolForm({
         <Input
           value={name}
           onChange={e => setName(e.target.value)}
-          placeholder="Nhánh ông Đặng Đình Nhân"
+          placeholder="Nhánh ông Đào Văn A"
         />
       </div>
       <div>
