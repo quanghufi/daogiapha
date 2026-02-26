@@ -158,16 +158,22 @@ const PersonCard = memo(function PersonCard({
   const initials = getInitials(person.display_name);
   const selectedRing = isSelected ? 'ring-2 ring-primary ring-offset-2' : '';
 
-  // Year display
+  // Year/status display
   const birthYear = person.birth_year;
   const deathYear = person.death_year;
-  const yearText = birthYear
-    ? deathYear
-      ? `${birthYear} - ${deathYear}`
-      : `${birthYear} -`
-    : deathYear
-      ? `? - ${deathYear}`
-      : null;
+  const isLiving = person.is_living !== false;
+  let yearText: string;
+  if (birthYear && deathYear) {
+    yearText = `${birthYear} - ${deathYear}`;
+  } else if (birthYear && isLiving) {
+    yearText = `${birthYear} - nay`;
+  } else if (birthYear && !isLiving) {
+    yearText = `${birthYear} - ?`;
+  } else if (!birthYear && deathYear) {
+    yearText = `? - ${deathYear}`;
+  } else {
+    yearText = isLiving ? 'Còn sống' : 'Đã mất';
+  }
 
   if (zoomLevel === 'mini') {
     const dotColor = person.gender === GENDER.MALE
@@ -390,7 +396,7 @@ const NodeContextMenu = memo(function NodeContextMenu({
         animate={{ opacity: 1, scale: 1, x: 0 }}
         exit={{ opacity: 0, scale: 0.9, x: -8 }}
         transition={{ duration: 0.15 }}
-        className="bg-background/95 backdrop-blur-lg border rounded-xl shadow-xl min-w-[200px] overflow-hidden"
+        className="bg-background/95 backdrop-blur-sm border rounded-xl shadow-xl min-w-[200px] overflow-hidden"
       >
         {/* Header */}
         <div className="flex items-center gap-2.5 px-3 py-2.5 border-b bg-muted/30">
@@ -428,6 +434,7 @@ const NodeContextMenu = memo(function NodeContextMenu({
               <Link
                 key={item.label}
                 href={item.href}
+                onClick={onClose}
                 className="block px-3 py-2 hover:bg-muted transition-colors group"
               >
                 {content}
@@ -1099,11 +1106,12 @@ export function FamilyTree() {
     return () => observer.disconnect();
   }, []);
 
-  // Layout
+  // Layout — focusPersonId only matters for ancestors/descendants view modes
+  const focusPersonId = viewMode !== 'all' ? selectedPerson?.id || null : null;
   const layout = useMemo(() => {
     if (!data || data.people.length === 0) return null;
-    return buildTreeLayout(data, collapsedNodes, viewMode, selectedPerson?.id || null, filterRootId);
-  }, [data, collapsedNodes, viewMode, selectedPerson?.id, filterRootId]);
+    return buildTreeLayout(data, collapsedNodes, viewMode, focusPersonId, filterRootId);
+  }, [data, collapsedNodes, viewMode, focusPersonId, filterRootId]);
 
   // Zoom level
   const zoomLevel = useMemo<ZoomLevel>(() => getZoomLevel(scale), [scale]);
