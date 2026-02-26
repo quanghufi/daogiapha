@@ -18,6 +18,7 @@ import {
   searchPeople,
   getPeopleByGeneration,
   getStats,
+  cascadeGenerationUpdate,
 } from '@/lib/supabase-data';
 import type { CreatePersonInput, UpdatePersonInput } from '@/types';
 
@@ -87,13 +88,20 @@ export function useCreatePerson() {
 
 export function useUpdatePerson() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: ({ id, input }: { id: string; input: UpdatePersonInput }) => 
-      updatePerson(id, input),
+    mutationFn: async ({ id, input, oldGeneration }: { id: string; input: UpdatePersonInput; oldGeneration?: number }) => {
+      const updated = await updatePerson(id, input);
+      // Cascade generation change to all descendants
+      if (oldGeneration !== undefined && input.generation !== undefined && input.generation !== oldGeneration) {
+        await cascadeGenerationUpdate(id, input.generation - oldGeneration);
+      }
+      return updated;
+    },
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: peopleKeys.detail(id) });
       queryClient.invalidateQueries({ queryKey: peopleKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: ['tree'] });
     },
   });
 }

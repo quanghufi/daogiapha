@@ -101,6 +101,94 @@ export async function getPeopleByGeneration(generation: number): Promise<Person[
   return data || [];
 }
 
+/**
+ * Cascade generation update to all descendants when a person's generation changes.
+ * BFS through families/children to find all descendants, then batch update.
+ */
+export async function cascadeGenerationUpdate(personId: string, delta: number): Promise<number> {
+  if (delta === 0) return 0;
+
+  // Fetch all families and children links
+  const [famRes, childRes] = await Promise.all([
+    supabase.from('families').select('id, father_id, mother_id'),
+    supabase.from('children').select('family_id, person_id'),
+  ]);
+  if (famRes.error) throw famRes.error;
+  if (childRes.error) throw childRes.error;
+
+  const families = famRes.data || [];
+  const children = childRes.data || [];
+
+  // Build lookup: person → families where they are father/mother
+  const personToFamilies = new Map<string, string[]>();
+  for (const fam of families) {
+    if (fam.father_id) {
+      if (!personToFamilies.has(fam.father_id)) personToFamilies.set(fam.father_id, []);
+      personToFamilies.get(fam.father_id)!.push(fam.id);
+    }
+    if (fam.mother_id) {
+      if (!personToFamilies.has(fam.mother_id)) personToFamilies.set(fam.mother_id, []);
+      personToFamilies.get(fam.mother_id)!.push(fam.id);
+    }
+  }
+
+  // Build lookup: family → child person IDs
+  const familyToChildren = new Map<string, string[]>();
+  for (const c of children) {
+    if (!familyToChildren.has(c.family_id)) familyToChildren.set(c.family_id, []);
+    familyToChildren.get(c.family_id)!.push(c.person_id);
+  }
+
+  // Build lookup: family by id
+  const familyMap = new Map(families.map(f => [f.id, f]));
+
+  // BFS to collect all descendant IDs (excluding the root person)
+  const descendantIds = new Set<string>();
+  const queue = [personId];
+
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    const famIds = personToFamilies.get(current) || [];
+    for (const famId of famIds) {
+      // Add spouse
+      const fam = familyMap.get(famId)!;
+      const spouseId = fam.father_id === current ? fam.mother_id : fam.father_id;
+      if (spouseId && spouseId !== personId && !descendantIds.has(spouseId)) {
+        descendantIds.add(spouseId);
+      }
+      // Add children and continue BFS
+      const childIds = familyToChildren.get(famId) || [];
+      for (const childId of childIds) {
+        if (!descendantIds.has(childId)) {
+          descendantIds.add(childId);
+          queue.push(childId);
+        }
+      }
+    }
+  }
+
+  if (descendantIds.size === 0) return 0;
+
+  // Fetch current generation values then update with delta
+  const ids = Array.from(descendantIds);
+  const { data: currentPeople, error: fetchErr } = await supabase
+    .from('people')
+    .select('id, generation')
+    .in('id', ids);
+
+  if (fetchErr) throw fetchErr;
+
+  const updates = (currentPeople || []).map(p =>
+    supabase
+      .from('people')
+      .update({ generation: Math.max(1, p.generation + delta), updated_at: new Date().toISOString() })
+      .eq('id', p.id)
+  );
+
+  await Promise.all(updates);
+  return ids.length;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // Families CRUD
 // ═══════════════════════════════════════════════════════════════════════════

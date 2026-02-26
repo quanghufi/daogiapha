@@ -37,7 +37,11 @@ export default function EditPersonPage({ params }: PageProps) {
       toast.error('Bạn cần đăng nhập với quyền admin hoặc editor để chỉnh sửa');
       return;
     }
-    updateMutation.mutate({ id, input: data }, {
+    if (!person) {
+      toast.error('Không tìm thấy thông tin người này');
+      return;
+    }
+    updateMutation.mutate({ id, input: data, oldGeneration: person.generation }, {
       onSuccess: () => {
         toast.success('Đã cập nhật thành công');
         router.replace(`/people/${id}`);
