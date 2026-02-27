@@ -57,7 +57,7 @@ function PersonLink({ person }: { person: Person }) {
       {person.birth_year && (
         <span className="text-xs text-muted-foreground">({person.birth_year})</span>
       )}
-      {!person.is_living && <span className="text-xs text-muted-foreground">†</span>}
+      {!person.is_living && <span className="text-xs text-amber-600">☸</span>}
     </Link>
   );
 }

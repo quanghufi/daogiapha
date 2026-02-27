@@ -35,7 +35,7 @@ function PersonEntry({ entry }: { entry: BookPerson }) {
         <div className="flex-1 min-w-0">
           <h4 className="font-semibold text-base">
             {person.display_name}
-            {!person.is_living && ' †'}
+            {!person.is_living && <span className="text-amber-600"> ☸</span>}
           </h4>
 
           <div className="text-sm text-muted-foreground space-y-0.5 mt-1">
