@@ -47,6 +47,7 @@ import {
   BookOpen,
   ScrollText,
   RotateCcw,
+  HelpCircle,
 } from 'lucide-react';
 import { useAuth } from '@/components/auth/auth-provider';
 
@@ -62,6 +63,7 @@ const mainNavItems = [
   { title: 'Hương ước', url: '/charter', icon: ScrollText },
   { title: 'Cầu đương', url: '/cau-duong', icon: RotateCcw },
   { title: 'Tài liệu', url: '/documents', icon: FileText },
+  { title: 'Hướng dẫn', url: '/guide', icon: HelpCircle },
 ];
 
 const adminNavItems = [
