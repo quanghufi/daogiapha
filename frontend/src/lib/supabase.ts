@@ -15,14 +15,6 @@ const fetchWithTimeout: typeof fetch = async (input, init) => {
     existingSignal.addEventListener('abort', () => controller.abort(), { once: true });
   }
 
-  // Debug: detect missing apikey before request is sent
-  const headers = init?.headers;
-  if (headers && typeof (headers as Headers).has === 'function') {
-    if (!(headers as Headers).has('apikey')) {
-      console.warn('[Supabase] Request missing apikey header:', typeof input === 'string' ? input : (input as Request).url);
-    }
-  }
-
   try {
     return await fetch(input, { ...init, signal: controller.signal });
   } catch (err) {
