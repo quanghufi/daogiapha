@@ -32,9 +32,9 @@ export default function ResetPasswordPage() {
       }
     });
 
-    // Also check existing session as fallback
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
+    // Also check existing session as fallback (use getUser() for server-verified check)
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
         setIsReady(true);
       }
     });

@@ -47,16 +47,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user]);
 
   useEffect(() => {
-    // Initial session check + profile fetch
-    supabase.auth.getSession().then(async ({ data: { session: s } }) => {
-      setSession(s);
-      setUser(s?.user ?? null);
-      if (s?.user) {
-        const p = await fetchProfile(s.user.id);
-        setProfile(p);
+    // Initial auth check: use getUser() to verify with Supabase Auth server.
+    // getSession() only reads from storage (cookies) and may return stale/unverified data.
+    const initAuth = async () => {
+      try {
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        if (authUser) {
+          setUser(authUser);
+          // Get the session for the token/expiry info
+          const { data: { session: s } } = await supabase.auth.getSession();
+          setSession(s);
+          const p = await fetchProfile(authUser.id);
+          setProfile(p);
+        }
+      } catch {
+        // Auth server unreachable — leave as unauthenticated
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
-    });
+    };
+    initAuth();
 
     // Listen for auth changes (skip profile fetch on TOKEN_REFRESHED to avoid spurious DB calls)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -73,31 +83,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     );
 
-    // Proactive session health check: periodically verify the token is still valid
-    // and force a refresh before it expires. This prevents the "data stops loading"
+    // Proactive session health check: periodically call getUser() to verify the token
+    // is still valid. If invalid, force refresh. This prevents the "data stops loading"
     // issue where the JWT silently expires and all Supabase queries fail.
     sessionCheckRef.current = setInterval(async () => {
       try {
-        const { data: { session: current } } = await supabase.auth.getSession();
-        if (!current) return;
-
-        // Check if token expires within the next 5 minutes
-        const expiresAt = current.expires_at; // unix seconds
-        if (expiresAt) {
-          const secondsUntilExpiry = expiresAt - Math.floor(Date.now() / 1000);
-          if (secondsUntilExpiry < 300) {
-            console.info('[Auth] Token expiring soon, refreshing...');
-            const { data, error } = await supabase.auth.refreshSession();
-            if (error) {
-              console.error('[Auth] Session refresh failed:', error.message);
-              // Session is dead — sign out to force re-login instead of broken state
-              setSession(null);
-              setUser(null);
-              setProfile(null);
-            } else if (data.session) {
-              setSession(data.session);
-              setUser(data.session.user);
-            }
+        const { data: { user: checkUser }, error } = await supabase.auth.getUser();
+        if (error || !checkUser) {
+          // Token might be expired — try to refresh
+          console.info('[Auth] Session check failed, attempting refresh...');
+          const { data, error: refreshError } = await supabase.auth.refreshSession();
+          if (refreshError || !data.session) {
+            console.error('[Auth] Session refresh failed');
+            setSession(null);
+            setUser(null);
+            setProfile(null);
+          } else {
+            setSession(data.session);
+            setUser(data.session.user);
           }
         }
       } catch {
@@ -105,31 +108,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     }, SESSION_CHECK_INTERVAL);
 
-    // Also refresh session when tab becomes visible again (user returns after idle)
+    // Also check session when tab becomes visible again (user returns after idle)
     const handleVisibilityChange = async () => {
       if (document.visibilityState !== 'visible') return;
       try {
-        const { data: { session: current } } = await supabase.auth.getSession();
-        if (!current) {
-          // Session gone while tab was hidden
-          setSession(null);
-          setUser(null);
-          setProfile(null);
-          return;
-        }
-        const expiresAt = current.expires_at;
-        if (expiresAt) {
-          const secondsUntilExpiry = expiresAt - Math.floor(Date.now() / 1000);
-          if (secondsUntilExpiry < 300) {
-            const { data, error } = await supabase.auth.refreshSession();
-            if (error) {
-              setSession(null);
-              setUser(null);
-              setProfile(null);
-            } else if (data.session) {
-              setSession(data.session);
-              setUser(data.session.user);
-            }
+        const { data: { user: checkUser }, error } = await supabase.auth.getUser();
+        if (error || !checkUser) {
+          const { data, error: refreshError } = await supabase.auth.refreshSession();
+          if (refreshError || !data.session) {
+            setSession(null);
+            setUser(null);
+            setProfile(null);
+          } else {
+            setSession(data.session);
+            setUser(data.session.user);
           }
         }
       } catch {
