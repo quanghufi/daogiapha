@@ -33,16 +33,35 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Mật khẩu không đúng' }, { status: 401 });
     }
 
-    // Verify user is admin
-    const admin = createServerClient();
-    const { data: profile } = await admin
+    // Verify user is admin (using service role to bypass RLS)
+    let admin;
+    try {
+      admin = createServerClient();
+    } catch {
+      return NextResponse.json(
+        { error: 'Lỗi cấu hình server: thiếu SUPABASE_SERVICE_ROLE_KEY' },
+        { status: 500 },
+      );
+    }
+
+    const { data: profile, error: profileError } = await admin
       .from('profiles')
       .select('role')
       .eq('id', authData.user.id)
       .single();
 
+    if (profileError) {
+      return NextResponse.json(
+        { error: `Không tìm thấy hồ sơ người dùng (${profileError.message})` },
+        { status: 403 },
+      );
+    }
+
     if (!profile || profile.role !== 'admin') {
-      return NextResponse.json({ error: 'Bạn không có quyền quản trị viên' }, { status: 403 });
+      return NextResponse.json(
+        { error: `Bạn không có quyền quản trị viên (role hiện tại: ${profile?.role || 'không có'})` },
+        { status: 403 },
+      );
     }
 
     // Reset data
