@@ -71,7 +71,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     );
 
-    return () => subscription.unsubscribe();
+    // Mobile resume: when user returns to app after screen-off or tab switch,
+    // proactively refresh the session. This handles the case where JS was
+    // suspended and the SDK's auto-refresh timer didn't fire.
+    const handleResume = () => {
+      if (document.visibilityState === 'visible') {
+        supabase.auth.getSession().then(({ data: { session: s } }) => {
+          if (!s) return;
+          // If token expires within 5 minutes, force refresh
+          const expiresAt = s.expires_at ?? 0;
+          const now = Math.floor(Date.now() / 1000);
+          if (expiresAt - now < 300) {
+            supabase.auth.refreshSession();
+          }
+        });
+      }
+    };
+    document.addEventListener('visibilitychange', handleResume);
+
+    return () => {
+      subscription.unsubscribe();
+      document.removeEventListener('visibilitychange', handleResume);
+    };
   }, []);
 
   const signIn = useCallback(async (email: string, password: string) => {

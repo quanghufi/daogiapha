@@ -36,9 +36,15 @@ export function QueryProvider({ children }: QueryProviderProps) {
           queries: {
             staleTime: 5 * 60 * 1000, // 5 minutes
             retry: (failureCount, error) => {
-              // Don't retry auth errors — trigger session refresh instead
+              // Don't retry auth errors — trigger session refresh instead.
+              // After refresh succeeds, invalidate all queries so they refetch
+              // with the new token (critical for mobile resume).
               if (isAuthError(error)) {
-                supabase.auth.refreshSession().catch(() => {});
+                supabase.auth.refreshSession().then(({ error: refreshErr }) => {
+                  if (!refreshErr) {
+                    queryClient.invalidateQueries();
+                  }
+                }).catch(() => {});
                 return false;
               }
               return failureCount < 1;
