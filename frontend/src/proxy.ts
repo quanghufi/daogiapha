@@ -43,14 +43,15 @@ export async function proxy(request: NextRequest) {
     }
   );
 
-  // Use getSession() for fast session check (reads cookies, no network call).
-  // getUser() hits Supabase auth server every time and can hang 5-10s on free tier cold start.
-  // Session-based check is sufficient for routing decisions; actual auth verification
-  // happens in the Supabase client (RLS policies + token refresh).
+  // IMPORTANT: Must use getUser() instead of getSession() in middleware.
+  // getUser() contacts the Supabase Auth server to verify the JWT, and critically,
+  // refreshes expired tokens — writing new cookies via setAll(). Without this,
+  // expired tokens persist in cookies and all subsequent requests fail.
+  // getSession() only reads cookies without verification or refresh.
   let user: { id: string } | null = null;
   try {
-    const { data: { session } } = await supabase.auth.getSession();
-    user = session?.user ?? null;
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    user = authUser;
   } catch {
     user = null;
   }
