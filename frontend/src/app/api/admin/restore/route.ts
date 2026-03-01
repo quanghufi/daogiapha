@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
     const { data: profile, error: profileError } = await admin
       .from('profiles')
       .select('role')
-      .eq('id', authData.user.id)
+      .eq('user_id', authData.user.id)
       .single();
 
     if (profileError) {
