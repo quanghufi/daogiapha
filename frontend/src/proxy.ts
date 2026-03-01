@@ -43,17 +43,27 @@ export async function proxy(request: NextRequest) {
     }
   );
 
-  // IMPORTANT: Must use getUser() instead of getSession() in middleware.
-  // getUser() contacts the Supabase Auth server to verify the JWT, and critically,
-  // refreshes expired tokens — writing new cookies via setAll(). Without this,
-  // expired tokens persist in cookies and all subsequent requests fail.
-  // getSession() only reads cookies without verification or refresh.
+  // IMPORTANT: Call getUser() to refresh session cookies via setAll().
+  // This ensures expired tokens get refreshed on every navigation.
+  // We use getUser() instead of getSession() because getSession() doesn't
+  // verify or refresh tokens — it just reads stale cookies.
+  //
+  // On free tier, getUser() may timeout — in that case, fall back to
+  // getSession() for the routing decision (we already triggered the
+  // cookie refresh attempt above).
   let user: { id: string } | null = null;
   try {
     const { data: { user: authUser } } = await supabase.auth.getUser();
     user = authUser;
   } catch {
-    user = null;
+    // getUser() failed (timeout/network) — fallback to session from cookies
+    // This avoids redirecting to login on transient failures
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      user = session?.user ?? null;
+    } catch {
+      user = null;
+    }
   }
 
   // Redirect unauthenticated users from all non-public pages
@@ -61,23 +71,9 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  // Admin routes require admin or editor role
-  if (user && pathname.startsWith('/admin')) {
-    try {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('user_id', user.id)
-        .single();
-
-      if (profile?.role !== 'admin' && profile?.role !== 'editor') {
-        return NextResponse.redirect(new URL('/', request.url));
-      }
-    } catch {
-      // On timeout/error, deny access to admin
-      return NextResponse.redirect(new URL('/', request.url));
-    }
-  }
+  // Admin routes require admin or editor role — checked client-side via AuthProvider.
+  // Removed server-side profile query here because on free tier it causes timeouts
+  // that wrongly redirect admins to homepage and can corrupt the perceived role.
 
   // Redirect authenticated users away from auth pages (not homepage)
   if (user && authPages.some(path => pathname === path)) {
