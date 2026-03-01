@@ -3,6 +3,7 @@ import type {
   Person, Family, Profile, Contribution, Event, Media,
   CreatePersonInput, UpdatePersonInput, CreateMediaInput, ContributionStatus, EventType,
   PersonRelations, TreePerson, TreeFamily, SearchPerson,
+  RecentActivity, ActivityType,
 } from '@/types';
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -911,4 +912,139 @@ export async function setPrimaryMedia(personId: string, mediaId: string): Promis
     }
     throw setError;
   }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Recent Activities (aggregated from multiple tables)
+// ═══════════════════════════════════════════════════════════════════════════
+
+export async function getRecentActivities(limit = 15): Promise<RecentActivity[]> {
+  const activities: RecentActivity[] = [];
+
+  // 1. Recently added/updated people
+  const { data: recentPeople } = await supabase
+    .from('people')
+    .select('id, display_name, created_at, updated_at')
+    .order('updated_at', { ascending: false })
+    .limit(5);
+
+  if (recentPeople) {
+    for (const p of recentPeople) {
+      const isNew = p.created_at === p.updated_at;
+      activities.push({
+        id: `person-${p.id}`,
+        type: isNew ? 'person_added' : 'person_updated',
+        title: isNew ? `Thêm thành viên: ${p.display_name}` : `Cập nhật: ${p.display_name}`,
+        timestamp: p.updated_at,
+        link: `/people/${p.id}`,
+      });
+    }
+  }
+
+  // 2. Recent contributions
+  const { data: recentContribs } = await supabase
+    .from('contributions')
+    .select('id, field_name, new_value, status, created_at, person:people!contributions_person_id_fkey(display_name)')
+    .order('created_at', { ascending: false })
+    .limit(5);
+
+  if (recentContribs) {
+    for (const c of recentContribs) {
+      const personName = (c.person as unknown as { display_name: string })?.display_name || 'Không rõ';
+      const statusLabel = c.status === 'approved' ? 'đã duyệt' : c.status === 'rejected' ? 'bị từ chối' : 'chờ duyệt';
+      activities.push({
+        id: `contrib-${c.id}`,
+        type: 'contribution',
+        title: `Đề xuất sửa ${c.field_name} của ${personName}`,
+        description: `Trạng thái: ${statusLabel}`,
+        timestamp: c.created_at,
+        link: '/contributions',
+      });
+    }
+  }
+
+  // 3. Recent events
+  const { data: recentEvents } = await supabase
+    .from('events')
+    .select('id, title, event_type, created_at')
+    .order('created_at', { ascending: false })
+    .limit(5);
+
+  if (recentEvents) {
+    for (const e of recentEvents) {
+      activities.push({
+        id: `event-${e.id}`,
+        type: 'event',
+        title: `Sự kiện: ${e.title}`,
+        timestamp: e.created_at,
+        link: '/events',
+      });
+    }
+  }
+
+  // 4. Recent achievements
+  const { data: recentAchievements } = await supabase
+    .from('achievements')
+    .select('id, title, created_at, person:people!achievements_person_id_fkey(display_name)')
+    .order('created_at', { ascending: false })
+    .limit(5);
+
+  if (recentAchievements) {
+    for (const a of recentAchievements) {
+      const personName = (a.person as unknown as { display_name: string })?.display_name || '';
+      activities.push({
+        id: `achievement-${a.id}`,
+        type: 'achievement',
+        title: `Vinh danh: ${a.title}`,
+        description: personName ? `Dành cho ${personName}` : undefined,
+        timestamp: a.created_at,
+        link: '/achievements',
+      });
+    }
+  }
+
+  // 5. Recent fund transactions
+  const { data: recentFund } = await supabase
+    .from('fund_transactions')
+    .select('id, description, amount, type, created_at')
+    .order('created_at', { ascending: false })
+    .limit(5);
+
+  if (recentFund) {
+    for (const f of recentFund) {
+      const amountFormatted = new Intl.NumberFormat('vi-VN').format(f.amount);
+      const label = f.type === 'income' ? 'Thu' : 'Chi';
+      activities.push({
+        id: `fund-${f.id}`,
+        type: 'fund',
+        title: `${label}: ${amountFormatted}đ`,
+        description: f.description || undefined,
+        timestamp: f.created_at,
+        link: '/fund',
+      });
+    }
+  }
+
+  // 6. Recent clan articles
+  const { data: recentArticles } = await supabase
+    .from('clan_articles')
+    .select('id, title, category, created_at')
+    .order('created_at', { ascending: false })
+    .limit(5);
+
+  if (recentArticles) {
+    for (const a of recentArticles) {
+      activities.push({
+        id: `article-${a.id}`,
+        type: 'article',
+        title: `Hương ước: ${a.title}`,
+        timestamp: a.created_at,
+        link: '/charter',
+      });
+    }
+  }
+
+  // Sort all by timestamp desc, return top N
+  activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  return activities.slice(0, limit);
 }

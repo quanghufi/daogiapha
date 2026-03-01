@@ -362,6 +362,26 @@ export interface PersonRelations {
   }>;
 }
 
+// ─── Recent Activity ────────────────────────────────────────────────────────
+
+export type ActivityType =
+  | 'person_added'
+  | 'person_updated'
+  | 'contribution'
+  | 'event'
+  | 'achievement'
+  | 'fund'
+  | 'article';
+
+export interface RecentActivity {
+  id: string;
+  type: ActivityType;
+  title: string;
+  description?: string;
+  timestamp: string;
+  link?: string;
+}
+
 // ─── Zodiac ───────────────────────────────────────────────────────────────────
 
 export const CAN = ['Canh', 'Tân', 'Nhâm', 'Quý', 'Giáp', 'Ất', 'Bính', 'Đinh', 'Mậu', 'Kỷ'] as const;

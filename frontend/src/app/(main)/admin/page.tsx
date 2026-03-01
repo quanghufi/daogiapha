@@ -10,6 +10,7 @@
 
 import { useStats } from '@/hooks/use-people';
 import { useFamilies } from '@/hooks/use-families';
+import { useRecentActivities } from '@/hooks/use-activity';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -22,12 +23,21 @@ import {
   Shield,
   Activity,
   TrendingUp,
+  UserRoundPlus,
+  UserRoundPen,
+  ClipboardList,
+  Calendar,
+  Trophy,
+  BookOpen,
+  ScrollText,
 } from 'lucide-react';
 import Link from 'next/link';
+import type { ActivityType } from '@/types';
 
 export default function AdminPage() {
   const { data: stats, isLoading: statsLoading } = useStats();
   const { data: families, isLoading: familiesLoading } = useFamilies();
+  const { data: activities, isLoading: activitiesLoading } = useRecentActivities();
 
   const isLoading = statsLoading || familiesLoading;
 
@@ -188,19 +198,98 @@ export default function AdminPage() {
         </Card>
       </div>
 
-      {/* Recent Activity Placeholder */}
+      {/* Recent Activity */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Hoạt động gần đây</CardTitle>
           <CardDescription>Các thay đổi mới nhất trong hệ thống</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-8 text-muted-foreground">
-            <Activity className="h-8 w-8 mx-auto mb-2 opacity-50" />
-            <p>Tính năng đang phát triển</p>
-          </div>
+          {activitiesLoading ? (
+            <div className="space-y-4">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="flex items-start gap-3">
+                  <Skeleton className="h-9 w-9 rounded-full shrink-0" />
+                  <div className="space-y-1.5 flex-1">
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-3 w-1/3" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : !activities || activities.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <Activity className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              <p>Chưa có hoạt động nào</p>
+            </div>
+          ) : (
+            <div className="space-y-1">
+              {activities.map((activity) => (
+                <ActivityItem key={activity.id} activity={activity} />
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
   );
+}
+
+/* ─── Activity Item Component ─── */
+
+const activityConfig: Record<ActivityType, { icon: React.ElementType; color: string }> = {
+  person_added: { icon: UserRoundPlus, color: 'bg-emerald-100 text-emerald-700' },
+  person_updated: { icon: UserRoundPen, color: 'bg-blue-100 text-blue-700' },
+  contribution: { icon: ClipboardList, color: 'bg-amber-100 text-amber-700' },
+  event: { icon: Calendar, color: 'bg-purple-100 text-purple-700' },
+  achievement: { icon: Trophy, color: 'bg-yellow-100 text-yellow-700' },
+  fund: { icon: BookOpen, color: 'bg-cyan-100 text-cyan-700' },
+  article: { icon: ScrollText, color: 'bg-rose-100 text-rose-700' },
+};
+
+function formatRelativeTime(timestamp: string): string {
+  const now = Date.now();
+  const then = new Date(timestamp).getTime();
+  const diffMs = now - then;
+  const diffMin = Math.floor(diffMs / 60_000);
+  const diffHour = Math.floor(diffMs / 3_600_000);
+  const diffDay = Math.floor(diffMs / 86_400_000);
+
+  if (diffMin < 1) return 'Vừa xong';
+  if (diffMin < 60) return `${diffMin} phút trước`;
+  if (diffHour < 24) return `${diffHour} giờ trước`;
+  if (diffDay < 7) return `${diffDay} ngày trước`;
+  if (diffDay < 30) return `${Math.floor(diffDay / 7)} tuần trước`;
+  return new Date(timestamp).toLocaleDateString('vi-VN');
+}
+
+function ActivityItem({ activity }: { activity: import('@/types').RecentActivity }) {
+  const config = activityConfig[activity.type];
+  const Icon = config.icon;
+
+  const content = (
+    <div className="flex items-start gap-3 rounded-lg px-3 py-2.5 hover:bg-muted/50 transition-colors">
+      <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${config.color}`}>
+        <Icon className="h-4 w-4" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium leading-snug truncate">
+          {activity.title}
+        </p>
+        {activity.description && (
+          <p className="text-xs text-muted-foreground truncate">
+            {activity.description}
+          </p>
+        )}
+        <p className="text-xs text-muted-foreground mt-0.5">
+          {formatRelativeTime(activity.timestamp)}
+        </p>
+      </div>
+    </div>
+  );
+
+  if (activity.link) {
+    return <Link href={activity.link}>{content}</Link>;
+  }
+  return content;
 }
