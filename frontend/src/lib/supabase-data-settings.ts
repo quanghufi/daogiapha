@@ -1,8 +1,8 @@
 /**
  * @project AncestorTree
  * @file src/lib/supabase-data-settings.ts
- * @description Backup (export) all data tables as JSON
- * @version 1.0.0
+ * @description Backup (export), Restore (import) & Reset all data tables
+ * @version 1.1.0
  * @updated 2026-03-01
  */
 
@@ -38,6 +38,36 @@ const RESET_TABLES_ORDER = [
   'families',
   'people',
 ] as const;
+
+// Insert order: parent tables first, then children
+const RESTORE_TABLES_ORDER = [
+  'people',
+  'families',
+  'children',
+  'events',
+  'contributions',
+  'media',
+  'achievements',
+  'fund_transactions',
+  'scholarships',
+  'clan_articles',
+  'cau_duong_pools',
+  'cau_duong_assignments',
+] as const;
+
+export interface BackupFile {
+  exported_at: string;
+  version: string;
+  tables: Record<string, Record<string, unknown>[]>;
+}
+
+export function validateBackupFile(data: unknown): data is BackupFile {
+  if (!data || typeof data !== 'object') return false;
+  const obj = data as Record<string, unknown>;
+  if (!obj.exported_at || !obj.version || !obj.tables) return false;
+  if (typeof obj.tables !== 'object') return false;
+  return true;
+}
 
 export async function exportAllData() {
   const admin = createServerClient();
@@ -102,5 +132,42 @@ export async function resetAllData() {
   return {
     reset_at: new Date().toISOString(),
     deleted,
+  };
+}
+
+export async function restoreFromBackup(backup: BackupFile) {
+  const admin = createServerClient();
+  const restored: Record<string, number> = {};
+
+  // 1. Clear existing data first (same as reset, but skip profile deletion)
+  for (const table of RESET_TABLES_ORDER) {
+    const { error } = await admin.from(table).delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    if (error) throw new Error(`Lỗi khi xóa bảng ${table} trước restore: ${error.message}`);
+  }
+
+  // 2. Insert data in dependency order (parents first)
+  for (const table of RESTORE_TABLES_ORDER) {
+    const rows = backup.tables[table];
+    if (!rows || rows.length === 0) {
+      restored[table] = 0;
+      continue;
+    }
+
+    // Insert in batches of 500 to avoid payload limits
+    const BATCH_SIZE = 500;
+    let inserted = 0;
+    for (let i = 0; i < rows.length; i += BATCH_SIZE) {
+      const batch = rows.slice(i, i + BATCH_SIZE);
+      const { error } = await admin.from(table).upsert(batch, { onConflict: 'id' });
+      if (error) throw new Error(`Lỗi khi restore bảng ${table}: ${error.message}`);
+      inserted += batch.length;
+    }
+    restored[table] = inserted;
+  }
+
+  return {
+    restored_at: new Date().toISOString(),
+    backup_date: backup.exported_at,
+    restored,
   };
 }
