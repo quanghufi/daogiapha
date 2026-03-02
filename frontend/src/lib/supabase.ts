@@ -24,8 +24,13 @@ const fetchWithTimeout: typeof fetch = async (input, init) => {
 
   try {
     // cache: 'no-store' prevents browser from serving stale 304 responses
-    // (e.g. cached "No API key" error that persists across navigations).
-    const response = await fetch(input, { ...init, signal: controller.signal, cache: 'no-store' });
+    // Only apply to GET requests — POST/PATCH/DELETE are never cached by browsers
+    const method = (init?.method || 'GET').toUpperCase();
+    const fetchInit = { ...init, signal: controller.signal };
+    if (method === 'GET') {
+      (fetchInit as Record<string, unknown>).cache = 'no-store';
+    }
+    const response = await fetch(input, fetchInit);
 
     // Debug: log failed Supabase responses to trace "No API key" errors
     if (typeof window !== 'undefined' && !response.ok) {
