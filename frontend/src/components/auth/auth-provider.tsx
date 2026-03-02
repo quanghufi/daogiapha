@@ -46,19 +46,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let cancelled = false;
 
-    // Hard failsafe: force isLoading=false after 8s no matter what.
-    // Prevents infinite spinner even if Supabase is completely down.
-    const failsafe = setTimeout(() => {
+    const completeInit = () => {
       if (!cancelled && !initializedRef.current) {
-        console.warn('[Auth] Failsafe timeout — forcing auth load complete');
         initializedRef.current = true;
         setIsLoading(false);
       }
+    };
+
+    // Hard failsafe: force isLoading=false after 8s no matter what.
+    const failsafe = setTimeout(() => {
+      if (!cancelled && !initializedRef.current) {
+        console.warn('[Auth] Failsafe timeout — forcing auth load complete');
+        completeInit();
+      }
     }, 8000);
 
-    // Use onAuthStateChange as the primary source of truth.
-    // Supabase SDK fires INITIAL_SESSION synchronously after subscribing
-    // if it has a cached session in localStorage — this is the fastest path.
+    const initAuth = async () => {
+      try {
+        const { data: { session: s } } = await supabase.auth.getSession();
+        if (cancelled) return;
+
+        setSession(s);
+        setUser(s?.user ?? null);
+
+        if (s?.user) {
+          const p = await fetchProfile(s.user.id);
+          if (!cancelled) setProfile(p);
+        }
+      } catch (err) {
+        console.error('[Auth] Error checking session:', err);
+      } finally {
+        completeInit();
+      }
+    };
+
+    // Start explicit session check
+    initAuth();
+
+    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, s) => {
         if (cancelled) return;
@@ -66,23 +91,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(s);
         setUser(s?.user ?? null);
 
-        if (event === 'INITIAL_SESSION') {
-          // First event — mark initialization done
-          if (s?.user) {
-            const p = await fetchProfile(s.user.id);
-            if (!cancelled) setProfile(p);
-          }
-          if (!cancelled) {
-            initializedRef.current = true;
-            setIsLoading(false);
-          }
-        } else if (event === 'SIGNED_IN') {
+        if (event === 'SIGNED_IN') {
           const p = s?.user ? await fetchProfile(s.user.id) : null;
           if (!cancelled) setProfile(p);
+          completeInit();
         } else if (event === 'SIGNED_OUT') {
           if (!cancelled) setProfile(null);
+          completeInit();
+        } else if (event === 'INITIAL_SESSION') {
+          // Handled by initAuth mostly, but if this fires first:
+          completeInit();
         }
-        // TOKEN_REFRESHED — session/user already updated, skip profile refetch
       }
     );
 
