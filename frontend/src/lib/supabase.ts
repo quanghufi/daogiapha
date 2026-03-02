@@ -1,10 +1,9 @@
-import { createBrowserClient } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
-// Custom fetch with 25-second timeout to prevent infinite hangs on Supabase free tier cold starts.
+// Custom fetch with 30-second timeout to prevent infinite hangs on Supabase free tier cold starts.
 const fetchWithTimeout: typeof fetch = async (input, init) => {
   const controller = new AbortController();
   const existingSignal = init?.signal;
@@ -29,10 +28,11 @@ const fetchWithTimeout: typeof fetch = async (input, init) => {
   }
 };
 
-// Browser client uses cookies (shared with proxy.ts middleware for auth routing).
-// Falls back to basic client during build when env vars are missing.
+// Browser client using localStorage for session (no server dependency for auth).
+// This avoids the "No API key" error caused by cookie-based auth + proxy.ts getUser() calls
+// hitting Supabase server on every navigation (cold start / timeout → session lost).
 const supabase = supabaseUrl && supabaseAnonKey
-  ? createBrowserClient(supabaseUrl, supabaseAnonKey, {
+  ? createClient(supabaseUrl, supabaseAnonKey, {
       global: { fetch: fetchWithTimeout },
     })
   : createClient('https://placeholder.supabase.co', 'placeholder-key');

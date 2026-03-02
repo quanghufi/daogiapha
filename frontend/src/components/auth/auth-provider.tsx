@@ -43,8 +43,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user]);
 
   useEffect(() => {
-    // Initial auth: read session from cookies (fast, no network call).
-    // Supabase SDK handles token refresh automatically via onAuthStateChange.
+    // Initial auth: read session from localStorage (fast, no network call).
+    // createClient stores session in localStorage — SDK handles refresh automatically.
     supabase.auth.getSession().then(async ({ data: { session: s } }) => {
       setSession(s);
       setUser(s?.user ?? null);
@@ -71,51 +71,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     );
 
-    // Proactive session refresh: when user returns to app after idle (tab switch,
-    // screen-off, or simply not interacting for 10+ minutes), check if the token
-    // is near expiry and refresh it BEFORE any navigation/query triggers a 401.
-    // This prevents the "blank page after idle" problem.
-    let lastActivity = Date.now();
-    const IDLE_THRESHOLD = 10 * 60 * 1000; // 10 minutes
-
-    const refreshIfNeeded = () => {
-      supabase.auth.getSession().then(({ data: { session: s } }) => {
-        if (!s) return;
-        const expiresAt = s.expires_at ?? 0;
-        const now = Math.floor(Date.now() / 1000);
-        // Refresh if token expires within 5 minutes
-        if (expiresAt - now < 300) {
-          supabase.auth.refreshSession();
-        }
-      });
-    };
-
-    // Visibility change: tab was hidden and came back
+    // Proactive refresh when user returns from idle.
+    // createClient auto-refresh uses setInterval which may drift when tab is background.
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        refreshIfNeeded();
-        lastActivity = Date.now();
-      }
-    };
-
-    // User interaction after idle: click or keydown after 10+ min of no activity
-    const handleUserActivity = () => {
-      const idleTime = Date.now() - lastActivity;
-      lastActivity = Date.now();
-      if (idleTime > IDLE_THRESHOLD) {
-        refreshIfNeeded();
+        supabase.auth.getSession().then(({ data: { session: s } }) => {
+          if (!s) return;
+          const expiresAt = s.expires_at ?? 0;
+          const now = Math.floor(Date.now() / 1000);
+          if (expiresAt - now < 300) {
+            supabase.auth.refreshSession();
+          }
+        });
       }
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    document.addEventListener('click', handleUserActivity, { capture: true });
-    document.addEventListener('keydown', handleUserActivity, { capture: true });
 
     return () => {
       subscription.unsubscribe();
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      document.removeEventListener('click', handleUserActivity, { capture: true });
-      document.removeEventListener('keydown', handleUserActivity, { capture: true });
     };
   }, []);
 
