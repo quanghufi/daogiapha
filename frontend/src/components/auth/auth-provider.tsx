@@ -43,28 +43,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user]);
 
   useEffect(() => {
-    // Use onAuthStateChange as the SINGLE source of truth for auth state.
-    // The INITIAL_SESSION event fires when SDK finishes reading localStorage —
-    // this guarantees SDK internal state is ready before we render children.
-    // Using getSession() separately can cause a race condition where children
-    // mount and fire queries before SDK attaches JWT to requests.
+    let initialized = false;
+
+    const markReady = () => {
+      if (!initialized) {
+        initialized = true;
+        setIsLoading(false);
+      }
+    };
+
+    // Safety timeout: if INITIAL_SESSION never fires (corrupt localStorage,
+    // SDK bug, etc.), stop loading after 5 seconds to avoid infinite spinner.
+    const safetyTimer = setTimeout(markReady, 5000);
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, s) => {
         setSession(s);
         setUser(s?.user ?? null);
 
         if (event === 'INITIAL_SESSION') {
-          // SDK is now fully initialized — safe to render children
           if (s?.user) {
             const p = await fetchProfile(s.user.id);
             setProfile(p);
           }
-          setIsLoading(false);
+          markReady();
+        } else if (event === 'SIGNED_IN') {
+          // Also mark ready on SIGNED_IN in case INITIAL_SESSION was missed
+          markReady();
+          if (s?.user) {
+            const p = await fetchProfile(s.user.id);
+            if (p) setProfile(p);
+          }
         } else if (s?.user && event !== 'TOKEN_REFRESHED') {
           const p = await fetchProfile(s.user.id);
           if (p) setProfile(p);
         } else if (!s?.user) {
           setProfile(null);
+          markReady(); // No user = not loading anymore
         }
       }
     );
@@ -86,6 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
+      clearTimeout(safetyTimer);
       subscription.unsubscribe();
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
