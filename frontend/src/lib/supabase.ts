@@ -8,7 +8,7 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 const fetchWithTimeout: typeof fetch = async (input, init) => {
   const controller = new AbortController();
   const existingSignal = init?.signal;
-  const timer = setTimeout(() => controller.abort(), 25000);
+  const timer = setTimeout(() => controller.abort(), 30000);
 
   // If the caller already has a signal, abort when either signal fires
   if (existingSignal) {

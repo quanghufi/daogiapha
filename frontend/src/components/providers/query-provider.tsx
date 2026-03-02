@@ -49,19 +49,19 @@ export function QueryProvider({ children }: QueryProviderProps) {
             staleTime: 5 * 60 * 1000, // 5 minutes
             retry: (failureCount, error) => {
               if (isAuthError(error)) {
-                // First attempt: refresh session, then let React Query retry once.
-                // Second attempt after refresh: if still failing, give up.
+                // Retry up to 2 times for auth errors:
+                // 1st retry: trigger session refresh, wait for it
+                // 2nd retry: Supabase free tier may need extra time (cold start)
                 if (failureCount === 0) {
                   ensureSessionRefresh();
-                  return true; // retry once after refresh
                 }
-                return false;
+                return failureCount < 2;
               }
               return failureCount < 1;
             },
             retryDelay: (attemptIndex, error) => {
-              // Give session refresh time to complete before retrying
-              if (isAuthError(error)) return 1500;
+              // Auth errors: 2s first retry (session refresh), 4s second (cold start)
+              if (isAuthError(error)) return attemptIndex === 0 ? 2000 : 4000;
               return Math.min(1000 * 2 ** attemptIndex, 5000);
             },
             refetchOnWindowFocus: false,
