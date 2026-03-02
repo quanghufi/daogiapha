@@ -39,32 +39,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshProfile = useCallback(async () => {
     if (!user) return;
     const p = await fetchProfile(user.id);
-    if (p) setProfile(p); // Only update if fetch succeeded — preserve existing profile on failure
+    if (p) setProfile(p);
   }, [user]);
 
   useEffect(() => {
-    // Initial auth: read session from localStorage (fast, no network call).
-    // createClient stores session in localStorage — SDK handles refresh automatically.
-    supabase.auth.getSession().then(async ({ data: { session: s } }) => {
-      setSession(s);
-      setUser(s?.user ?? null);
-      if (s?.user) {
-        const p = await fetchProfile(s.user.id);
-        setProfile(p);
-      }
-      setIsLoading(false);
-    });
-
-    // Listen for all auth changes — SDK handles token refresh automatically.
-    // Skip profile re-fetch on TOKEN_REFRESHED to avoid unnecessary DB calls.
+    // Use onAuthStateChange as the SINGLE source of truth for auth state.
+    // The INITIAL_SESSION event fires when SDK finishes reading localStorage —
+    // this guarantees SDK internal state is ready before we render children.
+    // Using getSession() separately can cause a race condition where children
+    // mount and fire queries before SDK attaches JWT to requests.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, s) => {
         setSession(s);
         setUser(s?.user ?? null);
 
-        if (s?.user && event !== 'TOKEN_REFRESHED') {
+        if (event === 'INITIAL_SESSION') {
+          // SDK is now fully initialized — safe to render children
+          if (s?.user) {
+            const p = await fetchProfile(s.user.id);
+            setProfile(p);
+          }
+          setIsLoading(false);
+        } else if (s?.user && event !== 'TOKEN_REFRESHED') {
           const p = await fetchProfile(s.user.id);
-          if (p) setProfile(p); // Preserve existing profile on fetch failure
+          if (p) setProfile(p);
         } else if (!s?.user) {
           setProfile(null);
         }
@@ -72,7 +70,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
 
     // Proactive refresh when user returns from idle.
-    // createClient auto-refresh uses setInterval which may drift when tab is background.
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         supabase.auth.getSession().then(({ data: { session: s } }) => {
