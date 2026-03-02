@@ -71,27 +71,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     );
 
-    // Mobile resume: when user returns to app after screen-off or tab switch,
-    // proactively refresh the session. This handles the case where JS was
-    // suspended and the SDK's auto-refresh timer didn't fire.
-    const handleResume = () => {
+    // Proactive session refresh: when user returns to app after idle (tab switch,
+    // screen-off, or simply not interacting for 10+ minutes), check if the token
+    // is near expiry and refresh it BEFORE any navigation/query triggers a 401.
+    // This prevents the "blank page after idle" problem.
+    let lastActivity = Date.now();
+    const IDLE_THRESHOLD = 10 * 60 * 1000; // 10 minutes
+
+    const refreshIfNeeded = () => {
+      supabase.auth.getSession().then(({ data: { session: s } }) => {
+        if (!s) return;
+        const expiresAt = s.expires_at ?? 0;
+        const now = Math.floor(Date.now() / 1000);
+        // Refresh if token expires within 5 minutes
+        if (expiresAt - now < 300) {
+          supabase.auth.refreshSession();
+        }
+      });
+    };
+
+    // Visibility change: tab was hidden and came back
+    const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        supabase.auth.getSession().then(({ data: { session: s } }) => {
-          if (!s) return;
-          // If token expires within 5 minutes, force refresh
-          const expiresAt = s.expires_at ?? 0;
-          const now = Math.floor(Date.now() / 1000);
-          if (expiresAt - now < 300) {
-            supabase.auth.refreshSession();
-          }
-        });
+        refreshIfNeeded();
+        lastActivity = Date.now();
       }
     };
-    document.addEventListener('visibilitychange', handleResume);
+
+    // User interaction after idle: click or keydown after 10+ min of no activity
+    const handleUserActivity = () => {
+      const idleTime = Date.now() - lastActivity;
+      lastActivity = Date.now();
+      if (idleTime > IDLE_THRESHOLD) {
+        refreshIfNeeded();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    document.addEventListener('click', handleUserActivity, { capture: true });
+    document.addEventListener('keydown', handleUserActivity, { capture: true });
 
     return () => {
       subscription.unsubscribe();
-      document.removeEventListener('visibilitychange', handleResume);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      document.removeEventListener('click', handleUserActivity, { capture: true });
+      document.removeEventListener('keydown', handleUserActivity, { capture: true });
     };
   }, []);
 
