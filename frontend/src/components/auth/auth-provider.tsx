@@ -53,33 +53,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     // Safety timeout: if INITIAL_SESSION never fires (corrupt localStorage,
-    // SDK bug, etc.), stop loading after 5 seconds to avoid infinite spinner.
-    const safetyTimer = setTimeout(markReady, 5000);
+    // SDK bug, etc.), fall back to getSession() after 5 seconds.
+    const safetyTimer = setTimeout(async () => {
+      if (initialized) return; // Already handled by event
+      const { data: { session: s } } = await supabase.auth.getSession();
+      setSession(s);
+      setUser(s?.user ?? null);
+      if (s?.user) {
+        const p = await fetchProfile(s.user.id);
+        setProfile(p);
+      }
+      markReady();
+    }, 5000);
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, s) => {
         setSession(s);
         setUser(s?.user ?? null);
 
-        if (event === 'INITIAL_SESSION') {
+        if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
           if (s?.user) {
             const p = await fetchProfile(s.user.id);
             setProfile(p);
           }
           markReady();
-        } else if (event === 'SIGNED_IN') {
-          // Also mark ready on SIGNED_IN in case INITIAL_SESSION was missed
-          markReady();
-          if (s?.user) {
-            const p = await fetchProfile(s.user.id);
-            if (p) setProfile(p);
-          }
         } else if (s?.user && event !== 'TOKEN_REFRESHED') {
           const p = await fetchProfile(s.user.id);
           if (p) setProfile(p);
         } else if (!s?.user) {
           setProfile(null);
-          markReady(); // No user = not loading anymore
+          markReady();
         }
       }
     );
