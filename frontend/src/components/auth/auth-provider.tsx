@@ -24,7 +24,7 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 async function fetchProfile(userId: string): Promise<Profile | null> {
   try {
     return await getProfile(userId);
-  } catch (error) {
+  } catch {
     console.error('[Auth] Failed to load profile');
     return null;
   }
@@ -43,71 +43,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user]);
 
   useEffect(() => {
-    let initialized = false;
-
-    const markReady = () => {
-      if (!initialized) {
-        initialized = true;
-        setIsLoading(false);
-      }
-    };
-
-    // Safety timeout: if INITIAL_SESSION never fires (corrupt localStorage,
-    // SDK bug, etc.), fall back to getSession() after 5 seconds.
-    const safetyTimer = setTimeout(async () => {
-      if (initialized) return; // Already handled by event
-      const { data: { session: s } } = await supabase.auth.getSession();
+    // Simple pattern from demo project — proven to work:
+    // 1. getSession() reads localStorage synchronously → always resolves
+    // 2. setLoading(false) always runs → no infinite spinner
+    // 3. onAuthStateChange handles subsequent events (login, logout, refresh)
+    supabase.auth.getSession().then(async ({ data: { session: s } }) => {
       setSession(s);
       setUser(s?.user ?? null);
       if (s?.user) {
         const p = await fetchProfile(s.user.id);
         setProfile(p);
       }
-      markReady();
-    }, 5000);
+      setIsLoading(false);
+    });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, s) => {
+      async (_event, s) => {
         setSession(s);
         setUser(s?.user ?? null);
-
-        if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
-          if (s?.user) {
-            const p = await fetchProfile(s.user.id);
-            setProfile(p);
-          }
-          markReady();
-        } else if (s?.user && event !== 'TOKEN_REFRESHED') {
+        if (s?.user && _event !== 'TOKEN_REFRESHED') {
           const p = await fetchProfile(s.user.id);
           if (p) setProfile(p);
         } else if (!s?.user) {
           setProfile(null);
-          markReady();
         }
       }
     );
 
-    // Proactive refresh when user returns from idle.
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        supabase.auth.getSession().then(({ data: { session: s } }) => {
-          if (!s) return;
-          const expiresAt = s.expires_at ?? 0;
-          const now = Math.floor(Date.now() / 1000);
-          if (expiresAt - now < 300) {
-            supabase.auth.refreshSession();
-          }
-        });
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    return () => {
-      clearTimeout(safetyTimer);
-      subscription.unsubscribe();
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
+    return () => subscription.unsubscribe();
   }, []);
 
   const signIn = useCallback(async (email: string, password: string) => {
