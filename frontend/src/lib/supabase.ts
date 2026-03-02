@@ -15,7 +15,9 @@ const fetchWithTimeout: typeof fetch = async (input, init) => {
   }
 
   try {
-    return await fetch(input, { ...init, signal: controller.signal });
+    // cache: 'no-store' prevents browser from serving stale 304 responses
+    // (e.g. cached "No API key" error that persists across navigations).
+    return await fetch(input, { ...init, signal: controller.signal, cache: 'no-store' });
   } catch (err) {
     if (err instanceof DOMException && err.name === 'AbortError') {
       // If the caller's signal aborted, re-throw as-is (not a timeout)
