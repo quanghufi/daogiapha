@@ -1,22 +1,161 @@
 /**
  * @project AncestorTree
  * @file src/proxy.ts
- * @description Next.js 16 proxy — lightweight pass-through.
- * Auth is handled entirely client-side via AuthProvider + useAuth().
- * No server-side Supabase calls on navigation (prevents cold start / "No API key" errors).
- * @version 2.0.0
+ * @description Auth middleware for protected routes — Next.js 16 convention
+ * @version 1.6.0
  * @updated 2026-03-03
  */
 
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { createServerClient as createSSRClient } from '@supabase/ssr';
+
+// ─── Rate Limiting ────────────────────────────────────────────────────────────
+
+interface RateEntry { count: number; windowStart: number; }
+
+const _rateLimitStore = new Map<string, RateEntry>();
+
+const RATE_LIMITS: Record<string, { max: number; windowMs: number }> = {
+  '/login':           { max: 20, windowMs: 60_000 },
+  '/register':        { max: 10, windowMs: 60_000 },
+  '/forgot-password': { max:  6, windowMs: 300_000 },
+  '/reset-password':  { max: 10, windowMs: 60_000 },
+};
+
+function _getClientIp(req: NextRequest): string {
+  return (
+    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
+    req.headers.get('x-real-ip') ??
+    '0.0.0.0'
+  );
+}
+
+function _checkRateLimit(ip: string, pathname: string): { allowed: boolean; retryAfterSec: number } {
+  const cfg = RATE_LIMITS[pathname];
+  if (!cfg) return { allowed: true, retryAfterSec: 0 };
+
+  const key = `${ip}:${pathname}`;
+  const now = Date.now();
+  const entry = _rateLimitStore.get(key);
+
+  if (!entry || now - entry.windowStart > cfg.windowMs) {
+    _rateLimitStore.set(key, { count: 1, windowStart: now });
+    return { allowed: true, retryAfterSec: 0 };
+  }
+
+  if (entry.count >= cfg.max) {
+    const retryAfterSec = Math.ceil((cfg.windowMs - (now - entry.windowStart)) / 1000);
+    return { allowed: false, retryAfterSec };
+  }
+
+  entry.count++;
+  return { allowed: true, retryAfterSec: 0 };
+}
+
+const publicPaths = ['/login', '/register', '/forgot-password', '/reset-password', '/api/debug'];
+const authPagePaths = ['/login', '/register', '/forgot-password', '/reset-password'];
+const authRequiredPaths = [
+  '/',
+  '/people', '/tree', '/directory', '/events',
+  '/achievements', '/charter', '/cau-duong', '/contributions',
+  '/documents', '/fund', '/admin', '/guide',
+];
 
 export async function proxy(request: NextRequest) {
-  // All route protection is client-side (useAuth hook in layout/pages).
-  // This proxy is a lightweight pass-through — no Supabase server calls.
-  return NextResponse.next({
+  const { pathname } = request.nextUrl;
+
+  // Rate limiting
+  if (pathname in RATE_LIMITS) {
+    const ip = _getClientIp(request);
+    const { allowed, retryAfterSec } = _checkRateLimit(ip, pathname);
+    if (!allowed) {
+      return new NextResponse(
+        JSON.stringify({ error: 'Quá nhiều yêu cầu. Vui lòng thử lại sau.', retryAfter: retryAfterSec }),
+        {
+          status: 429,
+          headers: {
+            'Content-Type': 'application/json',
+            'Retry-After': String(retryAfterSec),
+          },
+        }
+      );
+    }
+  }
+
+  let response = NextResponse.next({
     request: { headers: request.headers },
   });
+
+  const supabase = createSSRClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value)
+          );
+          response = NextResponse.next({
+            request: { headers: request.headers },
+          });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options)
+          );
+        },
+      },
+    }
+  );
+
+  // Auth check with 5s timeout
+  let user: { id: string } | null = null;
+  try {
+    const timeoutFlag = Symbol('timeout');
+    const result = await Promise.race([
+      supabase.auth.getUser().then(r => r.data.user),
+      new Promise<typeof timeoutFlag>(resolve => setTimeout(() => resolve(timeoutFlag), 5000)),
+    ]);
+    if (result !== timeoutFlag) {
+      user = result as { id: string } | null;
+    }
+  } catch {
+    user = null;
+  }
+
+  // Public paths
+  if (publicPaths.some(path => pathname === path || pathname.startsWith(path + '/'))) {
+    if (user && authPagePaths.some(p => pathname === p || pathname.startsWith(p + '/'))) {
+      return NextResponse.redirect(new URL('/', request.url));
+    }
+    return response;
+  }
+
+  // Unauthenticated redirect
+  if (!user && authRequiredPaths.some(path => pathname.startsWith(path))) {
+    return NextResponse.redirect(new URL('/login', request.url));
+  }
+
+  // Admin role check
+  if (user && pathname.startsWith('/admin')) {
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('user_id', user.id)
+        .single();
+
+      if (profile?.role !== 'admin' && profile?.role !== 'editor') {
+        return NextResponse.redirect(new URL('/', request.url));
+      }
+    } catch {
+      return NextResponse.redirect(new URL('/', request.url));
+    }
+  }
+
+  return response;
 }
 
 export const config = {

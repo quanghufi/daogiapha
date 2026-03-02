@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, useCallback, useRef, useMemo, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useMemo, type ReactNode } from 'react';
 import { supabase } from '@/lib/supabase';
 import { getProfile } from '@/lib/supabase-data';
 import type { User, Session } from '@supabase/supabase-js';
@@ -35,7 +35,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const initializedRef = useRef(false);
 
   const refreshProfile = useCallback(async () => {
     if (!user) return;
@@ -44,96 +43,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user]);
 
   useEffect(() => {
-    let cancelled = false;
-
-    const completeInit = () => {
-      if (!cancelled && !initializedRef.current) {
-        initializedRef.current = true;
-        setIsLoading(false);
-      }
-    };
-
-    // Hard failsafe: force isLoading=false after 8s no matter what.
-    const failsafe = setTimeout(() => {
-      if (!cancelled && !initializedRef.current) {
-        console.warn('[Auth] Failsafe timeout — forcing auth load complete');
-        completeInit();
-      }
-    }, 8000);
-
-    const initAuth = async () => {
-      try {
-        const { data: { session: s }, error } = await supabase.auth.getSession();
-        if (cancelled) return;
-
-        if (error || !s) {
-          // Session missing or invalid — try refreshing the token
-          console.warn('[Auth] getSession failed, attempting refresh...', error?.message);
-          const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
-          if (cancelled) return;
-
-          if (refreshError || !refreshData.session) {
-            // Refresh also failed — stale session in localStorage, clear it
-            console.warn('[Auth] refreshSession failed — signing out stale session');
-            await supabase.auth.signOut();
-            if (!cancelled) {
-              setSession(null);
-              setUser(null);
-              setProfile(null);
-            }
-            return;
-          }
-
-          // Refresh succeeded — use the new session
-          setSession(refreshData.session);
-          setUser(refreshData.session.user);
-          const p = await fetchProfile(refreshData.session.user.id);
-          if (!cancelled) setProfile(p);
-          return;
-        }
-
-        // Normal path — getSession succeeded
-        setSession(s);
-        setUser(s.user);
+    // Initial session check + profile fetch
+    supabase.auth.getSession().then(async ({ data: { session: s } }) => {
+      setSession(s);
+      setUser(s?.user ?? null);
+      if (s?.user) {
         const p = await fetchProfile(s.user.id);
-        if (!cancelled) setProfile(p);
-      } catch (err) {
-        console.error('[Auth] Error checking session:', err);
-      } finally {
-        completeInit();
+        setProfile(p);
       }
-    };
+      setIsLoading(false);
+    });
 
-    // Start explicit session check
-    initAuth();
-
-    // Listen for auth changes
+    // Listen for auth changes.
+    // IMPORTANT: callback must NOT be async and must NOT await inside.
+    // supabase-js _notifyAllSubscribers() awaits every subscriber while holding
+    // the Navigator auth lock. Any internal supabase call (getSession, from()...)
+    // that also needs the lock causes a permanent deadlock.
+    // Fix: return synchronously; fire async work detached via .then().
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, s) => {
-        if (cancelled) return;
-
+      (event, s) => {
         setSession(s);
         setUser(s?.user ?? null);
 
-        if (event === 'SIGNED_IN') {
-          const p = s?.user ? await fetchProfile(s.user.id) : null;
-          if (!cancelled) setProfile(p);
-          completeInit();
-        } else if (event === 'SIGNED_OUT') {
-          if (!cancelled) setProfile(null);
-          completeInit();
-        } else if (event === 'INITIAL_SESSION') {
-          // Handled by initAuth mostly, but if this fires first:
-          completeInit();
+        if (s?.user) {
+          const userId = s.user.id;
+          // Detached — runs after this callback returns, outside the lock window.
+          fetchProfile(userId).then((p) => {
+            setProfile(p);
+          }).catch((err) => {
+            console.error('[Auth] onAuthStateChange:fetchProfile error', err);
+          });
+        } else {
+          setProfile(null);
         }
       }
     );
 
-    return () => {
-      cancelled = true;
-      clearTimeout(failsafe);
-      subscription.unsubscribe();
-    };
+    return () => subscription.unsubscribe();
   }, []);
 
   const signIn = useCallback(async (email: string, password: string) => {
