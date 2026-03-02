@@ -63,16 +63,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const initAuth = async () => {
       try {
-        const { data: { session: s } } = await supabase.auth.getSession();
+        const { data: { session: s }, error } = await supabase.auth.getSession();
         if (cancelled) return;
 
-        setSession(s);
-        setUser(s?.user ?? null);
+        if (error || !s) {
+          // Session missing or invalid — try refreshing the token
+          console.warn('[Auth] getSession failed, attempting refresh...', error?.message);
+          const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+          if (cancelled) return;
 
-        if (s?.user) {
-          const p = await fetchProfile(s.user.id);
+          if (refreshError || !refreshData.session) {
+            // Refresh also failed — stale session in localStorage, clear it
+            console.warn('[Auth] refreshSession failed — signing out stale session');
+            await supabase.auth.signOut();
+            if (!cancelled) {
+              setSession(null);
+              setUser(null);
+              setProfile(null);
+            }
+            return;
+          }
+
+          // Refresh succeeded — use the new session
+          setSession(refreshData.session);
+          setUser(refreshData.session.user);
+          const p = await fetchProfile(refreshData.session.user.id);
           if (!cancelled) setProfile(p);
+          return;
         }
+
+        // Normal path — getSession succeeded
+        setSession(s);
+        setUser(s.user);
+        const p = await fetchProfile(s.user.id);
+        if (!cancelled) setProfile(p);
       } catch (err) {
         console.error('[Auth] Error checking session:', err);
       } finally {
