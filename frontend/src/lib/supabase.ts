@@ -3,6 +3,14 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
+// Debug: log if env vars are missing (visible in browser console)
+if (typeof window !== 'undefined' && (!supabaseUrl || !supabaseAnonKey)) {
+  console.error('[Supabase] Missing env vars:', {
+    url: supabaseUrl ? '✓' : '✗ MISSING',
+    key: supabaseAnonKey ? `✓ (${supabaseAnonKey.substring(0, 10)}...)` : '✗ MISSING'
+  });
+}
+
 // Custom fetch with 30-second timeout to prevent infinite hangs on Supabase free tier cold starts.
 const fetchWithTimeout: typeof fetch = async (input, init) => {
   const controller = new AbortController();
@@ -17,7 +25,15 @@ const fetchWithTimeout: typeof fetch = async (input, init) => {
   try {
     // cache: 'no-store' prevents browser from serving stale 304 responses
     // (e.g. cached "No API key" error that persists across navigations).
-    return await fetch(input, { ...init, signal: controller.signal, cache: 'no-store' });
+    const response = await fetch(input, { ...init, signal: controller.signal, cache: 'no-store' });
+
+    // Debug: log failed Supabase responses to trace "No API key" errors
+    if (typeof window !== 'undefined' && !response.ok) {
+      const url = typeof input === 'string' ? input : input instanceof Request ? input.url : '';
+      console.warn(`[Supabase] ${response.status} ${response.statusText} — ${url}`);
+    }
+
+    return response;
   } catch (err) {
     if (err instanceof DOMException && err.name === 'AbortError') {
       // If the caller's signal aborted, re-throw as-is (not a timeout)
