@@ -43,19 +43,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user]);
 
   useEffect(() => {
-    // Simple pattern from demo project — proven to work:
-    // 1. getSession() reads localStorage synchronously → always resolves
-    // 2. setLoading(false) always runs → no infinite spinner
-    // 3. onAuthStateChange handles subsequent events (login, logout, refresh)
-    supabase.auth.getSession().then(async ({ data: { session: s } }) => {
-      setSession(s);
-      setUser(s?.user ?? null);
-      if (s?.user) {
-        const p = await fetchProfile(s.user.id);
-        setProfile(p);
+    let cancelled = false;
+
+    async function init() {
+      try {
+        // getSession() may call network if token needs refresh.
+        // Race with a 10-second timeout to prevent infinite spinner
+        // when Supabase free tier is cold-starting.
+        const sessionResult = await Promise.race([
+          supabase.auth.getSession(),
+          new Promise<null>(resolve => setTimeout(() => resolve(null), 10000)),
+        ]);
+
+        if (cancelled) return;
+
+        const s = sessionResult?.data?.session ?? null;
+        setSession(s);
+        setUser(s?.user ?? null);
+
+        if (s?.user) {
+          const p = await fetchProfile(s.user.id);
+          if (!cancelled) setProfile(p);
+        }
+      } catch {
+        // getSession failed — user will be treated as logged out
+      } finally {
+        if (!cancelled) setIsLoading(false);
       }
-      setIsLoading(false);
-    });
+    }
+
+    init();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, s) => {
@@ -70,7 +87,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     );
 
-    return () => subscription.unsubscribe();
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signIn = useCallback(async (email: string, password: string) => {
