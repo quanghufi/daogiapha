@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, useCallback, useMemo, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useRef, useMemo, type ReactNode } from 'react';
 import { supabase } from '@/lib/supabase';
 import { getProfile } from '@/lib/supabase-data';
 import type { User, Session } from '@supabase/supabase-js';
@@ -35,6 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const initializedRef = useRef(false);
 
   const refreshProfile = useCallback(async () => {
     if (!user) return;
@@ -45,50 +46,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let cancelled = false;
 
-    async function init() {
-      try {
-        // getSession() may call network if token needs refresh.
-        // Race with a 10-second timeout to prevent infinite spinner
-        // when Supabase free tier is cold-starting.
-        const sessionResult = await Promise.race([
-          supabase.auth.getSession(),
-          new Promise<null>(resolve => setTimeout(() => resolve(null), 10000)),
-        ]);
+    // Hard failsafe: force isLoading=false after 8s no matter what.
+    // Prevents infinite spinner even if Supabase is completely down.
+    const failsafe = setTimeout(() => {
+      if (!cancelled && !initializedRef.current) {
+        console.warn('[Auth] Failsafe timeout — forcing auth load complete');
+        initializedRef.current = true;
+        setIsLoading(false);
+      }
+    }, 8000);
 
+    // Use onAuthStateChange as the primary source of truth.
+    // Supabase SDK fires INITIAL_SESSION synchronously after subscribing
+    // if it has a cached session in localStorage — this is the fastest path.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, s) => {
         if (cancelled) return;
 
-        const s = sessionResult?.data?.session ?? null;
         setSession(s);
         setUser(s?.user ?? null);
 
-        if (s?.user) {
-          const p = await fetchProfile(s.user.id);
+        if (event === 'INITIAL_SESSION') {
+          // First event — mark initialization done
+          if (s?.user) {
+            const p = await fetchProfile(s.user.id);
+            if (!cancelled) setProfile(p);
+          }
+          if (!cancelled) {
+            initializedRef.current = true;
+            setIsLoading(false);
+          }
+        } else if (event === 'SIGNED_IN') {
+          const p = s?.user ? await fetchProfile(s.user.id) : null;
           if (!cancelled) setProfile(p);
+        } else if (event === 'SIGNED_OUT') {
+          if (!cancelled) setProfile(null);
         }
-      } catch {
-        // getSession failed — user will be treated as logged out
-      } finally {
-        if (!cancelled) setIsLoading(false);
-      }
-    }
-
-    init();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, s) => {
-        setSession(s);
-        setUser(s?.user ?? null);
-        if (s?.user && _event !== 'TOKEN_REFRESHED') {
-          const p = await fetchProfile(s.user.id);
-          if (p) setProfile(p);
-        } else if (!s?.user) {
-          setProfile(null);
-        }
+        // TOKEN_REFRESHED — session/user already updated, skip profile refetch
       }
     );
 
     return () => {
       cancelled = true;
+      clearTimeout(failsafe);
       subscription.unsubscribe();
     };
   }, []);
