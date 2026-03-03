@@ -27,9 +27,8 @@ function PersonEntry({ entry }: { entry: BookPerson }) {
   return (
     <div className="book-person py-4">
       <div className="flex items-start gap-3">
-        <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-medium ${
-          person.gender === GENDER.MALE ? 'bg-blue-100 text-blue-800' : 'bg-pink-100 text-pink-800'
-        }`}>
+        <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-medium ${person.gender === GENDER.MALE ? 'bg-blue-100 text-blue-800' : 'bg-pink-100 text-pink-800'
+          }`}>
           {person.gender === GENDER.MALE ? '♂' : '♀'}
         </div>
         <div className="flex-1 min-w-0">
@@ -224,7 +223,7 @@ export default function BookPage() {
         {/* Footer */}
         <div className="text-center text-sm text-muted-foreground border-t pt-6">
           <p>Gia Phả Điện Tử - Đào tộc - Ninh thôn</p>
-          <p>Được tạo bởi AncestorTree · {new Date().getFullYear()}</p>
+          <p>Được tạo bởi gia tộc · {new Date().getFullYear()}</p>
         </div>
       </div>
     </div>
