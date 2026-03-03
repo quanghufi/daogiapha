@@ -45,6 +45,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { getZodiacYear } from '@/types';
+import { useAuth } from '@/components/auth/auth-provider';
 import { FamilyRelationsCard } from '@/components/people/family-relations-card';
 
 interface PageProps {
@@ -57,6 +58,7 @@ export default function PersonDetailPage({ params }: PageProps) {
   const { data: person, isLoading, error } = usePerson(id);
   const deleteMutation = useDeletePerson();
   const { data: canEdit = false } = useCanEditPerson(id);
+  const { isEditor } = useAuth();
 
   const handleDelete = async () => {
     try {
@@ -253,7 +255,8 @@ export default function PersonDetailPage({ params }: PageProps) {
           </CardContent>
         </Card>
 
-        {/* Contact Info */}
+        {/* Contact Info — only visible to editor/admin */}
+        {isEditor && (
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Liên hệ</CardTitle>
@@ -300,6 +303,7 @@ export default function PersonDetailPage({ params }: PageProps) {
             )}
           </CardContent>
         </Card>
+        )}
       </div>
 
       {/* Biography */}

@@ -46,7 +46,11 @@ import type { Person } from '@/types';
 type FilterGender = 'all' | '1' | '2';
 type FilterStatus = 'all' | 'living' | 'deceased';
 
-function getContactDisplay(person: Person, isAuthenticated: boolean, linkedPersonId?: string) {
+function getContactDisplay(person: Person, isAuthenticated: boolean, isEditorRole: boolean, linkedPersonId?: string) {
+  // Viewers cannot see contact info at all
+  if (!isEditorRole && person.id !== linkedPersonId) {
+    return { phone: null, email: null, address: null, masked: true };
+  }
   // Privacy level 2 = private: hide contacts from everyone except the person themselves
   if (person.privacy_level === 2 && person.id !== linkedPersonId) {
     return { phone: null, email: null, address: null, masked: true };
@@ -65,7 +69,7 @@ function getContactDisplay(person: Person, isAuthenticated: boolean, linkedPerso
 
 export default function DirectoryPage() {
   const { data: people, isLoading } = usePeople();
-  const { user, profile } = useAuth();
+  const { user, profile, isEditor: isEditorRole } = useAuth();
   const isAuthenticated = !!user;
 
   const [search, setSearch] = useState('');
@@ -225,7 +229,7 @@ export default function DirectoryPage() {
                 </TableHeader>
                 <TableBody>
                   {filteredPeople.map(person => {
-                    const contact = getContactDisplay(person, isAuthenticated, profile?.linked_person);
+                    const contact = getContactDisplay(person, isAuthenticated, isEditorRole, profile?.linked_person);
                     return (
                       <TableRow key={person.id}>
                         <TableCell>
