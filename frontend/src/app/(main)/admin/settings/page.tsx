@@ -8,10 +8,12 @@
 
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useAuth } from '@/components/auth/auth-provider';
+import { useClanSettings, useUpdateClanSettings } from '@/hooks/use-clan-settings';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
@@ -26,6 +28,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { Switch } from '@/components/ui/switch';
 import {
   Settings,
   Download,
@@ -36,10 +39,34 @@ import {
   AlertTriangle,
   Loader2,
   FileUp,
+  Building2,
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function AdminSettingsPage() {
   const { isAdmin, user } = useAuth();
+  const { data: clanSettings, isLoading: settingsLoading } = useClanSettings();
+  const updateSettings = useUpdateClanSettings();
+
+  // Clan settings form
+  const [clanName, setClanName] = useState('');
+  const [clanMotto, setClanMotto] = useState('');
+  const [contactEmail, setContactEmail] = useState('');
+  const [contactPhone, setContactPhone] = useState('');
+  const [requireVerification, setRequireVerification] = useState(true);
+  const [settingsInitialized, setSettingsInitialized] = useState(false);
+
+  // Populate clan settings form when data loads
+  useEffect(() => {
+    if (clanSettings && !settingsInitialized) {
+      setClanName(clanSettings.clan_name || '');
+      setClanMotto(clanSettings.clan_motto || '');
+      setContactEmail(clanSettings.contact_email || '');
+      setContactPhone(clanSettings.contact_phone || '');
+      setRequireVerification(clanSettings.require_verification ?? true);
+      setSettingsInitialized(true);
+    }
+  }, [clanSettings, settingsInitialized]);
 
   // Backup state
   const [backupPassword, setBackupPassword] = useState('');
@@ -73,6 +100,21 @@ export default function AdminSettingsPage() {
       </div>
     );
   }
+
+  const handleSaveClanSettings = async () => {
+    try {
+      await updateSettings.mutateAsync({
+        clan_name: clanName.trim(),
+        clan_motto: clanMotto.trim(),
+        contact_email: contactEmail.trim(),
+        contact_phone: contactPhone.trim(),
+        require_verification: requireVerification,
+      });
+      toast.success('Đã lưu cài đặt gia tộc');
+    } catch {
+      toast.error('Lỗi khi lưu cài đặt');
+    }
+  };
 
   const handleBackup = async () => {
     if (!backupPassword || !user?.email) return;
@@ -228,8 +270,101 @@ export default function AdminSettingsPage() {
           <Settings className="h-6 w-6" />
           Cài đặt hệ thống
         </h1>
-        <p className="text-muted-foreground">Sao lưu và quản lý dữ liệu gia phả.</p>
+        <p className="text-muted-foreground">Cài đặt gia tộc, sao lưu và quản lý dữ liệu.</p>
       </div>
+
+      <Separator />
+
+      {/* ===== CLAN SETTINGS SECTION ===== */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Building2 className="h-5 w-5 text-emerald-600" />
+            Cài đặt gia tộc
+          </CardTitle>
+          <CardDescription>
+            Thông tin chung về dòng họ, thông tin liên hệ và cấu hình hệ thống.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {settingsLoading ? (
+            <div className="space-y-3">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="clan-name">Tên dòng họ</Label>
+                  <Input
+                    id="clan-name"
+                    value={clanName}
+                    onChange={(e) => setClanName(e.target.value)}
+                    placeholder="VD: Họ Đào - Ninh Thôn"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="clan-motto">Khẩu hiệu</Label>
+                  <Input
+                    id="clan-motto"
+                    value={clanMotto}
+                    onChange={(e) => setClanMotto(e.target.value)}
+                    placeholder="VD: Uống nước nhớ nguồn"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="contact-email">Email liên hệ</Label>
+                  <Input
+                    id="contact-email"
+                    type="email"
+                    value={contactEmail}
+                    onChange={(e) => setContactEmail(e.target.value)}
+                    placeholder="admin@example.com"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="contact-phone">Số điện thoại liên hệ</Label>
+                  <Input
+                    id="contact-phone"
+                    value={contactPhone}
+                    onChange={(e) => setContactPhone(e.target.value)}
+                    placeholder="0912 345 678"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between rounded-lg border p-3">
+                <div className="space-y-0.5">
+                  <Label>Yêu cầu duyệt tài khoản</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Tài khoản mới cần admin phê duyệt trước khi sử dụng
+                  </p>
+                </div>
+                <Switch
+                  checked={requireVerification}
+                  onCheckedChange={setRequireVerification}
+                />
+              </div>
+
+              <Button
+                onClick={handleSaveClanSettings}
+                disabled={updateSettings.isPending}
+              >
+                {updateSettings.isPending ? (
+                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Đang lưu...</>
+                ) : (
+                  <><CheckCircle2 className="h-4 w-4 mr-2" /> Lưu cài đặt gia tộc</>
+                )}
+              </Button>
+            </>
+          )}
+        </CardContent>
+      </Card>
 
       <Separator />
 

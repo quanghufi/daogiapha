@@ -27,6 +27,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
@@ -49,8 +50,12 @@ import {
   RotateCcw,
   HelpCircle,
   Wrench,
+  FolderOpen,
+  CalendarDays,
 } from 'lucide-react';
 import { useAuth } from '@/components/auth/auth-provider';
+import { Badge } from '@/components/ui/badge';
+import { useUnverifiedUsers } from '@/hooks/use-profiles';
 
 const mainNavItems = [
   { title: 'Trang chủ', url: '/', icon: Home },
@@ -75,12 +80,16 @@ const adminNavItems = [
   { title: 'QL Quỹ & Học bổng', url: '/admin/fund', icon: BookOpen },
   { title: 'QL Hương ước', url: '/admin/charter', icon: ScrollText },
   { title: 'QL Cầu đương', url: '/admin/cau-duong', icon: RotateCcw },
+  { title: 'QL Sự kiện', url: '/admin/events', icon: CalendarDays },
+  { title: 'QL Tài liệu', url: '/admin/documents', icon: FolderOpen },
   { title: 'Cài đặt', url: '/admin/settings', icon: Wrench },
 ];
 
 export function AppSidebar() {
   const pathname = usePathname();
   const { user, profile, isAdmin, isEditor, signOut } = useAuth();
+  const { data: unverifiedUsers } = useUnverifiedUsers();
+  const pendingCount = unverifiedUsers?.length || 0;
 
   const getInitials = (name?: string) => {
     if (!name) return 'U';
@@ -131,6 +140,11 @@ export function AppSidebar() {
                       <Link href={item.url}>
                         <item.icon className="h-4 w-4" />
                         <span>{item.title}</span>
+                        {item.url === '/admin/users' && pendingCount > 0 && (
+                          <Badge className="ml-auto h-5 min-w-5 rounded-full bg-yellow-500 px-1 text-xs font-bold text-white">
+                            {pendingCount}
+                          </Badge>
+                        )}
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -160,6 +174,13 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent side="top" className="w-[--radix-popper-anchor-width]">
+                  <DropdownMenuItem asChild>
+                    <Link href="/settings">
+                      <Settings className="mr-2 h-4 w-4" />
+                      Hồ sơ của tôi
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => signOut()}>
                     <LogOut className="mr-2 h-4 w-4" />
                     Đăng xuất

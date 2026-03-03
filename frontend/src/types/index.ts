@@ -111,6 +111,13 @@ export interface Profile {
   /** FK → people.id: subtree root this user can edit (null = global editor) */
   edit_root_person_id?: string;
   avatar_url?: string;
+  // Verification & Suspension (Sprint 8)
+  is_verified: boolean;
+  is_suspended: boolean;
+  verified_at?: string;
+  verified_by?: string;
+  suspended_at?: string;
+  suspended_reason?: string;
   created_at: string;
   updated_at: string;
 }
@@ -389,4 +396,43 @@ export const CHI = ['Thân', 'Dậu', 'Tuất', 'Hợi', 'Tý', 'Sửu', 'Dần'
 
 export function getZodiacYear(year: number): string {
   return `${CAN[year % 10]} ${CHI[year % 12]}`;
+}
+
+// ─── Clan Document (Kho tài liệu) ──────────────────────────────────────────
+
+export type DocumentCategory = 'gia_pha' | 'lich_su' | 'hinh_anh' | 'van_kien' | 'other';
+
+export const DOCUMENT_CATEGORY_LABELS: Record<DocumentCategory, string> = {
+  gia_pha: 'Gia phả',
+  lich_su: 'Lịch sử',
+  hinh_anh: 'Hình ảnh',
+  van_kien: 'Văn kiện',
+  other: 'Khác',
+};
+
+export interface ClanDocument {
+  id: string;
+  title: string;
+  description?: string;
+  category: DocumentCategory;
+  file_url: string;
+  file_type?: string;
+  file_size?: number;
+  uploaded_by?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export type CreateClanDocumentInput = Pick<ClanDocument, 'title' | 'description' | 'category' | 'file_url' | 'file_type' | 'file_size' | 'uploaded_by'>;
+export type UpdateClanDocumentInput = Partial<CreateClanDocumentInput>;
+
+// ─── Clan Settings (Cài đặt gia tộc) ────────────────────────────────────────
+
+export interface ClanSettings {
+  clan_name: string;
+  clan_motto: string;
+  contact_email: string;
+  contact_phone: string;
+  require_verification: boolean;
 }

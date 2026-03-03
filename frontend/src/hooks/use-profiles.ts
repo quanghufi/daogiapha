@@ -16,6 +16,11 @@ import {
   updateUserRole,
   updateLinkedPerson,
   updateEditRootPerson,
+  verifyUser,
+  suspendUser,
+  unsuspendUser,
+  deleteUserAccount,
+  getUnverifiedUsers,
 } from '@/lib/supabase-data';
 import type { Profile, UserRole } from '@/types';
 
@@ -23,6 +28,7 @@ import type { Profile, UserRole } from '@/types';
 export const profileKeys = {
   all: ['profiles'] as const,
   lists: () => [...profileKeys.all, 'list'] as const,
+  unverified: () => [...profileKeys.all, 'unverified'] as const,
   details: () => [...profileKeys.all, 'detail'] as const,
   detail: (id: string) => [...profileKeys.details(), id] as const,
 };
@@ -91,6 +97,63 @@ export function useUpdateEditRootPerson() {
   return useMutation({
     mutationFn: ({ userId, personId }: { userId: string; personId: string | null }) =>
       updateEditRootPerson(userId, personId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: profileKeys.all });
+    },
+  });
+}
+
+// ─── Sprint 8: Verification & Suspension ─────────────────────────────────────
+
+export function useUnverifiedUsers() {
+  return useQuery({
+    queryKey: profileKeys.unverified(),
+    queryFn: getUnverifiedUsers,
+  });
+}
+
+export function useVerifyUser() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ profileId, verifiedByProfileId }: { profileId: string; verifiedByProfileId: string }) =>
+      verifyUser(profileId, verifiedByProfileId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: profileKeys.all });
+    },
+  });
+}
+
+export function useSuspendUser() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ profileId, reason }: { profileId: string; reason: string }) =>
+      suspendUser(profileId, reason),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: profileKeys.all });
+    },
+  });
+}
+
+export function useUnsuspendUser() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ profileId }: { profileId: string }) =>
+      unsuspendUser(profileId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: profileKeys.all });
+    },
+  });
+}
+
+export function useDeleteUser() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ userId }: { userId: string }) =>
+      deleteUserAccount(userId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: profileKeys.all });
     },

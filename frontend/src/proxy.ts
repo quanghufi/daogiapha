@@ -53,8 +53,9 @@ function _checkRateLimit(ip: string, pathname: string): { allowed: boolean; retr
   return { allowed: true, retryAfterSec: 0 };
 }
 
-const publicPaths = ['/login', '/register', '/forgot-password', '/reset-password', '/api/debug'];
+const publicPaths = ['/login', '/register', '/forgot-password', '/reset-password', '/pending-verification', '/account-suspended', '/api/debug'];
 const authPagePaths = ['/login', '/register', '/forgot-password', '/reset-password'];
+const statusPagePaths = ['/pending-verification', '/account-suspended'];
 const authRequiredPaths = [
   '/',
   '/people', '/tree', '/directory', '/events',
@@ -138,20 +139,33 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  // Admin role check
-  if (user && pathname.startsWith('/admin')) {
+  // Verification & suspension check (for authenticated users on protected pages)
+  if (user && !statusPagePaths.some(p => pathname === p) && !pathname.startsWith('/api/')) {
     try {
-      const { data: profile } = await supabase
+      const { data: statusProfile } = await supabase
         .from('profiles')
-        .select('role')
+        .select('is_verified, is_suspended, role')
         .eq('user_id', user.id)
         .single();
 
-      if (profile?.role !== 'admin' && profile?.role !== 'editor') {
-        return NextResponse.redirect(new URL('/', request.url));
+      if (statusProfile) {
+        // Unverified users → redirect to pending page
+        if (!statusProfile.is_verified) {
+          return NextResponse.redirect(new URL('/pending-verification', request.url));
+        }
+        // Suspended users → redirect to suspended page
+        if (statusProfile.is_suspended) {
+          return NextResponse.redirect(new URL('/account-suspended', request.url));
+        }
+        // Admin role check (reuse profile from above)
+        if (pathname.startsWith('/admin')) {
+          if (statusProfile.role !== 'admin' && statusProfile.role !== 'editor') {
+            return NextResponse.redirect(new URL('/', request.url));
+          }
+        }
       }
     } catch {
-      return NextResponse.redirect(new URL('/', request.url));
+      // If profile query fails, allow through (fail-open for existing sessions)
     }
   }
 

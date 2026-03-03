@@ -13,6 +13,8 @@ interface AuthContextValue {
   isLoading: boolean;
   isAdmin: boolean;
   isEditor: boolean;
+  isVerified: boolean;
+  isSuspended: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, fullName: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -105,6 +107,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const isAdmin = profile?.role === 'admin';
   const isEditor = profile?.role === 'admin' || profile?.role === 'editor';
+  const isVerified = profile?.is_verified ?? false;
+  const isSuspended = profile?.is_suspended ?? false;
 
   const value = useMemo(() => ({
     user,
@@ -113,11 +117,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isLoading,
     isAdmin,
     isEditor,
+    isVerified,
+    isSuspended,
     signIn,
     signUp,
     signOut,
     refreshProfile,
-  }), [user, profile, session, isLoading, isAdmin, isEditor, signIn, signUp, signOut, refreshProfile]);
+  }), [user, profile, session, isLoading, isAdmin, isEditor, isVerified, isSuspended, signIn, signUp, signOut, refreshProfile]);
 
   return (
     <AuthContext.Provider value={value}>

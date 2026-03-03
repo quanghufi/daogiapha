@@ -544,6 +544,88 @@ export async function updateEditRootPerson(
   return data;
 }
 
+// ─── User Verification & Suspension (Sprint 8) ──────────────────────────────
+
+export async function verifyUser(profileId: string, verifiedByProfileId: string): Promise<Profile> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .update({
+      is_verified: true,
+      verified_at: new Date().toISOString(),
+      verified_by: verifiedByProfileId,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', profileId)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function suspendUser(profileId: string, reason: string): Promise<Profile> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .update({
+      is_suspended: true,
+      suspended_at: new Date().toISOString(),
+      suspended_reason: reason,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', profileId)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function unsuspendUser(profileId: string): Promise<Profile> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .update({
+      is_suspended: false,
+      suspended_at: null,
+      suspended_reason: null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', profileId)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteUserAccount(userId: string): Promise<void> {
+  const { error } = await supabase.rpc('admin_delete_user', {
+    target_user_id: userId,
+  });
+  if (error) throw error;
+}
+
+export async function getUnverifiedUsers(): Promise<Profile[]> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('is_verified', false)
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return data || [];
+}
+
+export async function getSuspendedUsers(): Promise<Profile[]> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('is_suspended', true)
+    .order('suspended_at', { ascending: false });
+
+  if (error) throw error;
+  return data || [];
+}
+
 // FR-510: check if target person is in the subtree rooted at rootPersonId
 // Calls the PostgreSQL function is_person_in_subtree via supabase.rpc
 export async function checkPersonInSubtree(
