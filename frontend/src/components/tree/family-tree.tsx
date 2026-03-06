@@ -36,6 +36,7 @@ import type { TreePerson } from '@/types';
 import type { TreeData } from '@/lib/supabase-data';
 import Link from 'next/link';
 import { GENDER } from '@/lib/constants';
+import { TraditionalBorder, TraditionalHeader, TraditionalScroll, TraditionalFooter } from './traditional-header';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Constants
@@ -893,7 +894,7 @@ function buildTreeLayout(
     nodes.push({
       person,
       x: xPositions.get(person.id)!,
-      y: (person.generation - minGen) * LEVEL_HEIGHT + 20,
+      y: (person.generation - minGen) * LEVEL_HEIGHT + 260, // Space for traditional temple header
       isCollapsed: collapsedNodes.has(person.id),
       hasChildren: getVisibleChildrenAsFather(person.id).length > 0,
       isVisible: true,
@@ -961,9 +962,9 @@ function buildTreeLayout(
   return {
     nodes,
     connections,
-    width: maxX - minX + 100,
-    height: maxY + 100,
-    offsetX: -minX + 70,
+    width: Math.max(800, maxX - minX + 240),
+    height: maxY + 300, // Space for traditional lotus footer
+    offsetX: -minX + 140, // Space for traditional scroll banner
   };
 }
 
@@ -1477,85 +1478,107 @@ export function FamilyTree() {
       )}
 
       {/* Tree container */}
-      <div className="rounded-xl border-2 bg-gradient-to-br from-background to-muted/30 overflow-hidden">
+      <TraditionalBorder>
         <div
-          ref={containerRef}
-          className="overflow-hidden relative select-none"
-          style={{ height: '65vh', cursor: isPanning ? 'grabbing' : 'grab' }}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
+          className="relative overflow-hidden bg-amber-50 rounded-xl"
+          style={{
+            backgroundImage: 'url(/tree-assets/bg-pattern.png)',
+            backgroundRepeat: 'repeat',
+            backgroundSize: '400px 400px',
+          }}
         >
-          {/* Generation headers */}
-          <GenerationHeaders nodes={layout.nodes} offsetX={layout.offsetX} />
+          {/* Subtle overlay */}
+          <div className="absolute inset-0 bg-gradient-to-b from-amber-50/60 via-transparent to-amber-50/60 pointer-events-none z-0" />
 
-          {/* Transformed content */}
-          <div
-            style={{
-              transform: `translate(${pan.x}px, ${pan.y}px) scale(${scale})`,
-              transformOrigin: '0 0',
-              position: 'relative',
-              width: layout.width + layout.offsetX,
-              height: layout.height,
-            }}
-          >
-            {/* Connections SVG layer */}
-            <ConnectionsLayer connections={layout.connections} offsetX={layout.offsetX} />
-
-            {/* Person cards */}
-            <div style={{ position: 'relative', transform: `translateX(${layout.offsetX}px)` }}>
-              {layout.nodes.map((node) => (
-                <PersonCard
-                  key={node.person.id}
-                  node={node}
-                  zoomLevel={zoomLevel}
-                  isSelected={selectedPerson?.id === node.person.id}
-                  onSelect={handleNodeSelect}
-                  onToggleCollapse={handleToggleCollapse}
-                  branchSummary={branchSummaries.get(node.person.id)}
-                />
-              ))}
-
-              {/* Context menu popup */}
-              <AnimatePresence>
-                {contextMenu && (
-                  <NodeContextMenu
-                    menu={contextMenu}
-                    onClose={handleCloseContextMenu}
-                    onViewAncestors={(person) => {
-                      setSelectedPerson(person);
-                      handleViewModeChange('ancestors');
-                    }}
-                    onViewDescendants={(person) => {
-                      setSelectedPerson(person);
-                      handleViewModeChange('descendants');
-                    }}
-                    onCenter={handleCenterOnNode}
-                  />
-                )}
-              </AnimatePresence>
-            </div>
+          {/* Fixed Traditional Overlays */}
+          <div className="absolute top-0 inset-x-0 z-10 pointer-events-none">
+            <TraditionalHeader familyName="Đào Tộc" subtitle="" />
+          </div>
+          <TraditionalScroll text="Phúc Đức Tổ Tiên" side="left" />
+          <TraditionalScroll text="Con Cháu Thảo Hiền" side="right" />
+          <div className="absolute bottom-0 inset-x-0 z-10 pointer-events-none">
+            <TraditionalFooter />
           </div>
 
-          {/* Minimap */}
-          {showMinimap && layout.nodes.length > 3 && (
-            <Minimap
-              nodes={layout.nodes}
-              viewBox={viewBox}
-              treeWidth={layout.width}
-              treeHeight={layout.height}
-              onViewportClick={handleMinimapClick}
-            />
-          )}
-        </div>
+          <div
+            ref={containerRef}
+            className="overflow-hidden relative select-none z-0"
+            style={{ height: '70vh', cursor: isPanning ? 'grabbing' : 'grab' }}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          >
+            {/* Generation headers */}
+            <GenerationHeaders nodes={layout.nodes} offsetX={layout.offsetX} />
 
-        {/* Legend */}
-        <LegendBar />
-      </div>
+            {/* Transformed content */}
+            <div
+              style={{
+                transform: `translate(${pan.x}px, ${pan.y}px) scale(${scale})`,
+                transformOrigin: '0 0',
+                position: 'relative',
+                width: layout.width + layout.offsetX,
+                height: layout.height,
+              }}
+            >
+              {/* Connections SVG layer */}
+              <ConnectionsLayer connections={layout.connections} offsetX={layout.offsetX} />
+
+              {/* Person cards */}
+              <div style={{ position: 'relative', transform: `translateX(${layout.offsetX}px)` }}>
+                {layout.nodes.map((node) => (
+                  <PersonCard
+                    key={node.person.id}
+                    node={node}
+                    zoomLevel={zoomLevel}
+                    isSelected={selectedPerson?.id === node.person.id}
+                    onSelect={handleNodeSelect}
+                    onToggleCollapse={handleToggleCollapse}
+                    branchSummary={branchSummaries.get(node.person.id)}
+                  />
+                ))}
+
+                {/* Context menu popup */}
+                <AnimatePresence>
+                  {contextMenu && (
+                    <NodeContextMenu
+                      menu={contextMenu}
+                      onClose={handleCloseContextMenu}
+                      onViewAncestors={(person) => {
+                        setSelectedPerson(person);
+                        handleViewModeChange('ancestors');
+                      }}
+                      onViewDescendants={(person) => {
+                        setSelectedPerson(person);
+                        handleViewModeChange('descendants');
+                      }}
+                      onCenter={handleCenterOnNode}
+                    />
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
+
+            {/* Minimap */}
+            {showMinimap && layout.nodes.length > 3 && (
+              <Minimap
+                nodes={layout.nodes}
+                viewBox={viewBox}
+                treeWidth={layout.width}
+                treeHeight={layout.height}
+                onViewportClick={handleMinimapClick}
+              />
+            )}
+          </div>
+
+          {/* Legend */}
+          <LegendBar />
+        </div>
+      </TraditionalBorder>
     </div>
   );
 }
