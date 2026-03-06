@@ -895,7 +895,7 @@ function buildTreeLayout(
     nodes.push({
       person,
       x: xPositions.get(person.id)!,
-      y: (person.generation - minGen) * LEVEL_HEIGHT + 120, // Top breathing room
+      y: (person.generation - minGen) * LEVEL_HEIGHT + 72, // Top breathing room
       isCollapsed: collapsedNodes.has(person.id),
       hasChildren: getVisibleChildrenAsFather(person.id).length > 0,
       isVisible: true,
@@ -964,7 +964,7 @@ function buildTreeLayout(
     nodes,
     connections,
     width: Math.max(800, maxX - minX + 240),
-    height: maxY + 180, // Bottom breathing room
+    height: maxY + 120, // Bottom breathing room
     offsetX: -minX + 120, // Space for traditional scroll banner
   };
 }
@@ -1492,7 +1492,7 @@ export function FamilyTree() {
       <TraditionalBorder>
         <div
           className={`relative overflow-hidden bg-amber-50 rounded-xl ${
-            showDecorations ? 'min-h-[620px] md:min-h-[680px]' : 'min-h-[560px] md:min-h-[620px]'
+            showDecorations ? 'h-[74vh] min-h-[640px]' : 'h-[76vh] min-h-[620px]'
           }`}
           style={{
             backgroundImage: 'url(/tree-assets/bg-pattern.png)',
@@ -1522,7 +1522,7 @@ export function FamilyTree() {
           <div
             className={`absolute rounded-lg overflow-hidden ${
               showDecorations
-                ? 'left-2 right-2 top-[128px] bottom-10 md:left-3 md:right-3 lg:left-[76px] lg:right-[76px]'
+                ? 'left-2 right-2 top-[120px] bottom-6 md:left-3 md:right-3 lg:left-[76px] lg:right-[76px]'
                 : 'left-2 right-2 top-2 bottom-8 md:left-3 md:right-3 md:top-3 md:bottom-9'
             }`}
           >
