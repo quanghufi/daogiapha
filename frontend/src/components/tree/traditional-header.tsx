@@ -77,11 +77,11 @@ export function TraditionalScroll({ text, side }: TraditionalScrollProps) {
           sizes="66px"
           className="object-contain drop-shadow-md"
         />
-        <div className="absolute inset-x-[11px] top-[78px] bottom-[78px] flex flex-col items-center justify-evenly overflow-hidden">
+        <div className="absolute inset-x-[12px] top-[22px] bottom-[28px] flex flex-col items-center justify-evenly overflow-hidden">
           {lines.map((line, index) => (
             <span
               key={`${line}-${index}`}
-              className="block whitespace-nowrap text-center text-[13px] font-semibold leading-none tracking-[0.02em] text-[#f7d86f]"
+              className="block whitespace-nowrap text-center text-[11px] font-semibold leading-none tracking-[0.01em] text-[#f7d86f]"
               style={{
                 fontFamily: '"Noto Serif", "Times New Roman", serif',
                 textShadow: '0 1px 2px rgba(44, 10, 0, 0.78)',
