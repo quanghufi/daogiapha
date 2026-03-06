@@ -242,7 +242,13 @@ export default function DirectoryPage() {
                                 person.gender === 1 ? 'bg-blue-500' : 'bg-pink-500'
                               }`}
                             >
-                              {person.display_name.charAt(person.display_name.length - 1)}
+                              {(() => {
+                                const parts = person.display_name.trim().split(/\s+/);
+                                if (parts.length >= 2) {
+                                  return (parts[parts.length - 2][0] + parts[parts.length - 1][0]).toUpperCase();
+                                }
+                                return person.display_name.substring(0, 2).toUpperCase();
+                              })()}
                             </div>
                             <div>
                               <div className="font-medium">{person.display_name}</div>
