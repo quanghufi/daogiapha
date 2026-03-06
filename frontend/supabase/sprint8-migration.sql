@@ -100,10 +100,8 @@ CREATE TABLE IF NOT EXISTS clan_documents (
 
 ALTER TABLE clan_documents ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Authenticated users can read active documents" ON clan_documents
-    FOR SELECT USING (
-        auth.uid() IS NOT NULL AND is_active = true
-    );
+CREATE POLICY "Anyone can read active documents" ON clan_documents
+    FOR SELECT USING (is_active = true);
 
 CREATE POLICY "Editors can insert documents" ON clan_documents
     FOR INSERT WITH CHECK (
