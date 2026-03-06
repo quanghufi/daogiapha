@@ -2,11 +2,12 @@
  * @project AncestorTree
  * @file src/app/(main)/page.tsx
  * @description Homepage with hero, features, stats, and upcoming events
- * @version 1.0.0
- * @updated 2026-02-24
+ * @version 2.0.0
+ * @updated 2026-03-06
  */
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { GitBranchPlus, Calendar, Users, ArrowRight } from 'lucide-react';
@@ -44,27 +45,88 @@ export default function HomePage() {
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-emerald-800 to-emerald-950 text-white">
-        <div className="container mx-auto px-4 py-16 md:py-24 text-center">
-          <h1 className="text-3xl md:text-5xl font-bold mb-4">
-            Đào tộc - Ninh thôn
-          </h1>
-          <p className="text-lg md:text-xl text-emerald-100 mb-8 max-w-2xl mx-auto">
-            &ldquo;Gìn giữ tinh hoa - Tiếp bước cha ông&rdquo;
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button asChild size="lg" variant="secondary">
-              <Link href="/tree">
-                <GitBranchPlus className="mr-2 h-5 w-5" />
-                Xem Gia Phả
-              </Link>
-            </Button>
-            <Button asChild size="lg" variant="outline" className="bg-transparent border-white text-white hover:bg-white/10">
-              <Link href="/people">
-                <Users className="mr-2 h-5 w-5" />
-                Danh sách thành viên
-              </Link>
-            </Button>
+      <section
+        className="relative overflow-hidden border-b border-amber-200"
+        style={{
+          backgroundImage: 'url(/tree-assets/bg-pattern.png)',
+          backgroundRepeat: 'repeat',
+          backgroundSize: '320px 320px',
+        }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-b from-amber-100/95 via-amber-50/85 to-amber-100/95" />
+
+        <div className="absolute left-0 top-0 h-full w-2 bg-gradient-to-b from-amber-700 via-yellow-500 to-amber-700 opacity-60" />
+        <div className="absolute right-0 top-0 h-full w-2 bg-gradient-to-b from-amber-700 via-yellow-500 to-amber-700 opacity-60" />
+
+        <div className="container relative z-10 mx-auto px-4 py-10 md:py-14">
+          <div className="relative mx-auto max-w-5xl rounded-2xl border-2 border-amber-700/70 bg-amber-50/80 px-5 py-8 shadow-[0_16px_36px_rgba(125,85,15,0.18)] backdrop-blur-sm md:px-10 md:py-10">
+            <div className="relative mx-auto mb-4 w-full max-w-[360px] aspect-[560/250]">
+              <Image
+                src="/tree-assets/temple-header-trim.png"
+                alt="Trang trí gia phả"
+                fill
+                sizes="(max-width: 768px) 80vw, 360px"
+                className="object-contain"
+                priority
+              />
+            </div>
+
+            <div className="mx-auto mb-5 w-fit rounded-md border border-yellow-500 bg-gradient-to-r from-red-900/95 via-red-800/95 to-red-900/95 px-5 py-2 text-center shadow-md">
+              <p className="text-[11px] font-medium uppercase tracking-[0.25em] text-yellow-200">Gia phả điện tử</p>
+              <h1
+                className="text-2xl font-bold tracking-wide text-yellow-300 md:text-4xl"
+                style={{ fontFamily: '"Noto Serif", "Times New Roman", serif' }}
+              >
+                Đào tộc - Ninh thôn
+              </h1>
+            </div>
+
+            <p className="mx-auto mb-7 max-w-2xl text-center text-base text-amber-900/85 md:text-lg">
+              &ldquo;Gìn giữ tinh hoa - Tiếp bước cha ông&rdquo;
+            </p>
+
+            <div className="flex flex-col justify-center gap-3 sm:flex-row">
+              <Button asChild size="lg" className="bg-amber-700 text-white hover:bg-amber-800">
+                <Link href="/tree">
+                  <GitBranchPlus className="mr-2 h-5 w-5" />
+                  Xem Gia Phả
+                </Link>
+              </Button>
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="border-amber-700 bg-transparent text-amber-900 hover:bg-amber-100"
+              >
+                <Link href="/people">
+                  <Users className="mr-2 h-5 w-5" />
+                  Danh sách thành viên
+                </Link>
+              </Button>
+            </div>
+
+            <div className="pointer-events-none absolute -bottom-1 left-3 hidden lg:block">
+              <div className="relative w-[120px] aspect-[296/205] overflow-hidden opacity-80">
+                <Image
+                  src="/tree-assets/lotus-decoration-trim.png"
+                  alt="Hoa sen trái"
+                  fill
+                  sizes="120px"
+                  className="object-cover object-left"
+                />
+              </div>
+            </div>
+            <div className="pointer-events-none absolute -bottom-1 right-3 hidden lg:block">
+              <div className="relative w-[120px] aspect-[296/205] overflow-hidden opacity-80">
+                <Image
+                  src="/tree-assets/lotus-decoration-trim.png"
+                  alt="Hoa sen phải"
+                  fill
+                  sizes="120px"
+                  className="object-cover object-right"
+                />
+              </div>
+            </div>
           </div>
         </div>
       </section>
