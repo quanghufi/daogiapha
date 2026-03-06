@@ -7,16 +7,23 @@
  */
 
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Be_Vietnam_Pro, Noto_Serif } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/components/auth/auth-provider";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 
-const inter = Inter({
+const bodyFont = Be_Vietnam_Pro({
   subsets: ["latin", "vietnamese"],
-  variable: "--font-inter",
+  variable: "--font-body",
+  weight: ["400", "500", "600", "700"],
+});
+
+const headingFont = Noto_Serif({
+  subsets: ["latin", "vietnamese"],
+  variable: "--font-display",
+  weight: ["600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -42,7 +49,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="vi" suppressHydrationWarning>
-      <body className={`${inter.variable} font-sans antialiased`}>
+      <body className={`${bodyFont.variable} ${headingFont.variable} font-sans antialiased`}>
         <QueryProvider>
           <AuthProvider>
             <TooltipProvider>

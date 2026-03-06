@@ -99,9 +99,9 @@ export function AppSidebar() {
 
   return (
     <Sidebar>
-      <SidebarHeader className="border-b px-4 py-4">
+      <SidebarHeader className="border-b border-sidebar-border/80 px-4 py-4">
         <Link href="/" className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-lg">
+          <div className="theme-brand-mark flex h-10 w-10 items-center justify-center font-bold text-lg">
             Đ
           </div>
           <div className="flex flex-col">
@@ -142,7 +142,7 @@ export function AppSidebar() {
                         <item.icon className="h-4 w-4" />
                         <span>{item.title}</span>
                         {item.url === '/admin/users' && pendingCount > 0 && (
-                          <Badge className="ml-auto h-5 min-w-5 rounded-full bg-yellow-500 px-1 text-xs font-bold text-white">
+                          <Badge className="ml-auto h-5 min-w-5 rounded-full bg-primary px-1 text-xs font-bold text-primary-foreground">
                             {pendingCount}
                           </Badge>
                         )}
@@ -169,7 +169,7 @@ export function AppSidebar() {
                     </Avatar>
                     <div className="flex flex-col items-start text-sm">
                       <span className="font-medium">{profile?.full_name || user?.email}</span>
-                      <span className="text-xs text-muted-foreground capitalize">{profile?.role || 'viewer'}</span>
+                      <span className="text-xs text-sidebar-foreground/70 capitalize">{profile?.role || 'viewer'}</span>
                     </div>
                     <ChevronUp className="ml-auto h-4 w-4" />
                   </SidebarMenuButton>

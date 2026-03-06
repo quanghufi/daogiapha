@@ -43,10 +43,10 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-emerald-100 p-4">
-      <Card className="w-full max-w-md">
+    <div className="theme-auth-shell">
+      <Card className="theme-auth-card w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mx-auto w-12 h-12 bg-emerald-600 rounded-lg flex items-center justify-center text-white font-bold text-xl mb-4">
+          <div className="theme-brand-mark mx-auto mb-4 flex h-12 w-12 items-center justify-center text-xl font-bold">
             Đ
           </div>
           <CardTitle>Quên mật khẩu</CardTitle>
@@ -57,8 +57,8 @@ export default function ForgotPasswordPage() {
         <CardContent>
           {sent ? (
             <div className="text-center space-y-4">
-              <div className="mx-auto w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
-                <Mail className="h-6 w-6 text-emerald-600" />
+              <div className="theme-status-icon mx-auto flex h-12 w-12 items-center justify-center rounded-full">
+                <Mail className="h-6 w-6" />
               </div>
               <p className="text-sm text-muted-foreground">
                 Email đặt lại mật khẩu đã được gửi đến <strong>{email}</strong>.
@@ -91,7 +91,7 @@ export default function ForgotPasswordPage() {
               </form>
 
               <div className="mt-4 text-center text-sm">
-                <Link href="/login" className="text-emerald-600 hover:underline inline-flex items-center">
+                <Link href="/login" className="theme-link inline-flex items-center">
                   <ArrowLeft className="h-3 w-3 mr-1" />
                   Quay lại đăng nhập
                 </Link>

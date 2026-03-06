@@ -9,11 +9,11 @@ export default function PendingVerificationPage() {
   const { signOut } = useAuth();
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4">
-      <Card className="w-full max-w-md text-center">
+    <div className="theme-auth-shell">
+      <Card className="theme-auth-card w-full max-w-md text-center">
         <CardHeader>
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-yellow-100">
-            <Clock className="h-8 w-8 text-yellow-600" />
+          <div className="theme-status-icon mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
+            <Clock className="h-8 w-8" />
           </div>
           <CardTitle className="text-2xl">Tài khoản đang chờ duyệt</CardTitle>
           <CardDescription>

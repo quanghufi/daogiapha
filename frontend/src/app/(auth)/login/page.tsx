@@ -34,10 +34,10 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-emerald-100 p-4">
-      <Card className="w-full max-w-md">
+    <div className="theme-auth-shell">
+      <Card className="theme-auth-card w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mx-auto w-12 h-12 bg-emerald-600 rounded-lg flex items-center justify-center text-white font-bold text-xl mb-4">
+          <div className="theme-brand-mark mx-auto mb-4 flex h-12 w-12 items-center justify-center text-xl font-bold">
             Đ
           </div>
           <CardTitle>Đăng nhập</CardTitle>
@@ -70,7 +70,7 @@ export default function LoginPage() {
               />
             </div>
             <div className="flex justify-end">
-              <Link href="/forgot-password" className="text-sm text-emerald-600 hover:underline">
+              <Link href="/forgot-password" className="theme-link text-sm">
                 Quên mật khẩu?
               </Link>
             </div>
@@ -81,7 +81,7 @@ export default function LoginPage() {
 
           <div className="mt-4 text-center text-sm">
             <span className="text-muted-foreground">Chưa có tài khoản? </span>
-            <Link href="/register" className="text-emerald-600 hover:underline">
+            <Link href="/register" className="theme-link">
               Đăng ký
             </Link>
           </div>

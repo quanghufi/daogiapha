@@ -9,11 +9,11 @@ export default function AccountSuspendedPage() {
   const { signOut, profile } = useAuth();
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4">
-      <Card className="w-full max-w-md text-center">
+    <div className="theme-auth-shell">
+      <Card className="theme-auth-card w-full max-w-md text-center">
         <CardHeader>
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
-            <Ban className="h-8 w-8 text-red-600" />
+          <div className="theme-status-icon mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
+            <Ban className="h-8 w-8 text-destructive" />
           </div>
           <CardTitle className="text-2xl">Tài khoản đã bị khóa</CardTitle>
           <CardDescription>

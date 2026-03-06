@@ -47,10 +47,10 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-emerald-100 p-4">
-      <Card className="w-full max-w-md">
+    <div className="theme-auth-shell">
+      <Card className="theme-auth-card w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mx-auto w-12 h-12 bg-emerald-600 rounded-lg flex items-center justify-center text-white font-bold text-xl mb-4">
+          <div className="theme-brand-mark mx-auto mb-4 flex h-12 w-12 items-center justify-center text-xl font-bold">
             Đ
           </div>
           <CardTitle>Đăng ký</CardTitle>
@@ -111,7 +111,7 @@ export default function RegisterPage() {
           
           <div className="mt-4 text-center text-sm">
             <span className="text-muted-foreground">Đã có tài khoản? </span>
-            <Link href="/login" className="text-emerald-600 hover:underline">
+            <Link href="/login" className="theme-link">
               Đăng nhập
             </Link>
           </div>
