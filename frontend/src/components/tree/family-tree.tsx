@@ -47,7 +47,7 @@ import { TraditionalBorder, TraditionalHeader, TraditionalScroll, TraditionalFoo
 const CARD_W = 180;
 const CARD_H = 80;
 const LEVEL_HEIGHT = 140;
-const FIRST_GENERATION_TOP_OFFSET = 72;
+const FIRST_GENERATION_TOP_OFFSET = 96;
 const SIBLING_GAP = 24;
 const COUPLE_GAP = 12;
 const MINIMAP_WIDTH = 160;
