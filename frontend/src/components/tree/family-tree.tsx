@@ -845,9 +845,9 @@ export function buildTreeLayout(
     const fams = fatherToFamilies.get(personId) || [];
     return fams
       .filter((fam) => {
-      const hasVisibleSpouse = !!fam.mother_id && visibleIds.has(fam.mother_id);
-      const hasVisibleChildren = (visibleChildIdsByFamily.get(fam.id) || []).length > 0;
-      return hasVisibleSpouse || hasVisibleChildren || !fam.mother_id;
+        const hasVisibleSpouse = !!fam.mother_id && visibleIds.has(fam.mother_id);
+        const hasVisibleChildren = (visibleChildIdsByFamily.get(fam.id) || []).length > 0;
+        return hasVisibleSpouse || hasVisibleChildren || !fam.mother_id;
       })
       .map((family) => ({
         family,
@@ -856,8 +856,23 @@ export function buildTreeLayout(
       }));
   };
 
+  const getPositionedFamilyGroupsAsFather = (personId: string) => {
+    const groups = getVisibleFamilyGroupsAsFather(personId);
+    if (groups.length <= 1) {
+      return groups.map((group) => ({ ...group, slot: 1 }));
+    }
+
+    return groups
+      .map((group, index) => {
+        const distance = Math.floor(index / 2) + 1;
+        const slot = index % 2 === 0 ? -distance : distance;
+        return { ...group, slot };
+      })
+      .sort((a, b) => a.slot - b.slot);
+  };
+
   const getVisibleChildrenAsFather = (personId: string): string[] => {
-    const familiesWithChildren = getVisibleFamilyGroupsAsFather(personId);
+    const familiesWithChildren = getPositionedFamilyGroupsAsFather(personId);
     const result: string[] = [];
     for (const { childIds } of familiesWithChildren) {
       childIds.forEach((childId) => {
@@ -868,7 +883,7 @@ export function buildTreeLayout(
   };
 
   const getVisibleWives = (personId: string): string[] => {
-    const fams = getVisibleFamilyGroupsAsFather(personId);
+    const fams = getPositionedFamilyGroupsAsFather(personId);
     const result: string[] = [];
     for (const fam of fams) {
       if (fam.spouseId && !result.includes(fam.spouseId)) {
@@ -903,11 +918,14 @@ export function buildTreeLayout(
   const subtreeWidths = new Map<string, number>();
   const computeSubtreeWidth = (personId: string): number => {
     if (subtreeWidths.has(personId)) return subtreeWidths.get(personId)!;
-    const wives = getVisibleWives(personId);
+    const familyGroupsWithSlots = getPositionedFamilyGroupsAsFather(personId);
+    const wives = familyGroupsWithSlots.filter(({ spouseId }) => spouseId !== null);
     const familyGroups = collapsedNodes.has(personId)
       ? []
-      : getVisibleFamilyGroupsAsFather(personId).filter(({ childIds }) => childIds.length > 0);
-    const spouseRowWidth = CARD_W + wives.length * (COUPLE_GAP + CARD_W);
+      : familyGroupsWithSlots.filter(({ childIds }) => childIds.length > 0);
+    const spouseRowWidth = wives.length > 1
+      ? CARD_W + Math.max(...wives.map(({ slot }) => Math.abs(slot)), 0) * 2 * (COUPLE_GAP + CARD_W)
+      : CARD_W + wives.length * (COUPLE_GAP + CARD_W);
     const childrenWidth = familyGroups.length > 0
       ? familyGroups.reduce((sum, group, index) => {
           const groupWidth =
@@ -926,21 +944,30 @@ export function buildTreeLayout(
   const xPositions = new Map<string, number>();
   const assignPositions = (personId: string, startX: number) => {
     const sw = subtreeWidths.get(personId) || CARD_W;
-    const wives = getVisibleWives(personId);
+    const familyGroupsWithSlots = getPositionedFamilyGroupsAsFather(personId);
+    const wives = familyGroupsWithSlots.filter(({ spouseId }) => spouseId !== null);
     const familyChildren = collapsedNodes.has(personId)
       ? []
-      : getVisibleFamilyGroupsAsFather(personId).filter(({ childIds }) => childIds.length > 0);
-    const spouseRowWidth = CARD_W + wives.length * (CARD_W + COUPLE_GAP);
+      : familyGroupsWithSlots.filter(({ childIds }) => childIds.length > 0);
+    const hasMultipleSpouses = wives.length > 1;
+    const spouseRowWidth = hasMultipleSpouses
+      ? CARD_W + Math.max(...wives.map(({ slot }) => Math.abs(slot)), 0) * 2 * (CARD_W + COUPLE_GAP)
+      : CARD_W + wives.length * (CARD_W + COUPLE_GAP);
     const centerX = startX + sw / 2;
 
-    // Center spouse row with the husband anchored on the left.
-    const fatherX = centerX - spouseRowWidth / 2;
+    // Single spouse keeps the classic left-right layout. Multiple spouses use a centered hub layout.
+    const fatherX = hasMultipleSpouses ? centerX - CARD_W / 2 : centerX - spouseRowWidth / 2;
     xPositions.set(personId, fatherX);
-    wives.forEach((wifeId, index) => {
-      xPositions.set(wifeId, fatherX + (index + 1) * (CARD_W + COUPLE_GAP));
+    wives.forEach(({ spouseId, slot }) => {
+      if (!spouseId) return;
+      if (hasMultipleSpouses) {
+        xPositions.set(spouseId, fatherX + slot * (CARD_W + COUPLE_GAP));
+      } else {
+        xPositions.set(spouseId, fatherX + (CARD_W + COUPLE_GAP));
+      }
     });
 
-    // Children stay grouped by family order so each spouse keeps her own branch.
+    // Children stay grouped by the visual spouse order so each branch reads as one family unit.
     if (familyChildren.length > 0) {
       const totalChildW = familyChildren.reduce((sum, group, index) => {
         const groupWidth =
@@ -995,11 +1022,12 @@ export function buildTreeLayout(
 
     // Couple line (horizontal, between nodes)
     if (fatherPos && motherPos) {
+      const fatherToRight = fatherPos.x < motherPos.x;
       connections.push({
         id: `couple-${family.id}`,
-        x1: fatherPos.x + CARD_W,
+        x1: fatherToRight ? fatherPos.x + CARD_W : fatherPos.x,
         y1: fatherPos.y + CARD_H / 2,
-        x2: motherPos.x,
+        x2: fatherToRight ? motherPos.x : motherPos.x + CARD_W,
         y2: motherPos.y + CARD_H / 2,
         type: 'couple',
         isVisible: true,
@@ -1014,7 +1042,7 @@ export function buildTreeLayout(
     const parentPos = fatherPos ?? motherPos!;
     const familyCenterX =
       fatherPos && motherPos
-        ? (fatherPos.x + CARD_W + motherPos.x) / 2
+        ? (fatherPos.x + CARD_W / 2 + motherPos.x + CARD_W / 2) / 2
         : parentPos.x + CARD_W / 2;
 
     children.filter((c) => c.family_id === family.id).forEach((child) => {

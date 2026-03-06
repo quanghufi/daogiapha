@@ -386,6 +386,7 @@ interface OwnFamilySectionProps {
   currentPerson: Person;
   canEdit: boolean;
   index: number;
+  totalFamilies: number;
   onAddChild: (familyId: string) => void;
 }
 
@@ -394,10 +395,12 @@ function OwnFamilySection({
   currentPerson,
   canEdit,
   index,
+  totalFamilies,
   onAddChild,
 }: OwnFamilySectionProps) {
   const { family, spouse, children } = familyEntry;
-  const spouseLabel = currentPerson.gender === GENDER.MALE ? 'Vợ' : 'Chồng';
+  const spouseBaseLabel = currentPerson.gender === GENDER.MALE ? 'Vợ' : 'Chồng';
+  const spouseLabel = totalFamilies > 1 ? `${spouseBaseLabel} ${index + 1}` : spouseBaseLabel;
 
   return (
     <div className="space-y-3">
@@ -577,6 +580,7 @@ export function FamilyRelationsCard({ person, canEdit }: FamilyRelationsCardProp
                   currentPerson={person}
                   canEdit={canEdit}
                   index={idx}
+                  totalFamilies={ownFamilies.length}
                   onAddChild={openChildDialog}
                 />
               ))}

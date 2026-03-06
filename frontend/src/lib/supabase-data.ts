@@ -381,7 +381,7 @@ export async function getPersonRelations(personId: string): Promise<PersonRelati
       spouse: spouseId ? (personMap.get(spouseId) || null) : null,
       children: familyChildren,
     };
-  });
+  }).filter((entry) => entry.spouse !== null || entry.children.length > 0);
 
   return { parentFamily: parentFamilyResult, ownFamilies: resolvedOwnFamilies };
 }
