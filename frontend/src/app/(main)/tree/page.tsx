@@ -1,9 +1,9 @@
 /**
  * @project AncestorTree
  * @file src/app/(main)/tree/page.tsx
- * @description Family tree visualization page with GEDCOM export
- * @version 2.0.0
- * @updated 2026-02-25
+ * @description Family tree visualization page with traditional Vietnamese theme
+ * @version 3.0.0
+ * @updated 2026-03-06
  */
 
 'use client';
@@ -14,7 +14,13 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useTreeData } from '@/hooks/use-families';
 import { downloadGedcom } from '@/lib/gedcom-export';
-import { GitBranchPlus, Download, Loader2 } from 'lucide-react';
+import {
+  TraditionalHeader,
+  TraditionalScroll,
+  TraditionalFooter,
+  TraditionalBorder,
+} from '@/components/tree/traditional-header';
+import { Download, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 const FamilyTree = dynamic(
@@ -48,33 +54,58 @@ export default function TreePage() {
   };
 
   return (
-    <div className="container mx-auto p-4 space-y-6">
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <GitBranchPlus className="h-6 w-6" />
-            Cây Gia Phả
-          </h1>
-          <p className="text-muted-foreground">
-            Sơ đồ phả hệ trực quan - Click vào từng thành viên để xem chi tiết
-          </p>
-        </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleExport}
-          disabled={isExporting || !treeData}
-        >
-          {isExporting ? (
-            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-          ) : (
-            <Download className="h-4 w-4 mr-2" />
-          )}
-          Xuất GEDCOM
-        </Button>
-      </div>
+    <div
+      className="relative min-h-screen pb-8"
+      style={{
+        backgroundImage: 'url(/tree-assets/bg-pattern.png)',
+        backgroundRepeat: 'repeat',
+        backgroundSize: '400px 400px',
+      }}
+    >
+      {/* Subtle overlay for readability */}
+      <div className="absolute inset-0 bg-gradient-to-b from-amber-50/60 via-transparent to-amber-50/60 pointer-events-none" />
 
-      <FamilyTree />
+      <div className="relative z-10 container mx-auto px-4 py-4 space-y-4">
+        {/* Traditional Header with temple & family name */}
+        <TraditionalHeader familyName="Đào Tộc" subtitle="Ninh Thôn - Gia Phả Điện Tử" />
+
+        {/* Export button */}
+        <div className="flex justify-end">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExport}
+            disabled={isExporting || !treeData}
+            className="bg-amber-50/80 border-yellow-700/40 text-yellow-900 hover:bg-amber-100/80 hover:border-yellow-700/60"
+          >
+            {isExporting ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4 mr-2" />
+            )}
+            Xuất GEDCOM
+          </Button>
+        </div>
+
+        {/* Main tree area with traditional border & scrolls */}
+        <div className="relative">
+          {/* Left scroll - Câu đối trái */}
+          <TraditionalScroll text="Phúc Đức Tổ Tiên" side="left" />
+
+          {/* Right scroll - Câu đối phải */}
+          <TraditionalScroll text="Con Cháu Thảo Hiền" side="right" />
+
+          {/* Tree content with traditional border */}
+          <div className="lg:mx-[90px]">
+            <TraditionalBorder>
+              <FamilyTree />
+            </TraditionalBorder>
+          </div>
+        </div>
+
+        {/* Lotus footer decoration */}
+        <TraditionalFooter />
+      </div>
     </div>
   );
 }
