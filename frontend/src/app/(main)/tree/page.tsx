@@ -48,7 +48,7 @@ export default function TreePage() {
   };
 
   return (
-    <div className="container mx-auto p-4 space-y-6">
+    <div className="w-full px-4 py-4 md:px-6 space-y-6">
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
