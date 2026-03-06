@@ -57,6 +57,11 @@ interface TraditionalScrollProps {
 }
 
 export function TraditionalScroll({ text, side }: TraditionalScrollProps) {
+  const lines = text
+    .split(/\s+/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+
   return (
     <div
       className={`absolute top-1/2 -translate-y-1/2 z-[3] hidden xl:flex flex-col items-center ${
@@ -72,18 +77,19 @@ export function TraditionalScroll({ text, side }: TraditionalScrollProps) {
           sizes="66px"
           className="object-contain drop-shadow-md"
         />
-        <div className="absolute inset-0 flex items-center justify-center px-2.5 pt-2 pb-4">
-          <p
-            className="text-[11px] font-bold leading-[2.0] tracking-[0.25em] text-yellow-300"
-            style={{
-              writingMode: 'vertical-rl',
-              textOrientation: 'upright',
-              fontFamily: '"Noto Serif", "Times New Roman", serif',
-              textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
-            }}
-          >
-            {text}
-          </p>
+        <div className="absolute inset-x-[11px] top-[78px] bottom-[78px] flex flex-col items-center justify-evenly overflow-hidden">
+          {lines.map((line, index) => (
+            <span
+              key={`${line}-${index}`}
+              className="block whitespace-nowrap text-center text-[13px] font-semibold leading-none tracking-[0.02em] text-[#f7d86f]"
+              style={{
+                fontFamily: '"Noto Serif", "Times New Roman", serif',
+                textShadow: '0 1px 2px rgba(44, 10, 0, 0.78)',
+              }}
+            >
+              {line}
+            </span>
+          ))}
         </div>
       </div>
     </div>
