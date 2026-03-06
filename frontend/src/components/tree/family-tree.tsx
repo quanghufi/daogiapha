@@ -49,6 +49,7 @@ const CARD_H = 80;
 const LEVEL_HEIGHT = 140;
 const FIRST_GENERATION_TOP_OFFSET = 96;
 const SIBLING_GAP = 24;
+const FAMILY_GAP = 72;
 const COUPLE_GAP = 12;
 const MINIMAP_WIDTH = 160;
 const MINIMAP_HEIGHT = 100;
@@ -74,6 +75,7 @@ interface TreeNodeData {
   isCollapsed: boolean;
   hasChildren: boolean;
   isVisible: boolean;
+  spouseOrder?: number;
 }
 
 interface TreeConnectionData {
@@ -161,6 +163,7 @@ const PersonCard = memo(function PersonCard({
   const style = getCardStyle(person);
   const initials = getInitials(person.display_name);
   const selectedRing = isSelected ? 'ring-2 ring-primary ring-offset-2' : '';
+  const spouseBadge = node.spouseOrder ? `Vợ ${node.spouseOrder}` : null;
 
   // Year/status display
   const birthYear = person.birth_year;
@@ -200,6 +203,11 @@ const PersonCard = memo(function PersonCard({
         style={{ left: x, top: y, width: CARD_W, height: 40 }}
         onClick={() => onSelect(person, x, y)}
       >
+        {spouseBadge && (
+          <div className="absolute right-1.5 top-1 z-10 rounded-full border border-rose-200 bg-white/90 px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-[0.08em] text-rose-700 shadow-sm">
+            {spouseBadge}
+          </div>
+        )}
         <div className="flex items-center gap-1.5 px-2 h-full">
           <div className={`w-5 h-5 rounded-full ${style.avatar} flex items-center justify-center text-[9px] font-bold shrink-0`}>
             {initials.charAt(0)}
@@ -236,6 +244,11 @@ const PersonCard = memo(function PersonCard({
         style={{ left: x, top: y, width: CARD_W, height: CARD_H }}
         onClick={() => onSelect(person, x, y)}
       >
+        {spouseBadge && (
+          <div className="absolute right-2 top-2 z-10 rounded-full border border-rose-200 bg-white/90 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-rose-700 shadow-sm">
+            {spouseBadge}
+          </div>
+        )}
         <div className="flex items-start gap-2.5 p-2.5 h-full">
           {/* Avatar */}
           <div className={`w-9 h-9 rounded-full ${style.avatar} flex items-center justify-center text-xs font-bold shrink-0 mt-0.5`}>
@@ -816,26 +829,35 @@ export function buildTreeLayout(
     visibleChildIdsByFamily.set(family.id, childIds);
   }
 
+  const spouseOrderById = new Map<string, number>();
+  for (const [fatherId, fatherFamilies] of fatherToFamilies) {
+    const visibleSpouseFamilies = fatherFamilies.filter(
+      (family) => family.father_id === fatherId && family.mother_id && visibleIds.has(family.mother_id)
+    );
+    if (visibleSpouseFamilies.length <= 1) continue;
+    visibleSpouseFamilies.forEach((family, index) => {
+      if (family.mother_id) spouseOrderById.set(family.mother_id, index + 1);
+    });
+  }
+
   // Helpers
-  const getVisibleFamiliesAsFather = (personId: string) => {
+  const getVisibleFamilyGroupsAsFather = (personId: string) => {
     const fams = fatherToFamilies.get(personId) || [];
-    return fams.filter((fam) => {
+    return fams
+      .filter((fam) => {
       const hasVisibleSpouse = !!fam.mother_id && visibleIds.has(fam.mother_id);
       const hasVisibleChildren = (visibleChildIdsByFamily.get(fam.id) || []).length > 0;
       return hasVisibleSpouse || hasVisibleChildren || !fam.mother_id;
-    });
-  };
-
-  const getVisibleChildrenByFamilyAsFather = (personId: string) => {
-    const fams = getVisibleFamiliesAsFather(personId);
-    return fams.map((family) => ({
-      family,
-      childIds: visibleChildIdsByFamily.get(family.id) || [],
-    }));
+      })
+      .map((family) => ({
+        family,
+        spouseId: family.mother_id && visibleIds.has(family.mother_id) ? family.mother_id : null,
+        childIds: visibleChildIdsByFamily.get(family.id) || [],
+      }));
   };
 
   const getVisibleChildrenAsFather = (personId: string): string[] => {
-    const familiesWithChildren = getVisibleChildrenByFamilyAsFather(personId);
+    const familiesWithChildren = getVisibleFamilyGroupsAsFather(personId);
     const result: string[] = [];
     for (const { childIds } of familiesWithChildren) {
       childIds.forEach((childId) => {
@@ -846,11 +868,11 @@ export function buildTreeLayout(
   };
 
   const getVisibleWives = (personId: string): string[] => {
-    const fams = getVisibleFamiliesAsFather(personId);
+    const fams = getVisibleFamilyGroupsAsFather(personId);
     const result: string[] = [];
     for (const fam of fams) {
-      if (fam.mother_id && visibleIds.has(fam.mother_id) && !result.includes(fam.mother_id)) {
-        result.push(fam.mother_id);
+      if (fam.spouseId && !result.includes(fam.spouseId)) {
+        result.push(fam.spouseId);
       }
     }
     return result;
@@ -882,10 +904,17 @@ export function buildTreeLayout(
   const computeSubtreeWidth = (personId: string): number => {
     if (subtreeWidths.has(personId)) return subtreeWidths.get(personId)!;
     const wives = getVisibleWives(personId);
-    const visChildren = collapsedNodes.has(personId) ? [] : getVisibleChildrenAsFather(personId);
+    const familyGroups = collapsedNodes.has(personId)
+      ? []
+      : getVisibleFamilyGroupsAsFather(personId).filter(({ childIds }) => childIds.length > 0);
     const spouseRowWidth = CARD_W + wives.length * (COUPLE_GAP + CARD_W);
-    const childrenWidth = visChildren.length > 0
-      ? visChildren.reduce((s, c) => s + computeSubtreeWidth(c), 0) + (visChildren.length - 1) * SIBLING_GAP
+    const childrenWidth = familyGroups.length > 0
+      ? familyGroups.reduce((sum, group, index) => {
+          const groupWidth =
+            group.childIds.reduce((groupSum, childId) => groupSum + computeSubtreeWidth(childId), 0) +
+            (group.childIds.length - 1) * SIBLING_GAP;
+          return sum + groupWidth + (index > 0 ? FAMILY_GAP : 0);
+        }, 0)
       : 0;
     const result = Math.max(spouseRowWidth, childrenWidth);
     subtreeWidths.set(personId, result);
@@ -898,8 +927,9 @@ export function buildTreeLayout(
   const assignPositions = (personId: string, startX: number) => {
     const sw = subtreeWidths.get(personId) || CARD_W;
     const wives = getVisibleWives(personId);
-    const familyChildren = collapsedNodes.has(personId) ? [] : getVisibleChildrenByFamilyAsFather(personId);
-    const visChildren = familyChildren.flatMap(({ childIds }) => childIds);
+    const familyChildren = collapsedNodes.has(personId)
+      ? []
+      : getVisibleFamilyGroupsAsFather(personId).filter(({ childIds }) => childIds.length > 0);
     const spouseRowWidth = CARD_W + wives.length * (CARD_W + COUPLE_GAP);
     const centerX = startX + sw / 2;
 
@@ -911,16 +941,22 @@ export function buildTreeLayout(
     });
 
     // Children stay grouped by family order so each spouse keeps her own branch.
-    if (visChildren.length > 0) {
-      const totalChildW = visChildren.reduce((s, c) => s + (subtreeWidths.get(c) || CARD_W), 0)
-        + (visChildren.length - 1) * SIBLING_GAP;
+    if (familyChildren.length > 0) {
+      const totalChildW = familyChildren.reduce((sum, group, index) => {
+        const groupWidth =
+          group.childIds.reduce((groupSum, childId) => groupSum + (subtreeWidths.get(childId) || CARD_W), 0) +
+          (group.childIds.length - 1) * SIBLING_GAP;
+        return sum + groupWidth + (index > 0 ? FAMILY_GAP : 0);
+      }, 0);
       let childX = centerX - totalChildW / 2;
-      for (const { childIds } of familyChildren) {
-        for (const child of childIds) {
+      familyChildren.forEach(({ childIds }, groupIndex) => {
+        childIds.forEach((child, childIndex) => {
           assignPositions(child, childX);
-          childX += (subtreeWidths.get(child) || CARD_W) + SIBLING_GAP;
-        }
-      }
+          childX += (subtreeWidths.get(child) || CARD_W);
+          if (childIndex < childIds.length - 1) childX += SIBLING_GAP;
+        });
+        if (groupIndex < familyChildren.length - 1) childX += FAMILY_GAP;
+      });
     }
   };
 
@@ -944,6 +980,7 @@ export function buildTreeLayout(
       isCollapsed: collapsedNodes.has(person.id),
       hasChildren: getVisibleChildrenAsFather(person.id).length > 0,
       isVisible: true,
+      spouseOrder: spouseOrderById.get(person.id),
     });
   }
 
