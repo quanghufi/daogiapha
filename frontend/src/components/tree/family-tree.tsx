@@ -958,19 +958,33 @@ function buildTreeLayout(
 
   // Bounds
   let minX = Infinity, maxX = -Infinity, maxY = 0;
+  let firstGenerationMinX = Infinity, firstGenerationMaxX = -Infinity;
   for (const n of nodes) {
     minX = Math.min(minX, n.x);
     maxX = Math.max(maxX, n.x + CARD_W);
     maxY = Math.max(maxY, n.y + CARD_H);
+    const generation = n.person.generation || rootGeneration;
+    if (generation === rootGeneration) {
+      firstGenerationMinX = Math.min(firstGenerationMinX, n.x);
+      firstGenerationMaxX = Math.max(firstGenerationMaxX, n.x + CARD_W);
+    }
   }
   if (!isFinite(minX)) { minX = 0; maxX = 0; }
+
+  // Align the first generation lane to the horizontal center axis of the tree.
+  let firstGenerationCenterOffset = 0;
+  if (isFinite(firstGenerationMinX) && isFinite(firstGenerationMaxX)) {
+    const firstGenerationCenterX = (firstGenerationMinX + firstGenerationMaxX) / 2;
+    const treeCenterX = (minX + maxX) / 2;
+    firstGenerationCenterOffset = treeCenterX - firstGenerationCenterX;
+  }
 
   return {
     nodes,
     connections,
     width: Math.max(800, maxX - minX + 240),
     height: maxY + 120, // Bottom breathing room
-    offsetX: -minX + 120, // Space for traditional scroll banner
+    offsetX: -minX + 120 + firstGenerationCenterOffset, // Space + first-generation centering
   };
 }
 
@@ -1119,6 +1133,26 @@ export function FamilyTree() {
     return buildTreeLayout(data, activeCollapsedNodes, viewMode, focusPersonId, filterRootId);
   }, [data, activeCollapsedNodes, viewMode, focusPersonId, filterRootId]);
 
+  const firstGenerationCenterX = useMemo(() => {
+    if (!layout || layout.nodes.length === 0) return null;
+    const firstGeneration = Math.min(...layout.nodes.map((node) => node.person.generation || 1));
+    const firstGenerationNodes = layout.nodes.filter(
+      (node) => (node.person.generation || 1) === firstGeneration
+    );
+    if (firstGenerationNodes.length === 0) return null;
+    const minX = Math.min(...firstGenerationNodes.map((node) => node.x));
+    const maxX = Math.max(...firstGenerationNodes.map((node) => node.x + CARD_W));
+    return (minX + maxX) / 2 + layout.offsetX;
+  }, [layout]);
+
+  // Keep first generation centered under the temple header.
+  const autoAlignPanX = useMemo(() => {
+    if (firstGenerationCenterX == null || containerSize.width <= 0) return 0;
+    return containerSize.width / 2 - firstGenerationCenterX * scale;
+  }, [firstGenerationCenterX, containerSize.width, scale]);
+
+  const effectivePanX = pan.x + autoAlignPanX;
+
   // Zoom level
   const zoomLevel = useMemo<ZoomLevel>(() => getZoomLevel(scale), [scale]);
 
@@ -1161,10 +1195,10 @@ export function FamilyTree() {
     if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
     setPan({
-      x: rect.width / 2 - nodeX * scale,
+      x: rect.width / 2 - nodeX * scale - autoAlignPanX,
       y: rect.height / 2 - nodeY * scale,
     });
-  }, [scale]);
+  }, [scale, autoAlignPanX]);
 
   const handleToggleCollapse = useCallback((personId: string) => {
     setCollapsedNodes((prev) => {
@@ -1202,10 +1236,10 @@ export function FamilyTree() {
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (e.button === 0) {
       setIsPanning(true);
-      setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
+      setPanStart({ x: e.clientX - effectivePanX, y: e.clientY - pan.y });
       setContextMenu(null);
     }
-  }, [pan.x, pan.y]);
+  }, [effectivePanX, pan.y]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (isPanning) {
@@ -1225,12 +1259,12 @@ export function FamilyTree() {
     if (e.touches.length === 1) {
       setIsPanning(true);
       setPanStart({
-        x: e.touches[0].clientX - pan.x,
+        x: e.touches[0].clientX - effectivePanX,
         y: e.touches[0].clientY - pan.y,
       });
       setContextMenu(null);
     }
-  }, [pan.x, pan.y]);
+  }, [effectivePanX, pan.y]);
 
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
     if (isPanning && e.touches.length === 1) {
@@ -1264,10 +1298,10 @@ export function FamilyTree() {
     if (!containerRef.current || !layout) return;
     const rect = containerRef.current.getBoundingClientRect();
     setPan({
-      x: -(x - rect.width / 2 / scale),
+      x: -(x - rect.width / 2 / scale) - autoAlignPanX,
       y: -(y - rect.height / 2 / scale),
     });
-  }, [layout, scale]);
+  }, [layout, scale, autoAlignPanX]);
 
   // View mode change
   const handleViewModeChange = useCallback((mode: ViewMode) => {
@@ -1279,11 +1313,11 @@ export function FamilyTree() {
 
   // Computed viewBox for minimap
   const viewBox = useMemo(() => ({
-    x: -pan.x / scale,
+    x: -effectivePanX / scale,
     y: -pan.y / scale,
     width: containerSize.width / scale,
     height: containerSize.height / scale,
-  }), [pan.x, pan.y, scale, containerSize.width, containerSize.height]);
+  }), [effectivePanX, pan.y, scale, containerSize.width, containerSize.height]);
 
   const filterSearchResults = useMemo(() => {
     if (!data?.people || filterSearch.length < 2) return [];
@@ -1553,7 +1587,7 @@ export function FamilyTree() {
               {/* Transformed content */}
               <div
                 style={{
-                  transform: `translate(${pan.x}px, ${pan.y}px) scale(${scale})`,
+                  transform: `translate(${effectivePanX}px, ${pan.y}px) scale(${scale})`,
                   transformOrigin: '0 0',
                   position: 'relative',
                   width: layout.width + layout.offsetX,
