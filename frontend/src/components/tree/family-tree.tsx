@@ -47,7 +47,7 @@ import { TraditionalBorder, TraditionalHeader, TraditionalScroll, TraditionalFoo
 const CARD_W = 180;
 const CARD_H = 80;
 const LEVEL_HEIGHT = 140;
-const FIRST_GENERATION_TOP_OFFSET = 12;
+const FIRST_GENERATION_TOP_OFFSET = 72;
 const SIBLING_GAP = 24;
 const COUPLE_GAP = 12;
 const MINIMAP_WIDTH = 160;
@@ -1018,6 +1018,33 @@ function computeBranchSummary(
   return { totalCount: total, livingCount: living, minGen: isFinite(minGen) ? minGen : 0, maxGen: isFinite(maxGen) ? maxGen : 0 };
 }
 
+function computeAutoCollapsedNodes(data: TreeData | null | undefined): Set<string> {
+  if (!data || data.people.length === 0) return new Set();
+
+  const maxGen = Math.max(...data.people.map((p) => p.generation || 1));
+  if (maxGen <= AUTO_COLLAPSE_GEN) return new Set();
+
+  const fatherToFamilies = new Map<string, TreeData['families']>();
+  for (const family of data.families) {
+    if (!family.father_id) continue;
+    if (!fatherToFamilies.has(family.father_id)) {
+      fatherToFamilies.set(family.father_id, []);
+    }
+    fatherToFamilies.get(family.father_id)!.push(family);
+  }
+
+  const toCollapse = new Set<string>();
+  for (const person of data.people) {
+    const generation = person.generation || 1;
+    if (generation < AUTO_COLLAPSE_GEN) continue;
+    const families = fatherToFamilies.get(person.id) || [];
+    const hasChildren = families.some((family) => data.children.some((child) => child.family_id === family.id));
+    if (hasChildren) toCollapse.add(person.id);
+  }
+
+  return toCollapse;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // Main Family Tree Component
 // ═══════════════════════════════════════════════════════════════════════════
@@ -1036,7 +1063,7 @@ export function FamilyTree() {
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
   const [selectedPerson, setSelectedPerson] = useState<TreePerson | null>(null);
-  const [collapsedNodes, setCollapsedNodes] = useState<Set<string>>(new Set());
+  const [collapsedNodes, setCollapsedNodes] = useState<Set<string> | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('all');
   const [showMinimap, setShowMinimap] = useState(true);
   const [showDecorations, setShowDecorations] = useState(true);
@@ -1052,34 +1079,8 @@ export function FamilyTree() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerSize, setContainerSize] = useState({ width: 800, height: 600 });
 
-  // Auto-collapse on initial load for deep trees
-  const autoCollapseDone = useRef(false);
-  useEffect(() => {
-    if (autoCollapseDone.current || !data || data.people.length === 0) return;
-    autoCollapseDone.current = true;
-
-    const maxGen = Math.max(...data.people.map(p => p.generation || 1));
-    if (maxGen > AUTO_COLLAPSE_GEN) {
-      // Build fatherToFamilies for auto-collapse
-      const ftf = new Map<string, typeof data.families>();
-      for (const fam of data.families) {
-        if (fam.father_id) {
-          if (!ftf.has(fam.father_id)) ftf.set(fam.father_id, []);
-          ftf.get(fam.father_id)!.push(fam);
-        }
-      }
-      const toCollapse = new Set<string>();
-      for (const p of data.people) {
-        const gen = p.generation || 1;
-        if (gen >= AUTO_COLLAPSE_GEN) {
-          const fams = ftf.get(p.id) || [];
-          const hasKids = fams.some(f => data.children.some(c => c.family_id === f.id));
-          if (hasKids) toCollapse.add(p.id);
-        }
-      }
-      if (toCollapse.size > 0) setCollapsedNodes(toCollapse);
-    }
-  }, [data]);
+  const autoCollapsedNodes = useMemo(() => computeAutoCollapsedNodes(data), [data]);
+  const activeCollapsedNodes = collapsedNodes ?? autoCollapsedNodes;
 
   const handleSetFilterRoot = useCallback((person: TreePerson | null) => {
     setFilterRootId(person?.id ?? null);
@@ -1115,15 +1116,15 @@ export function FamilyTree() {
   const focusPersonId = viewMode !== 'all' ? selectedPerson?.id || null : null;
   const layout = useMemo(() => {
     if (!data || data.people.length === 0) return null;
-    return buildTreeLayout(data, collapsedNodes, viewMode, focusPersonId, filterRootId);
-  }, [data, collapsedNodes, viewMode, focusPersonId, filterRootId]);
+    return buildTreeLayout(data, activeCollapsedNodes, viewMode, focusPersonId, filterRootId);
+  }, [data, activeCollapsedNodes, viewMode, focusPersonId, filterRootId]);
 
   // Zoom level
   const zoomLevel = useMemo<ZoomLevel>(() => getZoomLevel(scale), [scale]);
 
   // Branch summaries for collapsed nodes
   const branchSummaries = useMemo(() => {
-    if (!data || collapsedNodes.size === 0) return new Map<string, BranchSummary>();
+    if (!data || activeCollapsedNodes.size === 0) return new Map<string, BranchSummary>();
     const fatherToFams = new Map<string, typeof data.families>();
     for (const fam of data.families) {
       if (fam.father_id) {
@@ -1133,11 +1134,11 @@ export function FamilyTree() {
     }
     const pMap = new Map(data.people.map(p => [p.id, p]));
     const map = new Map<string, BranchSummary>();
-    for (const nodeId of collapsedNodes) {
+    for (const nodeId of activeCollapsedNodes) {
       map.set(nodeId, computeBranchSummary(nodeId, data, fatherToFams, data.children, pMap));
     }
     return map;
-  }, [data, collapsedNodes]);
+  }, [data, activeCollapsedNodes]);
 
   // Handlers
   const handleZoomIn = useCallback(() => setScale((s) => Math.min(s + 0.1, 2)), []);
@@ -1167,7 +1168,7 @@ export function FamilyTree() {
 
   const handleToggleCollapse = useCallback((personId: string) => {
     setCollapsedNodes((prev) => {
-      const next = new Set(prev);
+      const next = new Set(prev ?? autoCollapsedNodes);
       if (next.has(personId)) {
         next.delete(personId);
       } else {
@@ -1175,7 +1176,7 @@ export function FamilyTree() {
       }
       return next;
     });
-  }, []);
+  }, [autoCollapsedNodes]);
 
   const expandAll = useCallback(() => setCollapsedNodes(new Set()), []);
   const collapseAll = useCallback(() => {
@@ -1274,7 +1275,7 @@ export function FamilyTree() {
     if (mode !== 'all' && !selectedPerson && data?.people.length) {
       setSelectedPerson(data.people[0]);
     }
-  }, [selectedPerson, data?.people]);
+  }, [selectedPerson, data]);
 
   // Computed viewBox for minimap
   const viewBox = useMemo(() => ({
@@ -1288,7 +1289,7 @@ export function FamilyTree() {
     if (!data?.people || filterSearch.length < 2) return [];
     const query = filterSearch.toLowerCase();
     return data.people.filter((p) => p.display_name.toLowerCase().includes(query)).slice(0, 10);
-  }, [data?.people, filterSearch]);
+  }, [data, filterSearch]);
 
   // Loading state
   if (isLoading) {
