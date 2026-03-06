@@ -43,13 +43,18 @@ function PersonLink({ person }: { person: Person }) {
       className="flex items-center gap-2 hover:bg-muted rounded-md px-2 py-1 transition-colors group"
     >
       <div
-        className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium ${
-          person.gender === GENDER.MALE
-            ? 'bg-blue-100 text-blue-700'
-            : 'bg-pink-100 text-pink-700'
-        }`}
+        className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium ${person.gender === GENDER.MALE
+          ? 'bg-blue-100 text-blue-700'
+          : 'bg-pink-100 text-pink-700'
+          }`}
       >
-        {person.display_name.slice(-1)}
+        {person.display_name
+          .split(' ')
+          .filter(Boolean)
+          .map((n) => n[0])
+          .slice(-2)
+          .join('')
+          .toUpperCase()}
       </div>
       <span className="text-sm group-hover:text-primary transition-colors">
         {person.display_name}
@@ -119,22 +124,20 @@ function QuickPersonForm({
             <button
               type="button"
               onClick={() => setGender(1)}
-              className={`flex-1 py-1.5 rounded text-sm border ${
-                gender === GENDER.MALE
-                  ? 'bg-blue-50 border-blue-400 text-blue-700 font-medium'
-                  : 'border-muted-foreground/30'
-              }`}
+              className={`flex-1 py-1.5 rounded text-sm border ${gender === GENDER.MALE
+                ? 'bg-blue-50 border-blue-400 text-blue-700 font-medium'
+                : 'border-muted-foreground/30'
+                }`}
             >
               Nam
             </button>
             <button
               type="button"
               onClick={() => setGender(2)}
-              className={`flex-1 py-1.5 rounded text-sm border ${
-                gender === GENDER.FEMALE
-                  ? 'bg-pink-50 border-pink-400 text-pink-700 font-medium'
-                  : 'border-muted-foreground/30'
-              }`}
+              className={`flex-1 py-1.5 rounded text-sm border ${gender === GENDER.FEMALE
+                ? 'bg-pink-50 border-pink-400 text-pink-700 font-medium'
+                : 'border-muted-foreground/30'
+                }`}
             >
               Nữ
             </button>
@@ -208,11 +211,16 @@ function PersonSearchSelect({ excludeIds = [], onSelect, isLoading }: PersonSear
             className="w-full text-left flex items-center gap-2 px-3 py-2 rounded-md hover:bg-muted transition-colors disabled:opacity-50"
           >
             <div
-              className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium shrink-0 ${
-                person.gender === GENDER.MALE ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700'
-              }`}
+              className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium shrink-0 ${person.gender === GENDER.MALE ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700'
+                }`}
             >
-              {person.display_name.slice(-1)}
+              {person.display_name
+                .split(' ')
+                .filter(Boolean)
+                .map((n) => n[0])
+                .slice(-2)
+                .join('')
+                .toUpperCase()}
             </div>
             <div>
               <p className="text-sm font-medium">{person.display_name}</p>

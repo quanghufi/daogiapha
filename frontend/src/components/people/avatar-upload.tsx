@@ -34,6 +34,7 @@ export function AvatarUpload({ person, canEdit, size = 'lg' }: AvatarUploadProps
 
   const initials = person.display_name
     .split(' ')
+    .filter(Boolean)
     .map((n) => n[0])
     .slice(-2)
     .join('')

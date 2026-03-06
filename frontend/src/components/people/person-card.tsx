@@ -24,6 +24,7 @@ interface PersonCardProps {
 export function PersonCard({ person, showDetails = true }: PersonCardProps) {
   const initials = person.display_name
     .split(' ')
+    .filter(Boolean)
     .map((n) => n[0])
     .slice(-2)
     .join('')
@@ -43,12 +44,12 @@ export function PersonCard({ person, showDetails = true }: PersonCardProps) {
                 {initials || <User className="h-6 w-6" />}
               </AvatarFallback>
             </Avatar>
-            
+
             <div className="flex-1 min-w-0">
               <h3 className="font-semibold text-base truncate">
                 {person.display_name}
               </h3>
-              
+
               <div className="flex flex-wrap gap-1.5 mt-1.5">
                 <Badge variant="outline" className="text-xs">
                   Đời {person.generation}

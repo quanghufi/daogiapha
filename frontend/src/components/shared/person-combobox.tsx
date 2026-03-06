@@ -31,11 +31,16 @@ export function PersonCombobox({ label, hint, selected, onSelect, excludeId }: P
       {selected ? (
         <div className="flex items-center gap-2 p-2 rounded-md border bg-muted/50">
           <div
-            className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium shrink-0 ${
-              selected.gender === GENDER.MALE ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700'
-            }`}
+            className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium shrink-0 ${selected.gender === GENDER.MALE ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700'
+              }`}
           >
-            {selected.display_name.slice(-1)}
+            {selected.display_name
+              .split(' ')
+              .filter(Boolean)
+              .map((n) => n[0])
+              .slice(-2)
+              .join('')
+              .toUpperCase()}
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate">{selected.display_name}</p>
@@ -79,11 +84,16 @@ export function PersonCombobox({ label, hint, selected, onSelect, excludeId }: P
                     }}
                   >
                     <div
-                      className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium shrink-0 ${
-                        person.gender === GENDER.MALE ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700'
-                      }`}
+                      className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium shrink-0 ${person.gender === GENDER.MALE ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700'
+                        }`}
                     >
-                      {person.display_name.slice(-1)}
+                      {person.display_name
+                        .split(' ')
+                        .filter(Boolean)
+                        .map((n) => n[0])
+                        .slice(-2)
+                        .join('')
+                        .toUpperCase()}
                     </div>
                     <div className="min-w-0">
                       <p className="text-sm font-medium truncate">{person.display_name}</p>
