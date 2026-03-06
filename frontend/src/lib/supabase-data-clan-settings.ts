@@ -13,6 +13,28 @@ const DEFAULTS: ClanSettings = {
   require_verification: true,
 };
 
+function parseSettingValue(key: keyof ClanSettings, value: unknown): unknown {
+  let parsed: unknown = value;
+
+  if (typeof value === 'string') {
+    try {
+      parsed = JSON.parse(value);
+    } catch {
+      parsed = value;
+    }
+  }
+
+  if (key === 'require_verification') {
+    if (typeof parsed === 'boolean') return parsed;
+    if (typeof parsed === 'string') return parsed === 'true';
+    return true;
+  }
+
+  if (typeof parsed === 'string') return parsed;
+  if (parsed == null) return '';
+  return String(parsed);
+}
+
 export async function getClanSettings(): Promise<ClanSettings> {
   const { data, error } = await supabase
     .from('clan_settings')
@@ -25,7 +47,7 @@ export async function getClanSettings(): Promise<ClanSettings> {
   for (const row of data || []) {
     const key = row.key as keyof ClanSettings;
     if (key in settings) {
-      (settings as Record<string, unknown>)[key] = row.value;
+      (settings as Record<string, unknown>)[key] = parseSettingValue(key, row.value);
     }
   }
   return settings;

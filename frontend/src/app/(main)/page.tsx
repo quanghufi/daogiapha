@@ -6,6 +6,8 @@
  * @updated 2026-03-06
  */
 
+'use client';
+
 import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { GitBranchPlus, Calendar, Users, ArrowRight } from 'lucide-react';
 import { StatsCard } from '@/components/home/stats-card';
 import { FeaturedCharter } from '@/components/home/featured-charter';
+import { useClanSettings } from '@/hooks/use-clan-settings';
 
 const features = [
   {
@@ -75,6 +78,10 @@ function LotusCorner({
 }
 
 export default function HomePage() {
+  const { data: clanSettings } = useClanSettings();
+  const clanName = clanSettings?.clan_name?.trim() || 'Đào tộc - Ninh thôn';
+  const clanMotto = clanSettings?.clan_motto?.trim() || 'Gìn giữ tinh hoa - Tiếp bước cha ông';
+
   return (
     <div className="flex flex-col">
       <section
@@ -116,12 +123,12 @@ export default function HomePage() {
                   className="text-2xl font-bold tracking-wide text-yellow-300 md:text-4xl"
                   style={{ fontFamily: '"Noto Serif", "Times New Roman", serif' }}
                 >
-                  Đào tộc - Ninh thôn
+                  {clanName}
                 </h1>
               </div>
 
               <p className="mx-auto mb-7 max-w-2xl text-center text-base text-amber-900/85 md:text-lg">
-                &ldquo;Gìn giữ tinh hoa - Tiếp bước cha ông&rdquo;
+                &ldquo;{clanMotto}&rdquo;
               </p>
 
               <div className="flex flex-col justify-center gap-3 sm:flex-row">

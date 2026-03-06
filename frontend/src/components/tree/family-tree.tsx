@@ -10,6 +10,7 @@
 import { useMemo, useState, useRef, useCallback, useEffect, memo } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTreeData } from '@/hooks/use-families';
+import { useClanSettings } from '@/hooks/use-clan-settings';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -1019,6 +1020,9 @@ function computeBranchSummary(
 
 export function FamilyTree() {
   const { data, isLoading, error } = useTreeData();
+  const { data: clanSettings } = useClanSettings();
+  const clanName = clanSettings?.clan_name?.trim() || 'Đào tộc - Ninh thôn';
+  const clanMotto = clanSettings?.clan_motto?.trim() || 'Uống nước nhớ nguồn';
 
   // State
   const [scale, setScale] = useState(() =>
@@ -1508,7 +1512,7 @@ export function FamilyTree() {
           {showDecorations && (
             <>
               <div className="absolute inset-x-0 top-2 h-[108px] z-[1] pointer-events-none">
-                <TraditionalHeader familyName="Đào Tộc" subtitle="" />
+                <TraditionalHeader familyName={clanName} subtitle={clanMotto} />
               </div>
               <TraditionalScroll text="Phúc Đức Tổ Tiên" side="left" />
               <TraditionalScroll text="Con Cháu Thảo Hiền" side="right" />
