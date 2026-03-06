@@ -88,7 +88,8 @@ const adminNavItems = [
 export function AppSidebar() {
   const pathname = usePathname();
   const { user, profile, isAdmin, isEditor, signOut } = useAuth();
-  const { data: unverifiedUsers } = useUnverifiedUsers();
+  const shouldFetchUnverified = !!user && (isAdmin || isEditor);
+  const { data: unverifiedUsers } = useUnverifiedUsers(shouldFetchUnverified);
   const pendingCount = unverifiedUsers?.length || 0;
 
   const getInitials = (name?: string) => {

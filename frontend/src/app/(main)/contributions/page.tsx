@@ -239,7 +239,7 @@ function NewContributionDialog({ onClose }: { onClose: () => void }) {
 
 export default function ContributionsPage() {
   const { user, profile } = useAuth();
-  const { data: contributions, isLoading } = useContributions();
+  const { data: contributions, isLoading } = useContributions(undefined, !!user);
   const { data: people } = usePeople();
   const [dialogOpen, setDialogOpen] = useState(false);
 

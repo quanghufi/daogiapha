@@ -105,10 +105,11 @@ export function useUpdateEditRootPerson() {
 
 // ─── Sprint 8: Verification & Suspension ─────────────────────────────────────
 
-export function useUnverifiedUsers() {
+export function useUnverifiedUsers(enabled = true) {
   return useQuery({
     queryKey: profileKeys.unverified(),
     queryFn: getUnverifiedUsers,
+    enabled,
   });
 }
 

@@ -56,12 +56,15 @@ function _checkRateLimit(ip: string, pathname: string): { allowed: boolean; retr
 const publicPaths = ['/login', '/register', '/forgot-password', '/reset-password', '/pending-verification', '/account-suspended', '/api/debug'];
 const authPagePaths = ['/login', '/register', '/forgot-password', '/reset-password'];
 const statusPagePaths = ['/pending-verification', '/account-suspended'];
-const authRequiredPaths = [
-  '/',
-  '/people', '/tree', '/directory', '/events',
-  '/achievements', '/charter', '/cau-duong', '/contributions',
-  '/documents', '/fund', '/admin', '/guide',
-];
+const protectedPathPrefixes = ['/admin', '/settings', '/people/new'];
+const protectedPathMatchers = [/^\/people\/[^/]+\/edit(?:\/|$)/];
+
+function isProtectedPath(pathname: string): boolean {
+  if (protectedPathPrefixes.some(path => pathname === path || pathname.startsWith(path + '/'))) {
+    return true;
+  }
+  return protectedPathMatchers.some(pattern => pattern.test(pathname));
+}
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -134,13 +137,15 @@ export async function proxy(request: NextRequest) {
     return response;
   }
 
+  const requiresAuth = isProtectedPath(pathname);
+
   // Unauthenticated redirect
-  if (!user && authRequiredPaths.some(path => pathname.startsWith(path))) {
+  if (!user && requiresAuth) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
   // Verification & suspension check (for authenticated users on protected pages)
-  if (user && !statusPagePaths.some(p => pathname === p) && !pathname.startsWith('/api/')) {
+  if (user && requiresAuth && !statusPagePaths.some(p => pathname === p) && !pathname.startsWith('/api/')) {
     try {
       const { data: statusProfile } = await supabase
         .from('profiles')

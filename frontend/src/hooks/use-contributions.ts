@@ -27,10 +27,11 @@ export const contributionKeys = {
   byPerson: (personId: string) => [...contributionKeys.all, 'person', personId] as const,
 };
 
-export function useContributions(status?: ContributionStatus) {
+export function useContributions(status?: ContributionStatus, enabled = true) {
   return useQuery({
     queryKey: contributionKeys.list(status),
     queryFn: () => getContributions(status),
+    enabled,
   });
 }
 

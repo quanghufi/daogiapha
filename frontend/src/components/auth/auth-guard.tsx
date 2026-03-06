@@ -1,23 +1,38 @@
 'use client';
 
 import { useAuth } from '@/components/auth/auth-provider';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, type ReactNode } from 'react';
 
 /**
- * Client-side auth guard for (main) layout.
- * Redirects to /login if user is not authenticated.
- * Shows loading spinner while checking auth state.
+ * Client-side auth guard for protected routes inside (main) layout.
  */
+const protectedPathPrefixes = ['/admin', '/settings', '/people/new'];
+const protectedPathMatchers = [/^\/people\/[^/]+\/edit(?:\/|$)/];
+
+function isProtectedPath(pathname: string): boolean {
+  if (protectedPathPrefixes.some(path => pathname === path || pathname.startsWith(path + '/'))) {
+    return true;
+  }
+  return protectedPathMatchers.some(pattern => pattern.test(pathname));
+}
+
 export function AuthGuard({ children }: { children: ReactNode }) {
   const { user, isLoading } = useAuth();
+  const pathname = usePathname();
   const router = useRouter();
+  const requiresAuth = isProtectedPath(pathname);
 
   useEffect(() => {
-    if (!isLoading && !user) {
+    if (requiresAuth && !isLoading && !user) {
       router.replace('/login');
     }
-  }, [isLoading, user, router]);
+  }, [requiresAuth, isLoading, user, router]);
+
+  // Public routes render immediately without waiting for auth resolution.
+  if (!requiresAuth) {
+    return <>{children}</>;
+  }
 
   if (isLoading) {
     return (
