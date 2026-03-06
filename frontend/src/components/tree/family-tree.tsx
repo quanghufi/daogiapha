@@ -84,7 +84,7 @@ interface TreeConnectionData {
   y1: number;
   x2: number;
   y2: number;
-  type: 'parent-child' | 'couple';
+  type: 'parent-child' | 'couple' | 'family-link';
   isVisible: boolean;
 }
 
@@ -474,11 +474,14 @@ interface ConnectionsLayerProps {
 const ConnectionsLayer = memo(function ConnectionsLayer({ connections, offsetX }: ConnectionsLayerProps) {
   // Group parent-child connections by parent point to draw bus-lines
   const coupleLines: TreeConnectionData[] = [];
+  const familyLinks: TreeConnectionData[] = [];
   const parentChildGroups = new Map<string, { parentX: number; parentY: number; children: { x: number; y: number }[] }>();
 
   for (const conn of connections) {
     if (conn.type === 'couple') {
       coupleLines.push(conn);
+    } else if (conn.type === 'family-link') {
+      familyLinks.push(conn);
     } else {
       const key = `${conn.x1},${conn.y1}`;
       if (!parentChildGroups.has(key)) {
@@ -522,6 +525,16 @@ const ConnectionsLayer = memo(function ConnectionsLayer({ connections, offsetX }
       style={{ width: '100%', height: '100%', overflow: 'visible' }}
     >
       <g transform={`translate(${offsetX}, 0)`}>
+        {familyLinks.map((conn) => (
+          <path
+            key={conn.id}
+            d={`M ${conn.x1} ${conn.y1} L ${conn.x1} ${conn.y2} L ${conn.x2} ${conn.y2}`}
+            fill="none"
+            stroke="#94a3b8"
+            strokeWidth={1.5}
+          />
+        ))}
+
         {/* Parent-child bus lines */}
         {paths.map((d, i) => (
           <path key={`pc-${i}`} d={d} fill="none" stroke="#94a3b8" strokeWidth={1.5} />
@@ -942,6 +955,7 @@ export function buildTreeLayout(
 
   // Top-down: assign X positions
   const xPositions = new Map<string, number>();
+  const familyCenterById = new Map<string, number>();
   const assignPositions = (personId: string, startX: number) => {
     const sw = subtreeWidths.get(personId) || CARD_W;
     const familyGroupsWithSlots = getPositionedFamilyGroupsAsFather(personId);
@@ -976,7 +990,12 @@ export function buildTreeLayout(
         return sum + groupWidth + (index > 0 ? FAMILY_GAP : 0);
       }, 0);
       let childX = centerX - totalChildW / 2;
-      familyChildren.forEach(({ childIds }, groupIndex) => {
+      familyChildren.forEach(({ family, childIds }, groupIndex) => {
+        const groupWidth =
+          childIds.reduce((groupSum, childId) => groupSum + (subtreeWidths.get(childId) || CARD_W), 0) +
+          (childIds.length - 1) * SIBLING_GAP;
+        familyCenterById.set(family.id, childX + groupWidth / 2);
+
         childIds.forEach((child, childIndex) => {
           assignPositions(child, childX);
           childX += (subtreeWidths.get(child) || CARD_W);
@@ -1020,6 +1039,13 @@ export function buildTreeLayout(
     const motherPos = family.mother_id ? personPos.get(family.mother_id) : null;
     if (!fatherPos && !motherPos) continue;
 
+    const fatherCenterX = fatherPos ? fatherPos.x + CARD_W / 2 : null;
+    const motherCenterX = motherPos ? motherPos.x + CARD_W / 2 : null;
+    const coupleMidX =
+      fatherCenterX !== null && motherCenterX !== null
+        ? (fatherCenterX + motherCenterX) / 2
+        : (fatherCenterX ?? motherCenterX ?? 0);
+
     // Couple line (horizontal, between nodes)
     if (fatherPos && motherPos) {
       const fatherToRight = fatherPos.x < motherPos.x;
@@ -1040,10 +1066,19 @@ export function buildTreeLayout(
     if (parentIsCollapsed) continue;
 
     const parentPos = fatherPos ?? motherPos!;
-    const familyCenterX =
-      fatherPos && motherPos
-        ? (fatherPos.x + CARD_W / 2 + motherPos.x + CARD_W / 2) / 2
-        : parentPos.x + CARD_W / 2;
+    const familyCenterX = familyCenterById.get(family.id) ?? coupleMidX;
+
+    if (fatherPos && motherPos && Math.abs(familyCenterX - coupleMidX) > 1) {
+      connections.push({
+        id: `family-link-${family.id}`,
+        x1: coupleMidX,
+        y1: parentPos.y + CARD_H / 2,
+        x2: familyCenterX,
+        y2: parentPos.y + CARD_H,
+        type: 'family-link',
+        isVisible: true,
+      });
+    }
 
     children.filter((c) => c.family_id === family.id).forEach((child) => {
       const childPos = personPos.get(child.person_id);
