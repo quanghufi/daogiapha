@@ -59,7 +59,7 @@ export type UpdatePersonInput = Partial<CreatePersonInput>;
 
 // Lightweight projections for tree rendering (7 columns instead of 30)
 export type TreePerson = Pick<Person, 'id' | 'display_name' | 'gender' | 'generation' | 'is_living' | 'is_patrilineal' | 'chi' | 'avatar_url' | 'birth_year' | 'death_year'>;
-export type TreeFamily = Pick<Family, 'id' | 'father_id' | 'mother_id'>;
+export type TreeFamily = Pick<Family, 'id' | 'father_id' | 'mother_id' | 'sort_order'>;
 
 // Lightweight projection for search results (7 columns)
 export type SearchPerson = Pick<Person, 'id' | 'display_name' | 'gender' | 'generation' | 'birth_year' | 'avatar_url' | 'is_living'>;

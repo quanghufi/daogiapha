@@ -694,7 +694,7 @@ function LegendBar() {
 // Tree Layout Builder — Hierarchical (Bottom-up subtree sizing)
 // ═══════════════════════════════════════════════════════════════════════════
 
-function buildTreeLayout(
+export function buildTreeLayout(
   data: TreeData,
   collapsedNodes: Set<string>,
   viewMode: ViewMode,
@@ -723,6 +723,13 @@ function buildTreeLayout(
       const fam = families.find((f) => f.id === child.family_id);
       if (fam) childToFamily.set(child.person_id, fam);
     }
+  }
+
+  for (const familyList of fatherToFamilies.values()) {
+    familyList.sort((a, b) => a.sort_order - b.sort_order);
+  }
+  for (const familyList of motherToFamilies.values()) {
+    familyList.sort((a, b) => a.sort_order - b.sort_order);
   }
 
   // Visible people selection
@@ -800,25 +807,53 @@ function buildTreeLayout(
     return { nodes: [], connections: [], width: 0, height: 0, offsetX: 0 };
   }
 
+  const visibleChildIdsByFamily = new Map<string, string[]>();
+  for (const family of families) {
+    const childIds = children
+      .filter((c) => c.family_id === family.id && visibleIds.has(c.person_id))
+      .sort((a, b) => a.sort_order - b.sort_order)
+      .map((c) => c.person_id);
+    visibleChildIdsByFamily.set(family.id, childIds);
+  }
+
   // Helpers
-  const getVisibleChildrenAsFather = (personId: string): string[] => {
+  const getVisibleFamiliesAsFather = (personId: string) => {
     const fams = fatherToFamilies.get(personId) || [];
+    return fams.filter((fam) => {
+      const hasVisibleSpouse = !!fam.mother_id && visibleIds.has(fam.mother_id);
+      const hasVisibleChildren = (visibleChildIdsByFamily.get(fam.id) || []).length > 0;
+      return hasVisibleSpouse || hasVisibleChildren || !fam.mother_id;
+    });
+  };
+
+  const getVisibleChildrenByFamilyAsFather = (personId: string) => {
+    const fams = getVisibleFamiliesAsFather(personId);
+    return fams.map((family) => ({
+      family,
+      childIds: visibleChildIdsByFamily.get(family.id) || [],
+    }));
+  };
+
+  const getVisibleChildrenAsFather = (personId: string): string[] => {
+    const familiesWithChildren = getVisibleChildrenByFamilyAsFather(personId);
     const result: string[] = [];
-    for (const fam of fams) {
-      children
-        .filter((c) => c.family_id === fam.id && visibleIds.has(c.person_id))
-        .sort((a, b) => a.sort_order - b.sort_order)
-        .forEach((c) => { if (!result.includes(c.person_id)) result.push(c.person_id); });
+    for (const { childIds } of familiesWithChildren) {
+      childIds.forEach((childId) => {
+        if (!result.includes(childId)) result.push(childId);
+      });
     }
     return result;
   };
 
-  const getVisibleWife = (personId: string): string | null => {
-    const fams = fatherToFamilies.get(personId) || [];
+  const getVisibleWives = (personId: string): string[] => {
+    const fams = getVisibleFamiliesAsFather(personId);
+    const result: string[] = [];
     for (const fam of fams) {
-      if (fam.mother_id && visibleIds.has(fam.mother_id)) return fam.mother_id;
+      if (fam.mother_id && visibleIds.has(fam.mother_id) && !result.includes(fam.mother_id)) {
+        result.push(fam.mother_id);
+      }
     }
-    return null;
+    return result;
   };
 
   // Wives will be positioned adjacent to husband — mark them
@@ -846,13 +881,13 @@ function buildTreeLayout(
   const subtreeWidths = new Map<string, number>();
   const computeSubtreeWidth = (personId: string): number => {
     if (subtreeWidths.has(personId)) return subtreeWidths.get(personId)!;
-    const wife = getVisibleWife(personId);
+    const wives = getVisibleWives(personId);
     const visChildren = collapsedNodes.has(personId) ? [] : getVisibleChildrenAsFather(personId);
-    const coupleWidth = CARD_W + (wife ? COUPLE_GAP + CARD_W : 0);
+    const spouseRowWidth = CARD_W + wives.length * (COUPLE_GAP + CARD_W);
     const childrenWidth = visChildren.length > 0
       ? visChildren.reduce((s, c) => s + computeSubtreeWidth(c), 0) + (visChildren.length - 1) * SIBLING_GAP
       : 0;
-    const result = Math.max(coupleWidth, childrenWidth);
+    const result = Math.max(spouseRowWidth, childrenWidth);
     subtreeWidths.set(personId, result);
     return result;
   };
@@ -862,24 +897,29 @@ function buildTreeLayout(
   const xPositions = new Map<string, number>();
   const assignPositions = (personId: string, startX: number) => {
     const sw = subtreeWidths.get(personId) || CARD_W;
-    const wife = getVisibleWife(personId);
-    const visChildren = collapsedNodes.has(personId) ? [] : getVisibleChildrenAsFather(personId);
-    const coupleWidth = CARD_W + (wife ? COUPLE_GAP + CARD_W : 0);
+    const wives = getVisibleWives(personId);
+    const familyChildren = collapsedNodes.has(personId) ? [] : getVisibleChildrenByFamilyAsFather(personId);
+    const visChildren = familyChildren.flatMap(({ childIds }) => childIds);
+    const spouseRowWidth = CARD_W + wives.length * (CARD_W + COUPLE_GAP);
     const centerX = startX + sw / 2;
 
-    // Center couple unit
-    const fatherX = centerX - coupleWidth / 2;
+    // Center spouse row with the husband anchored on the left.
+    const fatherX = centerX - spouseRowWidth / 2;
     xPositions.set(personId, fatherX);
-    if (wife) xPositions.set(wife, fatherX + CARD_W + COUPLE_GAP);
+    wives.forEach((wifeId, index) => {
+      xPositions.set(wifeId, fatherX + (index + 1) * (CARD_W + COUPLE_GAP));
+    });
 
-    // Children spread centered under couple
+    // Children stay grouped by family order so each spouse keeps her own branch.
     if (visChildren.length > 0) {
       const totalChildW = visChildren.reduce((s, c) => s + (subtreeWidths.get(c) || CARD_W), 0)
         + (visChildren.length - 1) * SIBLING_GAP;
       let childX = centerX - totalChildW / 2;
-      for (const child of visChildren) {
-        assignPositions(child, childX);
-        childX += (subtreeWidths.get(child) || CARD_W) + SIBLING_GAP;
+      for (const { childIds } of familyChildren) {
+        for (const child of childIds) {
+          assignPositions(child, childX);
+          childX += (subtreeWidths.get(child) || CARD_W) + SIBLING_GAP;
+        }
       }
     }
   };

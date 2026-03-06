@@ -692,7 +692,7 @@ export interface FullTreeData {
 }
 
 const TREE_PERSON_COLUMNS = 'id, display_name, gender, generation, is_living, is_patrilineal, chi, avatar_url, birth_year, death_year';
-const TREE_FAMILY_COLUMNS = 'id, father_id, mother_id';
+const TREE_FAMILY_COLUMNS = 'id, father_id, mother_id, sort_order';
 const SEARCH_PERSON_COLUMNS = 'id, display_name, gender, generation, birth_year, avatar_url, is_living';
 
 export async function getTreeData(): Promise<TreeData> {
