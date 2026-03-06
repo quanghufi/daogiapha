@@ -894,7 +894,7 @@ function buildTreeLayout(
     nodes.push({
       person,
       x: xPositions.get(person.id)!,
-      y: (person.generation - minGen) * LEVEL_HEIGHT + 260, // Space for traditional temple header
+      y: (person.generation - minGen) * LEVEL_HEIGHT + 180, // Space for traditional temple header
       isCollapsed: collapsedNodes.has(person.id),
       hasChildren: getVisibleChildrenAsFather(person.id).length > 0,
       isVisible: true,
@@ -963,8 +963,8 @@ function buildTreeLayout(
     nodes,
     connections,
     width: Math.max(800, maxX - minX + 240),
-    height: maxY + 300, // Space for traditional lotus footer
-    offsetX: -minX + 140, // Space for traditional scroll banner
+    height: maxY + 220, // Space for traditional lotus footer
+    offsetX: -minX + 120, // Space for traditional scroll banner
   };
 }
 
@@ -1480,103 +1480,110 @@ export function FamilyTree() {
       {/* Tree container */}
       <TraditionalBorder>
         <div
-          className="relative overflow-hidden bg-amber-50 rounded-xl"
+          className="relative overflow-hidden bg-amber-50 rounded-xl min-h-[620px] md:min-h-[680px]"
           style={{
             backgroundImage: 'url(/tree-assets/bg-pattern.png)',
             backgroundRepeat: 'repeat',
-            backgroundSize: '400px 400px',
+            backgroundSize: '320px 320px',
           }}
         >
           {/* Subtle overlay */}
-          <div className="absolute inset-0 bg-gradient-to-b from-amber-50/60 via-transparent to-amber-50/60 pointer-events-none z-0" />
+          <div className="absolute inset-0 bg-gradient-to-b from-amber-50/75 via-amber-50/25 to-amber-50/80 pointer-events-none z-0" />
+          <div className="absolute inset-0 pointer-events-none z-0 bg-[radial-gradient(circle_at_top,rgba(255,240,200,0.35),transparent_55%)]" />
 
           {/* Fixed Traditional Overlays */}
-          <div className="absolute top-0 inset-x-0 z-10 pointer-events-none">
+          <div className="absolute top-1 inset-x-0 z-[1] pointer-events-none opacity-95">
             <TraditionalHeader familyName="Đào Tộc" subtitle="" />
           </div>
           <TraditionalScroll text="Phúc Đức Tổ Tiên" side="left" />
           <TraditionalScroll text="Con Cháu Thảo Hiền" side="right" />
-          <div className="absolute bottom-0 inset-x-0 z-10 pointer-events-none">
+          <div className="absolute bottom-1 inset-x-0 z-[1] pointer-events-none opacity-90">
             <TraditionalFooter />
           </div>
 
           <div
-            ref={containerRef}
-            className="overflow-hidden relative select-none z-0"
-            style={{ height: '70vh', cursor: isPanning ? 'grabbing' : 'grab' }}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseUp}
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
+            className="absolute left-3 right-3 top-[128px] bottom-[92px] md:top-[150px] md:bottom-[112px] lg:left-[86px] lg:right-[86px] rounded-lg overflow-hidden"
           >
-            {/* Generation headers */}
-            <GenerationHeaders nodes={layout.nodes} offsetX={layout.offsetX} />
-
-            {/* Transformed content */}
             <div
-              style={{
-                transform: `translate(${pan.x}px, ${pan.y}px) scale(${scale})`,
-                transformOrigin: '0 0',
-                position: 'relative',
-                width: layout.width + layout.offsetX,
-                height: layout.height,
-              }}
+              ref={containerRef}
+              className="overflow-hidden relative select-none z-[5] h-full w-full"
+              style={{ cursor: isPanning ? 'grabbing' : 'grab' }}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseUp}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
             >
-              {/* Connections SVG layer */}
-              <ConnectionsLayer connections={layout.connections} offsetX={layout.offsetX} />
+              {/* Generation headers */}
+              <GenerationHeaders nodes={layout.nodes} offsetX={layout.offsetX} />
 
-              {/* Person cards */}
-              <div style={{ position: 'relative', transform: `translateX(${layout.offsetX}px)` }}>
-                {layout.nodes.map((node) => (
-                  <PersonCard
-                    key={node.person.id}
-                    node={node}
-                    zoomLevel={zoomLevel}
-                    isSelected={selectedPerson?.id === node.person.id}
-                    onSelect={handleNodeSelect}
-                    onToggleCollapse={handleToggleCollapse}
-                    branchSummary={branchSummaries.get(node.person.id)}
-                  />
-                ))}
+              {/* Transformed content */}
+              <div
+                style={{
+                  transform: `translate(${pan.x}px, ${pan.y}px) scale(${scale})`,
+                  transformOrigin: '0 0',
+                  position: 'relative',
+                  width: layout.width + layout.offsetX,
+                  height: layout.height,
+                }}
+              >
+                {/* Connections SVG layer */}
+                <ConnectionsLayer connections={layout.connections} offsetX={layout.offsetX} />
 
-                {/* Context menu popup */}
-                <AnimatePresence>
-                  {contextMenu && (
-                    <NodeContextMenu
-                      menu={contextMenu}
-                      onClose={handleCloseContextMenu}
-                      onViewAncestors={(person) => {
-                        setSelectedPerson(person);
-                        handleViewModeChange('ancestors');
-                      }}
-                      onViewDescendants={(person) => {
-                        setSelectedPerson(person);
-                        handleViewModeChange('descendants');
-                      }}
-                      onCenter={handleCenterOnNode}
+                {/* Person cards */}
+                <div style={{ position: 'relative', transform: `translateX(${layout.offsetX}px)` }}>
+                  {layout.nodes.map((node) => (
+                    <PersonCard
+                      key={node.person.id}
+                      node={node}
+                      zoomLevel={zoomLevel}
+                      isSelected={selectedPerson?.id === node.person.id}
+                      onSelect={handleNodeSelect}
+                      onToggleCollapse={handleToggleCollapse}
+                      branchSummary={branchSummaries.get(node.person.id)}
                     />
-                  )}
-                </AnimatePresence>
-              </div>
-            </div>
+                  ))}
 
-            {/* Minimap */}
-            {showMinimap && layout.nodes.length > 3 && (
-              <Minimap
-                nodes={layout.nodes}
-                viewBox={viewBox}
-                treeWidth={layout.width}
-                treeHeight={layout.height}
-                onViewportClick={handleMinimapClick}
-              />
-            )}
+                  {/* Context menu popup */}
+                  <AnimatePresence>
+                    {contextMenu && (
+                      <NodeContextMenu
+                        menu={contextMenu}
+                        onClose={handleCloseContextMenu}
+                        onViewAncestors={(person) => {
+                          setSelectedPerson(person);
+                          handleViewModeChange('ancestors');
+                        }}
+                        onViewDescendants={(person) => {
+                          setSelectedPerson(person);
+                          handleViewModeChange('descendants');
+                        }}
+                        onCenter={handleCenterOnNode}
+                      />
+                    )}
+                  </AnimatePresence>
+                </div>
+              </div>
+
+              {/* Minimap */}
+              {showMinimap && layout.nodes.length > 3 && (
+                <Minimap
+                  nodes={layout.nodes}
+                  viewBox={viewBox}
+                  treeWidth={layout.width}
+                  treeHeight={layout.height}
+                  onViewportClick={handleMinimapClick}
+                />
+              )}
+            </div>
           </div>
 
           {/* Legend */}
-          <LegendBar />
+          <div className="absolute left-2 right-2 bottom-1 z-[6]">
+            <LegendBar />
+          </div>
         </div>
       </TraditionalBorder>
     </div>

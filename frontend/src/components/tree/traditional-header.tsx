@@ -21,20 +21,20 @@ export function TraditionalHeader({
   return (
     <div className="relative w-full flex flex-col items-center select-none pointer-events-none">
       {/* Temple roof header */}
-      <div className="relative w-full max-w-[600px] mx-auto">
+      <div className="relative w-full max-w-[620px] mx-auto aspect-[560/250]">
         <Image
-          src="/tree-assets/temple-header.png"
+          src="/tree-assets/temple-header-trim.png"
           alt="Mái đình truyền thống"
-          width={600}
-          height={320}
-          className="w-full h-auto object-contain drop-shadow-lg"
+          fill
+          sizes="(max-width: 768px) 92vw, 620px"
+          className="object-contain drop-shadow-[0_14px_24px_rgba(90,48,12,0.26)]"
           priority
         />
       </div>
 
       {/* Family name banner below temple */}
-      <div className="relative -mt-4 z-10">
-        <div className="relative px-12 py-3 bg-gradient-to-r from-red-800 via-red-700 to-red-800 border-2 border-yellow-500 rounded-lg shadow-xl">
+      <div className="relative -mt-2.5 z-10">
+        <div className="relative px-8 sm:px-12 py-2.5 bg-gradient-to-r from-red-900/95 via-red-800/95 to-red-900/95 border-2 border-yellow-500 rounded-lg shadow-xl">
           {/* Golden corner decorations */}
           <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-yellow-400 rounded-tl-lg" />
           <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-yellow-400 rounded-tr-lg" />
@@ -67,23 +67,23 @@ interface TraditionalScrollProps {
 export function TraditionalScroll({ text, side }: TraditionalScrollProps) {
   return (
     <div
-      className={`absolute top-1/2 -translate-y-1/2 z-20 hidden lg:flex flex-col items-center ${
+      className={`absolute top-1/2 -translate-y-1/2 z-[3] hidden lg:flex flex-col items-center ${
         side === 'left' ? 'left-0' : 'right-0'
       }`}
       style={{ width: '80px' }}
     >
-      <div className="relative w-[70px]">
+      <div className="relative w-[74px] aspect-[210/535]">
         <Image
-          src="/tree-assets/scroll-banner.png"
+          src="/tree-assets/scroll-banner-trim.png"
           alt={`Câu đối ${side === 'left' ? 'trái' : 'phải'}`}
-          width={70}
-          height={240}
-          className="w-full h-auto object-contain drop-shadow-md"
+          fill
+          sizes="74px"
+          className="object-contain drop-shadow-md"
         />
         {/* Text overlay on scroll */}
-        <div className="absolute inset-0 flex items-center justify-center px-3 pt-4 pb-8">
+        <div className="absolute inset-0 flex items-center justify-center px-3 pt-2 pb-4">
           <p
-            className="text-yellow-300 text-sm font-bold leading-[2.2] tracking-widest"
+            className="text-yellow-300 text-xs font-bold leading-[2.05] tracking-[0.3em]"
             style={{
               writingMode: 'vertical-rl',
               textOrientation: 'upright',
@@ -102,13 +102,13 @@ export function TraditionalScroll({ text, side }: TraditionalScrollProps) {
 export function TraditionalFooter() {
   return (
     <div className="relative w-full flex justify-center select-none pointer-events-none mt-2">
-      <div className="w-full max-w-[500px]">
+      <div className="relative w-full max-w-[520px] aspect-[592/205]">
         <Image
-          src="/tree-assets/lotus-decoration.png"
+          src="/tree-assets/lotus-decoration-trim.png"
           alt="Hoa sen trang trí"
-          width={500}
-          height={150}
-          className="w-full h-auto object-contain opacity-80"
+          fill
+          sizes="(max-width: 768px) 85vw, 520px"
+          className="object-contain opacity-85 drop-shadow-[0_8px_16px_rgba(70,40,12,0.2)]"
         />
       </div>
     </div>
