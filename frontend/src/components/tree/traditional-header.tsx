@@ -2,7 +2,7 @@
  * @project AncestorTree
  * @file src/components/tree/traditional-header.tsx
  * @description Traditional Vietnamese family tree decorative elements
- * @version 1.0.0
+ * @version 2.0.0
  */
 
 'use client';
@@ -19,39 +19,31 @@ export function TraditionalHeader({
   subtitle = 'Ninh Thôn - Gia Phả',
 }: TraditionalHeaderProps) {
   return (
-    <div className="relative w-full flex flex-col items-center select-none pointer-events-none">
-      {/* Temple roof header */}
-      <div className="relative w-full max-w-[620px] mx-auto aspect-[560/250]">
-        <Image
-          src="/tree-assets/temple-header-trim.png"
-          alt="Mái đình truyền thống"
-          fill
-          sizes="(max-width: 768px) 92vw, 620px"
-          className="object-contain drop-shadow-[0_14px_24px_rgba(90,48,12,0.26)]"
-          priority
-        />
+    <div className="relative h-full w-full select-none pointer-events-none">
+      <div className="absolute inset-x-0 top-0 flex justify-center">
+        <div className="relative w-full max-w-[360px] sm:max-w-[420px] aspect-[560/250]">
+          <Image
+            src="/tree-assets/temple-header-trim.png"
+            alt="Mái đình truyền thống"
+            fill
+            sizes="(max-width: 768px) 78vw, 420px"
+            className="object-contain drop-shadow-[0_10px_18px_rgba(90,48,12,0.22)]"
+            priority
+          />
+        </div>
       </div>
 
-      {/* Family name banner below temple */}
-      <div className="relative -mt-2.5 z-10">
-        <div className="relative px-8 sm:px-12 py-2.5 bg-gradient-to-r from-red-900/95 via-red-800/95 to-red-900/95 border-2 border-yellow-500 rounded-lg shadow-xl">
-          {/* Golden corner decorations */}
-          <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-yellow-400 rounded-tl-lg" />
-          <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-yellow-400 rounded-tr-lg" />
-          <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-yellow-400 rounded-bl-lg" />
-          <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-yellow-400 rounded-br-lg" />
-
-          <div className="text-center">
-            <p className="text-yellow-200 text-xs tracking-[0.3em] uppercase font-medium">
-              Phả Đồ Dòng Họ
-            </p>
+      <div className="absolute inset-x-0 bottom-0 flex justify-center">
+        <div className="rounded-md border border-yellow-500 bg-gradient-to-r from-red-900/90 via-red-800/90 to-red-900/90 px-4 py-1.5 shadow-lg">
+          <div className="text-center leading-tight">
+            <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-yellow-200">Phả đồ dòng họ</p>
             <h2
-              className="text-2xl md:text-3xl font-bold text-yellow-300 tracking-wider"
+              className="text-lg font-bold tracking-wide text-yellow-300 sm:text-xl"
               style={{ fontFamily: '"Noto Serif", "Times New Roman", serif' }}
             >
               {familyName}
             </h2>
-            <p className="text-yellow-200/80 text-sm mt-0.5">{subtitle}</p>
+            {subtitle && <p className="text-[11px] text-yellow-200/80">{subtitle}</p>}
           </div>
         </div>
       </div>
@@ -67,23 +59,22 @@ interface TraditionalScrollProps {
 export function TraditionalScroll({ text, side }: TraditionalScrollProps) {
   return (
     <div
-      className={`absolute top-1/2 -translate-y-1/2 z-[3] hidden lg:flex flex-col items-center ${
-        side === 'left' ? 'left-0' : 'right-0'
+      className={`absolute top-1/2 -translate-y-1/2 z-[3] hidden xl:flex flex-col items-center ${
+        side === 'left' ? 'left-1' : 'right-1'
       }`}
-      style={{ width: '80px' }}
+      style={{ width: '72px' }}
     >
-      <div className="relative w-[74px] aspect-[210/535]">
+      <div className="relative w-[66px] aspect-[210/535]">
         <Image
           src="/tree-assets/scroll-banner-trim.png"
           alt={`Câu đối ${side === 'left' ? 'trái' : 'phải'}`}
           fill
-          sizes="74px"
+          sizes="66px"
           className="object-contain drop-shadow-md"
         />
-        {/* Text overlay on scroll */}
-        <div className="absolute inset-0 flex items-center justify-center px-3 pt-2 pb-4">
+        <div className="absolute inset-0 flex items-center justify-center px-2.5 pt-2 pb-4">
           <p
-            className="text-yellow-300 text-xs font-bold leading-[2.05] tracking-[0.3em]"
+            className="text-[11px] font-bold leading-[2.0] tracking-[0.25em] text-yellow-300"
             style={{
               writingMode: 'vertical-rl',
               textOrientation: 'upright',
@@ -101,15 +92,28 @@ export function TraditionalScroll({ text, side }: TraditionalScrollProps) {
 
 export function TraditionalFooter() {
   return (
-    <div className="relative w-full flex justify-center select-none pointer-events-none mt-2">
-      <div className="relative w-full max-w-[520px] aspect-[592/205]">
-        <Image
-          src="/tree-assets/lotus-decoration-trim.png"
-          alt="Hoa sen trang trí"
-          fill
-          sizes="(max-width: 768px) 85vw, 520px"
-          className="object-contain opacity-85 drop-shadow-[0_8px_16px_rgba(70,40,12,0.2)]"
-        />
+    <div className="relative h-full w-full select-none pointer-events-none">
+      <div className="absolute bottom-0 left-2">
+        <div className="relative w-[130px] aspect-[296/205] overflow-hidden">
+          <Image
+            src="/tree-assets/lotus-decoration-trim.png"
+            alt="Hoa sen góc trái"
+            fill
+            sizes="130px"
+            className="object-cover object-left opacity-80"
+          />
+        </div>
+      </div>
+      <div className="absolute bottom-0 right-2">
+        <div className="relative w-[130px] aspect-[296/205] overflow-hidden">
+          <Image
+            src="/tree-assets/lotus-decoration-trim.png"
+            alt="Hoa sen góc phải"
+            fill
+            sizes="130px"
+            className="object-cover object-right opacity-80"
+          />
+        </div>
       </div>
     </div>
   );
@@ -122,7 +126,6 @@ interface TraditionalBorderProps {
 export function TraditionalBorder({ children }: TraditionalBorderProps) {
   return (
     <div className="relative">
-      {/* Outer golden border */}
       <div
         className="absolute inset-0 rounded-xl pointer-events-none z-10"
         style={{
@@ -131,11 +134,12 @@ export function TraditionalBorder({ children }: TraditionalBorderProps) {
             'inset 0 0 0 2px #8b6c1f, inset 0 0 0 4px #c5942a33, 0 0 20px rgba(197, 148, 42, 0.15)',
         }}
       />
-      {/* Corner ornaments */}
-      <div className="absolute top-1 left-1 w-8 h-8 border-t-3 border-l-3 border-yellow-600 rounded-tl-lg z-10 pointer-events-none" />
-      <div className="absolute top-1 right-1 w-8 h-8 border-t-3 border-r-3 border-yellow-600 rounded-tr-lg z-10 pointer-events-none" />
-      <div className="absolute bottom-1 left-1 w-8 h-8 border-b-3 border-l-3 border-yellow-600 rounded-bl-lg z-10 pointer-events-none" />
-      <div className="absolute bottom-1 right-1 w-8 h-8 border-b-3 border-r-3 border-yellow-600 rounded-br-lg z-10 pointer-events-none" />
+      <div className="absolute inset-[7px] rounded-[10px] border border-amber-600/35 pointer-events-none z-10" />
+      <div className="absolute inset-[12px] rounded-[8px] border border-amber-400/25 pointer-events-none z-10" />
+      <div className="absolute top-1 left-1 h-8 w-8 rounded-tl-lg border-l-3 border-t-3 border-yellow-600 z-10 pointer-events-none" />
+      <div className="absolute top-1 right-1 h-8 w-8 rounded-tr-lg border-r-3 border-t-3 border-yellow-600 z-10 pointer-events-none" />
+      <div className="absolute bottom-1 left-1 h-8 w-8 rounded-bl-lg border-b-3 border-l-3 border-yellow-600 z-10 pointer-events-none" />
+      <div className="absolute bottom-1 right-1 h-8 w-8 rounded-br-lg border-b-3 border-r-3 border-yellow-600 z-10 pointer-events-none" />
 
       {children}
     </div>

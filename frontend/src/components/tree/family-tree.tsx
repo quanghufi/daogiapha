@@ -31,6 +31,7 @@ import {
   ChevronsUpDown,
   Crosshair,
   Eye,
+  Sparkles,
 } from 'lucide-react';
 import type { TreePerson } from '@/types';
 import type { TreeData } from '@/lib/supabase-data';
@@ -894,7 +895,7 @@ function buildTreeLayout(
     nodes.push({
       person,
       x: xPositions.get(person.id)!,
-      y: (person.generation - minGen) * LEVEL_HEIGHT + 180, // Space for traditional temple header
+      y: (person.generation - minGen) * LEVEL_HEIGHT + 120, // Top breathing room
       isCollapsed: collapsedNodes.has(person.id),
       hasChildren: getVisibleChildrenAsFather(person.id).length > 0,
       isVisible: true,
@@ -963,7 +964,7 @@ function buildTreeLayout(
     nodes,
     connections,
     width: Math.max(800, maxX - minX + 240),
-    height: maxY + 220, // Space for traditional lotus footer
+    height: maxY + 180, // Bottom breathing room
     offsetX: -minX + 120, // Space for traditional scroll banner
   };
 }
@@ -1030,6 +1031,7 @@ export function FamilyTree() {
   const [collapsedNodes, setCollapsedNodes] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<ViewMode>('all');
   const [showMinimap, setShowMinimap] = useState(true);
+  const [showDecorations, setShowDecorations] = useState(true);
   const [filterRootId, setFilterRootId] = useState<string | null>(() =>
     typeof window !== 'undefined'
       ? new URLSearchParams(window.location.search).get('root')
@@ -1457,6 +1459,15 @@ export function FamilyTree() {
           <Maximize2 className="h-3.5 w-3.5 mr-1" />
           Minimap
         </Button>
+        <Button
+          variant={showDecorations ? 'secondary' : 'ghost'}
+          size="sm"
+          onClick={() => setShowDecorations(!showDecorations)}
+          className="h-8"
+        >
+          <Sparkles className="h-3.5 w-3.5 mr-1" />
+          Trang trí
+        </Button>
 
         {/* Instructions */}
         <div className="ml-auto flex items-center gap-1 text-xs text-muted-foreground">
@@ -1480,7 +1491,9 @@ export function FamilyTree() {
       {/* Tree container */}
       <TraditionalBorder>
         <div
-          className="relative overflow-hidden bg-amber-50 rounded-xl min-h-[620px] md:min-h-[680px]"
+          className={`relative overflow-hidden bg-amber-50 rounded-xl ${
+            showDecorations ? 'min-h-[620px] md:min-h-[680px]' : 'min-h-[560px] md:min-h-[620px]'
+          }`}
           style={{
             backgroundImage: 'url(/tree-assets/bg-pattern.png)',
             backgroundRepeat: 'repeat',
@@ -1492,17 +1505,26 @@ export function FamilyTree() {
           <div className="absolute inset-0 pointer-events-none z-0 bg-[radial-gradient(circle_at_top,rgba(255,240,200,0.35),transparent_55%)]" />
 
           {/* Fixed Traditional Overlays */}
-          <div className="absolute top-1 inset-x-0 z-[1] pointer-events-none opacity-95">
-            <TraditionalHeader familyName="Đào Tộc" subtitle="" />
-          </div>
-          <TraditionalScroll text="Phúc Đức Tổ Tiên" side="left" />
-          <TraditionalScroll text="Con Cháu Thảo Hiền" side="right" />
-          <div className="absolute bottom-1 inset-x-0 z-[1] pointer-events-none opacity-90">
-            <TraditionalFooter />
-          </div>
+          {showDecorations && (
+            <>
+              <div className="absolute inset-x-0 top-2 h-[108px] z-[1] pointer-events-none">
+                <TraditionalHeader familyName="Đào Tộc" subtitle="" />
+              </div>
+              <TraditionalScroll text="Phúc Đức Tổ Tiên" side="left" />
+              <TraditionalScroll text="Con Cháu Thảo Hiền" side="right" />
+              <div className="absolute inset-x-0 bottom-7 h-[56px] z-[1] pointer-events-none opacity-80">
+                <TraditionalFooter />
+              </div>
+              <div className="absolute left-3 right-3 top-[122px] border-t border-amber-700/30 z-[2] pointer-events-none" />
+            </>
+          )}
 
           <div
-            className="absolute left-3 right-3 top-[128px] bottom-[92px] md:top-[150px] md:bottom-[112px] lg:left-[86px] lg:right-[86px] rounded-lg overflow-hidden"
+            className={`absolute rounded-lg overflow-hidden ${
+              showDecorations
+                ? 'left-2 right-2 top-[128px] bottom-10 md:left-3 md:right-3 lg:left-[76px] lg:right-[76px]'
+                : 'left-2 right-2 top-2 bottom-8 md:left-3 md:right-3 md:top-3 md:bottom-9'
+            }`}
           >
             <div
               ref={containerRef}
