@@ -47,6 +47,7 @@ import { TraditionalBorder, TraditionalHeader, TraditionalScroll, TraditionalFoo
 const CARD_W = 180;
 const CARD_H = 80;
 const LEVEL_HEIGHT = 140;
+const FIRST_GENERATION_TOP_OFFSET = 12;
 const SIBLING_GAP = 24;
 const COUPLE_GAP = 12;
 const MINIMAP_WIDTH = 160;
@@ -889,14 +890,17 @@ function buildTreeLayout(
     rootStartX += (subtreeWidths.get(root) || CARD_W) + SIBLING_GAP * 2;
   }
 
-  const minGen = Math.min(...visiblePeople.map((p) => p.generation || 1));
+  // Keep generation lanes anchored to the clan's first generation,
+  // so Đời 1 always stays right below the temple header.
+  const rootGeneration = Math.min(...people.map((p) => p.generation || 1));
   const nodes: TreeNodeData[] = [];
   for (const person of visiblePeople) {
     if (!xPositions.has(person.id)) continue;
+    const personGeneration = person.generation || rootGeneration;
     nodes.push({
       person,
       x: xPositions.get(person.id)!,
-      y: (person.generation - minGen) * LEVEL_HEIGHT + 72, // Top breathing room
+      y: (personGeneration - rootGeneration) * LEVEL_HEIGHT + FIRST_GENERATION_TOP_OFFSET,
       isCollapsed: collapsedNodes.has(person.id),
       hasChildren: getVisibleChildrenAsFather(person.id).length > 0,
       isVisible: true,
