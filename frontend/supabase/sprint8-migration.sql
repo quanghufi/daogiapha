@@ -155,8 +155,8 @@ CREATE TABLE IF NOT EXISTS clan_settings (
 
 ALTER TABLE clan_settings ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Anyone authenticated can read settings" ON clan_settings
-    FOR SELECT USING (auth.uid() IS NOT NULL);
+CREATE POLICY "Anyone can read clan settings" ON clan_settings
+    FOR SELECT USING (true);
 
 CREATE POLICY "Admins can insert settings" ON clan_settings
     FOR INSERT WITH CHECK (

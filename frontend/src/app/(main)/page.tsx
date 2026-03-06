@@ -16,6 +16,7 @@ import { GitBranchPlus, Calendar, Users, ArrowRight } from 'lucide-react';
 import { StatsCard } from '@/components/home/stats-card';
 import { FeaturedCharter } from '@/components/home/featured-charter';
 import { useClanSettings } from '@/hooks/use-clan-settings';
+import { DEFAULT_CLAN_MOTTO, DEFAULT_CLAN_NAME } from '@/lib/clan-defaults';
 
 const features = [
   {
@@ -79,8 +80,8 @@ function LotusCorner({
 
 export default function HomePage() {
   const { data: clanSettings } = useClanSettings();
-  const clanName = clanSettings?.clan_name?.trim() || 'Đào tộc - Ninh thôn';
-  const clanMotto = clanSettings?.clan_motto?.trim() || 'Gìn giữ tinh hoa - Tiếp bước cha ông';
+  const clanName = clanSettings?.clan_name?.trim() || DEFAULT_CLAN_NAME;
+  const clanMotto = clanSettings?.clan_motto?.trim() || DEFAULT_CLAN_MOTTO;
 
   return (
     <div className="flex flex-col">

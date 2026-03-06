@@ -38,6 +38,7 @@ import type { TreePerson } from '@/types';
 import type { TreeData } from '@/lib/supabase-data';
 import Link from 'next/link';
 import { GENDER } from '@/lib/constants';
+import { DEFAULT_CLAN_MOTTO, DEFAULT_CLAN_NAME } from '@/lib/clan-defaults';
 import { TraditionalBorder, TraditionalHeader, TraditionalScroll, TraditionalFooter } from './traditional-header';
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -1206,8 +1207,8 @@ function computeAutoCollapsedNodes(data: TreeData | null | undefined): Set<strin
 export function FamilyTree() {
   const { data, isLoading, error } = useTreeData();
   const { data: clanSettings } = useClanSettings();
-  const clanName = clanSettings?.clan_name?.trim() || 'Đào tộc - Ninh thôn';
-  const clanMotto = clanSettings?.clan_motto?.trim() || 'Uống nước nhớ nguồn';
+  const clanName = clanSettings?.clan_name?.trim() || DEFAULT_CLAN_NAME;
+  const clanMotto = clanSettings?.clan_motto?.trim() || DEFAULT_CLAN_MOTTO;
 
   // State
   const [scale, setScale] = useState(() =>

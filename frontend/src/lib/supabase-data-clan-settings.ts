@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { DEFAULT_CLAN_MOTTO, DEFAULT_CLAN_NAME } from './clan-defaults';
 import type { ClanSettings } from '@/types';
 
 const SETTINGS_KEYS: (keyof ClanSettings)[] = [
@@ -6,8 +7,8 @@ const SETTINGS_KEYS: (keyof ClanSettings)[] = [
 ];
 
 const DEFAULTS: ClanSettings = {
-  clan_name: 'Đào tộc - Ninh thôn',
-  clan_motto: 'Uống nước nhớ nguồn',
+  clan_name: DEFAULT_CLAN_NAME,
+  clan_motto: DEFAULT_CLAN_MOTTO,
   contact_email: '',
   contact_phone: '',
   require_verification: true,

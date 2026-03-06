@@ -11,6 +11,7 @@
 import { useMemo } from 'react';
 import Link from 'next/link';
 import { useFullTreeData } from '@/hooks/use-families';
+import { useClanSettings } from '@/hooks/use-clan-settings';
 import { generateBookData } from '@/lib/book-generator';
 import type { BookChapter, BookPerson } from '@/lib/book-generator';
 import { Card, CardContent } from '@/components/ui/card';
@@ -20,6 +21,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, Printer, User, Users, Heart } from 'lucide-react';
 import { formatDate } from '@/lib/format';
 import { GENDER } from '@/lib/constants';
+import { DEFAULT_CLAN_MOTTO, DEFAULT_CLAN_NAME } from '@/lib/clan-defaults';
 
 function PersonEntry({ entry }: { entry: BookPerson }) {
   const { person, father, mother, spouses, children, zodiacYear } = entry;
@@ -122,6 +124,9 @@ function ChapterSection({ chapter }: { chapter: BookChapter }) {
 
 export default function BookPage() {
   const { data: treeData, isLoading, error } = useFullTreeData();
+  const { data: clanSettings } = useClanSettings();
+  const clanName = clanSettings?.clan_name?.trim() || DEFAULT_CLAN_NAME;
+  const clanMotto = clanSettings?.clan_motto?.trim() || DEFAULT_CLAN_MOTTO;
 
   const chapters = useMemo(
     () => (treeData ? generateBookData(treeData) : []),
@@ -187,10 +192,10 @@ export default function BookPage() {
             Gia Phả
           </h1>
           <h2 className="text-xl md:text-2xl font-semibold text-emerald-700 mb-4">
-            Đào tộc - Ninh thôn
+            {clanName}
           </h2>
           <p className="text-muted-foreground italic mb-6">
-            &ldquo;Gìn giữ tinh hoa - Tiếp bước cha ông&rdquo;
+            &ldquo;{clanMotto}&rdquo;
           </p>
           <Separator className="max-w-xs mx-auto" />
           <div className="mt-6 text-sm text-muted-foreground space-y-1">
@@ -222,7 +227,7 @@ export default function BookPage() {
 
         {/* Footer */}
         <div className="text-center text-sm text-muted-foreground border-t pt-6">
-          <p>Gia Phả Điện Tử - Đào tộc - Ninh thôn</p>
+          <p>Gia Phả Điện Tử - {clanName}</p>
           <p>Được tạo bởi gia tộc · {new Date().getFullYear()}</p>
         </div>
       </div>

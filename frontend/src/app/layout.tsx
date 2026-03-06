@@ -13,6 +13,7 @@ import { AuthProvider } from "@/components/auth/auth-provider";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
+import { DEFAULT_CLAN_MOTTO, DEFAULT_CLAN_NAME } from "@/lib/clan-defaults";
 
 const bodyFont = Be_Vietnam_Pro({
   subsets: ["latin", "vietnamese"],
@@ -28,15 +29,15 @@ const headingFont = Noto_Serif({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Gia Phả Điện Tử - Đào tộc - Ninh thôn',
+    default: `Gia Phả Điện Tử - ${DEFAULT_CLAN_NAME}`,
     template: '%s | Gia Phả Đào tộc',
   },
-  description: 'Phần mềm quản lý gia phả điện tử cho Đào tộc - Ninh thôn. Lưu trữ thông tin dòng họ, cây gia phả, lịch giỗ chạp.',
+  description: `Phần mềm quản lý gia phả điện tử cho ${DEFAULT_CLAN_NAME}. Lưu trữ thông tin dòng họ, cây gia phả, lịch giỗ chạp.`,
   keywords: ['gia phả', 'gia phả điện tử', 'Đào tộc', 'Ninh thôn', 'dòng họ', 'cây gia phả', 'phả hệ'],
-  authors: [{ name: 'Đào tộc - Ninh thôn' }],
+  authors: [{ name: DEFAULT_CLAN_NAME }],
   openGraph: {
-    title: 'Gia Phả Điện Tử - Đào tộc - Ninh thôn',
-    description: 'Gìn giữ tinh hoa - Tiếp bước cha ông',
+    title: `Gia Phả Điện Tử - ${DEFAULT_CLAN_NAME}`,
+    description: DEFAULT_CLAN_MOTTO,
     type: 'website',
     locale: 'vi_VN',
   },
