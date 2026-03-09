@@ -45,3 +45,8 @@ docs/data/
 
 # Claude Code local settings (may contain secrets)
 .claude/
+
+# Antigravity/Codex review automation artifacts
+.agent/handoff/
+.agent/codex-review-home/
+scripts/__pycache__/
