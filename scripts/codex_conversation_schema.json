@@ -1,0 +1,44 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+        "status",
+        "response"
+    ],
+    "properties": {
+        "status": {
+            "type": "string",
+            "enum": [
+                "completed",
+                "needs_input",
+                "error"
+            ]
+        },
+        "response": {
+            "type": "string"
+        },
+        "files_modified": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "context_needed": {
+            "anyOf": [
+                {
+                    "type": "string"
+                },
+                {
+                    "type": "null"
+                }
+            ]
+        },
+        "follow_up_suggestions": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        }
+    }
+}
