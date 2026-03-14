@@ -16,22 +16,22 @@ export interface Person {
   gender: 1 | 2; // 1=Male, 2=Female
   generation: number;
   chi?: number;
-  
+
   // Birth
   birth_date?: string;
   birth_year?: number;
   birth_place?: string;
-  
+
   // Death
   death_date?: string;
   death_year?: number;
   death_place?: string;
   death_lunar?: string; // "15/7" format
-  
+
   // Status
   is_living: boolean;
   is_patrilineal: boolean;
-  
+
   // Contact
   phone?: string;
   email?: string;
@@ -39,16 +39,16 @@ export interface Person {
   facebook?: string;
   address?: string;
   hometown?: string;
-  
+
   // Bio
   occupation?: string;
   biography?: string;
   notes?: string;
   avatar_url?: string;
-  
+
   // Privacy: 0=public, 1=members only, 2=private
   privacy_level: number;
-  
+
   // Timestamps
   created_at: string;
   updated_at: string;
@@ -230,10 +230,20 @@ export interface Achievement {
 export type CreateAchievementInput = Omit<Achievement, 'id' | 'created_at' | 'updated_at'>;
 export type UpdateAchievementInput = Partial<CreateAchievementInput>;
 
-// ─── Fund Transaction (Quỹ khuyến học) ───────────────────────────────────────
+// ─── Fund Transaction (Quản lý Quỹ) ──────────────────────────────────────────
 
 export type FundTransactionType = 'income' | 'expense';
-export type FundCategory = 'dong_gop' | 'hoc_bong' | 'khen_thuong' | 'other';
+export type FundCategory = 'dong_gop' | 'hoc_bong' | 'khen_thuong' | 'xay_dung' | 'tu_thien' | 'hoat_dong' | 'other';
+
+export const FUND_CATEGORY_LABELS: Record<FundCategory, string> = {
+  dong_gop: 'Đóng góp',
+  hoc_bong: 'Học bổng',
+  khen_thuong: 'Khen thưởng',
+  xay_dung: 'Xây dựng',
+  tu_thien: 'Từ thiện',
+  hoat_dong: 'Hoạt động',
+  other: 'Khác',
+};
 
 export interface FundTransaction {
   id: string;
@@ -319,7 +329,7 @@ export type CauDuongStatus = 'scheduled' | 'completed' | 'delegated' | 'reschedu
 export const CAU_DUONG_CEREMONY_LABELS: Record<CauDuongCeremonyType, string> = {
   tet: 'Tết Nguyên Đán (1/1 AL)',
   ram_thang_gieng: 'Rằm tháng Giêng (15/1 AL)',
-  gio_to: 'Giỗ tổ Can Thăng (15/3 AL)',
+  gio_to: 'Giỗ tổ (24/1 AL)',
   ram_thang_bay: 'Rằm tháng Bảy (15/7 AL)',
 };
 

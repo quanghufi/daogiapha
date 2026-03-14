@@ -36,6 +36,7 @@ import Link from 'next/link';
 import { formatVND, formatDate } from '@/lib/format';
 import { ScholarshipStatusBadge } from '@/components/shared/scholarship-status-badge';
 import type { Person, CreateFundTransactionInput, CreateScholarshipInput, ScholarshipStatus } from '@/types';
+import { FUND_CATEGORY_LABELS } from '@/types';
 
 export default function AdminFundPage() {
   const { profile, isEditor } = useAuth();
@@ -156,7 +157,7 @@ export default function AdminFundPage() {
   return (
     <div className="container mx-auto px-4 py-8 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Quản lý Quỹ & Học bổng</h1>
+        <h1 className="text-2xl font-bold">Quản lý Quỹ</h1>
         <p className="text-muted-foreground">
           Số dư: <span className="font-semibold text-emerald-600">{formatVND(balance?.balance || 0)}</span>
         </p>
@@ -196,6 +197,9 @@ export default function AdminFundPage() {
                         <SelectItem value="dong_gop">Đóng góp</SelectItem>
                         <SelectItem value="hoc_bong">Học bổng</SelectItem>
                         <SelectItem value="khen_thuong">Khen thưởng</SelectItem>
+                        <SelectItem value="xay_dung">Xây dựng</SelectItem>
+                        <SelectItem value="tu_thien">Từ thiện</SelectItem>
+                        <SelectItem value="hoat_dong">Hoạt động</SelectItem>
                         <SelectItem value="other">Khác</SelectItem>
                       </SelectContent>
                     </Select>
@@ -234,6 +238,8 @@ export default function AdminFundPage() {
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {formatDate(tx.transaction_date)}
+                      {' · '}
+                      <Badge variant="outline" className="text-xs px-1 py-0">{FUND_CATEGORY_LABELS[tx.category]}</Badge>
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
