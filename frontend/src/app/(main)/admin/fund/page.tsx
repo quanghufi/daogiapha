@@ -210,8 +210,8 @@ export default function AdminFundPage() {
                   <Input type="number" value={txAmount} onChange={e => setTxAmount(e.target.value)} placeholder="1000000" />
                 </div>
                 <div>
-                  <Label>Người đóng góp</Label>
-                  <Input value={txDonorName} onChange={e => setTxDonorName(e.target.value)} placeholder="Ông Đào Văn A" />
+                  <Label>{txType === 'income' ? 'Người đóng góp' : 'Nội dung chi'}</Label>
+                  <Input value={txDonorName} onChange={e => setTxDonorName(e.target.value)} placeholder={txType === 'income' ? 'Ông Đào Văn A' : 'VD: Sửa nhà thờ, mua vật liệu...'} />
                 </div>
                 <div>
                   <Label>Ngày</Label>
