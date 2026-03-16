@@ -141,6 +141,34 @@ function getCardStyle(person: TreePerson) {
   };
 }
 
+
+// ══════════════════
+// Helper: Get generation-based background color (soft pastels for 14 gens)
+// 
+
+const GENERATION_COLORS: Record<number, { bg: string; border: string; badge: string; badgeText: string }> = {
+  1:  { bg: '#fef2f2', border: '#fca5a5', badge: '#fee2e2', badgeText: '#991b1b' },
+  2:  { bg: '#fff7ed', border: '#fdba74', badge: '#ffedd5', badgeText: '#9a3412' },
+  3:  { bg: '#fffbeb', border: '#fcd34d', badge: '#fef3c7', badgeText: '#92400e' },
+  4:  { bg: '#fefce8', border: '#bef264', badge: '#ecfccb', badgeText: '#3f6212' },
+  5:  { bg: '#f0fdf4', border: '#86efac', badge: '#dcfce7', badgeText: '#166534' },
+  6:  { bg: '#ecfdf5', border: '#6ee7b7', badge: '#d1fae5', badgeText: '#065f46' },
+  7:  { bg: '#f0fdfa', border: '#5eead4', badge: '#ccfbf1', badgeText: '#115e59' },
+  8:  { bg: '#ecfeff', border: '#67e8f9', badge: '#cffafe', badgeText: '#155e75' },
+  9:  { bg: '#eff6ff', border: '#93c5fd', badge: '#dbeafe', badgeText: '#1e40af' },
+  10: { bg: '#eef2ff', border: '#a5b4fc', badge: '#e0e7ff', badgeText: '#3730a3' },
+  11: { bg: '#f5f3ff', border: '#c4b5fd', badge: '#ede9fe', badgeText: '#5b21b6' },
+  12: { bg: '#fdf4ff', border: '#d8b4fe', badge: '#f3e8ff', badgeText: '#7e22ce' },
+  13: { bg: '#fdf2f8', border: '#f9a8d4', badge: '#fce7f3', badgeText: '#9d174d' },
+  14: { bg: '#f8fafc', border: '#94a3b8', badge: '#e2e8f0', badgeText: '#334155' },
+};
+
+function getGenerationColor(generation: number | null | undefined) {
+  const gen = generation ?? 1;
+  const idx = ((gen - 1) % 14) + 1;
+  return GENERATION_COLORS[idx] ?? GENERATION_COLORS[1];
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // PersonCard — 3 zoom levels
 // ═══════════════════════════════════════════════════════════════════════════
@@ -164,6 +192,7 @@ const PersonCard = memo(function PersonCard({
 }: PersonCardProps) {
   const { person, x, y, isCollapsed, hasChildren } = node;
   const style = getCardStyle(person);
+  const genColor = getGenerationColor(person.generation);
   const initials = getInitials(person.display_name);
   const selectedRing = isSelected ? 'ring-2 ring-primary ring-offset-2' : '';
   const spouseBadge = node.spouseOrder ? `Vợ ${node.spouseOrder}` : null;
@@ -202,8 +231,8 @@ const PersonCard = memo(function PersonCard({
   if (zoomLevel === 'compact') {
     return (
       <div
-        className={`absolute bg-gradient-to-br ${style.card} rounded-lg border-[1.5px] cursor-pointer hover:shadow-md transition-all ${selectedRing}`}
-        style={{ left: x, top: y, width: CARD_W, height: 40 }}
+        className={`absolute rounded-lg border-[1.5px] cursor-pointer hover:shadow-md transition-all ${selectedRing} ${person.is_patrilineal === false ? 'border-dashed' : ''}`}
+        style={{ left: x, top: y, width: CARD_W, height: 40, background: genColor.bg, borderColor: genColor.border, opacity: person.is_living === false ? 0.7 : 1 }}
         onClick={() => onSelect(person, x, y)}
       >
         {spouseBadge && (
@@ -217,7 +246,7 @@ const PersonCard = memo(function PersonCard({
           </div>
           <span className="text-[10px] font-medium truncate flex-1">{person.display_name}</span>
           {person.generation && (
-            <span className="text-[8px] text-amber-700 bg-amber-50 border border-amber-200 rounded px-1 shrink-0">
+            <span className="text-[8px] rounded px-1 shrink-0 border" style={{ background: genColor.badge, color: genColor.badgeText, borderColor: genColor.border }}>
               Đ{person.generation}
             </span>
           )}
@@ -243,8 +272,8 @@ const PersonCard = memo(function PersonCard({
   return (
     <>
       <div
-        className={`absolute bg-gradient-to-br ${style.card} rounded-xl border-[1.5px] cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all ${selectedRing}`}
-        style={{ left: x, top: y, width: CARD_W, height: CARD_H }}
+        className={`absolute rounded-xl border-[1.5px] cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all ${selectedRing} ${person.is_patrilineal === false ? 'border-dashed' : ''}`}
+        style={{ left: x, top: y, width: CARD_W, height: CARD_H, background: genColor.bg, borderColor: genColor.border, opacity: person.is_living === false ? 0.7 : 1 }}
         onClick={() => onSelect(person, x, y)}
       >
         {spouseBadge && (
@@ -271,7 +300,7 @@ const PersonCard = memo(function PersonCard({
 
             {/* Generation badge */}
             {person.generation && (
-              <span className="text-[9px] text-amber-700 bg-amber-50 border border-amber-200 rounded px-1 py-0.5 w-fit leading-none">
+              <span className="text-[9px] rounded px-1 py-0.5 w-fit leading-none border" style={{ background: genColor.badge, color: genColor.badgeText, borderColor: genColor.border }}>
                 Đời {person.generation}
               </span>
             )}
