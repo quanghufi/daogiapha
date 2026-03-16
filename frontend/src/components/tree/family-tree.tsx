@@ -663,36 +663,63 @@ const Minimap = memo(function Minimap({ nodes, viewBox, treeWidth, treeHeight, o
   const visibleNodes = nodes.filter(n => n.isVisible);
 
   return (
-    <div className="absolute bottom-4 right-4 bg-white/90 border rounded-lg p-2 shadow-lg">
+    <div
+      className="absolute bottom-4 right-4 rounded-lg overflow-hidden shadow-xl z-[15]"
+      style={{
+        border: '2px solid #c5942a',
+        boxShadow: '0 4px 20px rgba(90,26,26,0.25), 0 0 0 1px #8b6c1f',
+      }}
+    >
+      {/* Title bar */}
+      <div
+        className="flex items-center justify-between px-2.5 py-1"
+        style={{
+          background: 'linear-gradient(180deg, #5a1a1a, #8b1a1a)',
+          borderBottom: '1px solid #c5942a',
+        }}
+      >
+        <span
+          className="text-[10px] font-semibold tracking-wider text-yellow-300"
+          style={{ fontFamily: '"Noto Serif", serif' }}
+        >
+          Tree Overview
+        </span>
+      </div>
       <svg
         width={MINIMAP_WIDTH}
         height={MINIMAP_HEIGHT}
-        className="cursor-pointer"
+        className="cursor-pointer block"
+        style={{ background: 'rgba(245, 230, 211, 0.92)' }}
         onClick={handleClick}
       >
         <g transform={`scale(${scale})`}>
-          {visibleNodes.map((node) => (
-            <circle
-              key={node.person.id}
-              cx={node.x + CARD_W / 2}
-              cy={node.y + CARD_H / 2}
-              r={4 / scale}
-              className={
-                node.person.gender === GENDER.MALE
-                  ? (node.person.is_patrilineal !== false ? 'fill-indigo-400' : 'fill-stone-400')
-                  : (node.person.is_patrilineal !== false ? 'fill-rose-400' : 'fill-stone-400')
-              }
-            />
-          ))}
+          {visibleNodes.map((node) => {
+            const gen = Math.min((node.person.generation_number || 1) - 1, 13);
+            const genColors = [
+              '#8b1a1a','#a62626','#c43e1e','#d4691e',
+              '#b8860b','#8b7d3c','#3d7a3d','#2e8b6e',
+              '#1e7a7a','#1e5a8b','#2a4a8b','#2e3a7a',
+              '#1a2a5c','#0f1a3d',
+            ];
+            return (
+              <rect
+                key={node.person.id}
+                x={node.x + CARD_W / 2 - 2 / scale}
+                y={node.y + CARD_H / 2 - 1.5 / scale}
+                width={4 / scale}
+                height={3 / scale}
+                fill={genColors[gen] || '#666'}
+              />
+            );
+          })}
           <rect
             x={viewBox.x}
             y={viewBox.y}
             width={viewBox.width}
             height={viewBox.height}
-            fill="none"
-            stroke="hsl(var(--primary))"
+            fill="rgba(197, 148, 42, 0.08)"
+            stroke="#c5942a"
             strokeWidth={2 / scale}
-            className="opacity-50"
           />
         </g>
       </svg>
@@ -1721,7 +1748,7 @@ export function FamilyTree() {
           {/* Fixed Traditional Overlays */}
           {showDecorations && (
             <>
-              <div className="absolute inset-x-0 top-2 h-[108px] z-[1] pointer-events-none">
+              <div className="absolute inset-x-0 top-0 h-[140px] z-[1] pointer-events-none">
                 <TraditionalHeader familyName={clanName} subtitle={clanMotto} />
               </div>
               <TraditionalScroll text="Phúc Đức Tổ Tiên" side="left" />
@@ -1729,14 +1756,14 @@ export function FamilyTree() {
               <div className="absolute inset-x-0 bottom-7 h-[56px] z-[1] pointer-events-none opacity-80">
                 <TraditionalFooter />
               </div>
-              <div className="absolute left-3 right-3 top-[122px] border-t border-amber-700/30 z-[2] pointer-events-none" />
+              <div className="absolute left-3 right-3 top-[142px] border-t border-amber-700/30 z-[2] pointer-events-none" />
             </>
           )}
 
           <div
             className={`absolute rounded-lg overflow-hidden ${
               showDecorations
-                ? 'left-2 right-2 top-[120px] bottom-6 md:left-3 md:right-3 lg:left-[76px] lg:right-[76px]'
+                ? 'left-2 right-2 top-[144px] bottom-6 md:left-3 md:right-3 lg:left-[76px] lg:right-[76px]'
                 : 'left-2 right-2 top-2 bottom-8 md:left-3 md:right-3 md:top-3 md:bottom-9'
             }`}
           >

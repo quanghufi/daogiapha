@@ -2,54 +2,146 @@
  * @project AncestorTree
  * @file src/components/tree/traditional-header.tsx
  * @description Traditional Vietnamese family tree decorative elements
- * @version 2.0.0
+ * Stitch Design Phase 2 — Banner with dragons, scrolls, footer, border
+ * @version 3.0.0
  */
 
 'use client';
 
 import Image from 'next/image';
 
+// ═══════════════════════════════════════════════════════════════════════════
+// Traditional Header (Hoành Phi style with dragons)
+// ═══════════════════════════════════════════════════════════════════════════
+
 interface TraditionalHeaderProps {
   familyName?: string;
   subtitle?: string;
+  ancestorName?: string;
 }
 
 export function TraditionalHeader({
-  familyName = 'Đào Tộc',
-  subtitle = 'Ninh Thôn - Gia Phả',
+  familyName = 'Họ Đào',
+  subtitle = 'Ninh Thôn',
+  ancestorName,
 }: TraditionalHeaderProps) {
   return (
     <div className="relative h-full w-full select-none pointer-events-none">
-      <div className="absolute inset-x-0 top-0 flex justify-center">
-        <div className="relative w-full max-w-[360px] sm:max-w-[420px] aspect-[560/250]">
-          <Image
-            src="/tree-assets/temple-header-trim.png"
-            alt="Mái đình truyền thống"
-            fill
-            sizes="(max-width: 768px) 78vw, 420px"
-            className="object-contain drop-shadow-[0_10px_18px_rgba(90,48,12,0.22)]"
-            priority
-          />
-        </div>
+      {/* Dragon Left */}
+      <div className="absolute left-0 top-1/2 -translate-y-1/2 z-[2]" style={{ width: '140px', height: '120px' }}>
+        <Image
+          src="/tree-assets/dragon-left.png"
+          alt="Rồng trái"
+          fill
+          sizes="140px"
+          className="object-contain drop-shadow-[0_4px_12px_rgba(197,148,42,0.35)]"
+          style={{ filter: 'drop-shadow(0 2px 8px rgba(139,108,31,0.4))' }}
+          priority
+        />
       </div>
 
-      <div className="absolute inset-x-0 bottom-0 flex justify-center">
-        <div className="rounded-md border border-yellow-500 bg-gradient-to-r from-red-900/90 via-red-800/90 to-red-900/90 px-4 py-1.5 shadow-lg">
-          <div className="text-center leading-tight">
-            <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-yellow-200">Phả đồ dòng họ</p>
-            <h2
-              className="text-lg font-bold tracking-wide text-yellow-300 sm:text-xl"
-              style={{ fontFamily: '"Noto Serif", "Times New Roman", serif' }}
-            >
-              {familyName}
-            </h2>
-            {subtitle && <p className="text-[11px] text-yellow-200/80">{subtitle}</p>}
+      {/* Dragon Right */}
+      <div className="absolute right-0 top-1/2 -translate-y-1/2 z-[2]" style={{ width: '140px', height: '120px' }}>
+        <Image
+          src="/tree-assets/dragon-right.png"
+          alt="Rồng phải"
+          fill
+          sizes="140px"
+          className="object-contain drop-shadow-[0_4px_12px_rgba(197,148,42,0.35)]"
+          style={{ filter: 'drop-shadow(0 2px 8px rgba(139,108,31,0.4))' }}
+          priority
+        />
+      </div>
+
+      {/* Center Banner — Hoành Phi */}
+      <div className="absolute inset-x-0 top-0 flex justify-center z-[3]">
+        <div className="relative" style={{ width: 'min(420px, 60vw)' }}>
+          {/* Banner shape */}
+          <div
+            className="relative rounded-b-xl overflow-hidden"
+            style={{
+              background: 'linear-gradient(180deg, #5a1a1a 0%, #8b1a1a 15%, #6d1515 50%, #8b1a1a 85%, #5a1a1a 100%)',
+              border: '3px solid #c5942a',
+              borderTop: 'none',
+              boxShadow: '0 8px 32px rgba(90,26,26,0.55), inset 0 2px 20px rgba(0,0,0,0.25), 0 0 0 1px #8b6c1f',
+              padding: '10px 24px 14px',
+            }}
+          >
+            {/* Inner gold border */}
+            <div
+              className="absolute inset-[3px] rounded-b-lg pointer-events-none"
+              style={{ border: '1px solid rgba(197,148,42,0.45)' }}
+            />
+
+            {/* Corner ornaments */}
+            <div className="absolute top-0 left-2 w-4 h-4 border-l-2 border-b-2 border-yellow-600/60 rounded-bl-md" />
+            <div className="absolute top-0 right-2 w-4 h-4 border-r-2 border-b-2 border-yellow-600/60 rounded-br-md" />
+
+            {/* Text content */}
+            <div className="text-center leading-tight">
+              {/* Top label */}
+              <p
+                className="text-[9px] font-medium uppercase tracking-[0.35em] text-yellow-300/70 mb-1"
+                style={{ fontFamily: '"Noto Serif", "Times New Roman", serif' }}
+              >
+                Phả Hệ
+              </p>
+
+              {/* Main title */}
+              <h2
+                className="text-xl sm:text-2xl font-bold tracking-wider text-yellow-300"
+                style={{
+                  fontFamily: '"Noto Serif", "Times New Roman", serif',
+                  textShadow: '0 2px 8px rgba(0,0,0,0.6), 0 0 30px rgba(197,148,42,0.25)',
+                  letterSpacing: '0.12em',
+                }}
+              >
+                {familyName.toUpperCase()}
+              </h2>
+
+              {/* Ancestor name in calligraphy style */}
+              {ancestorName && (
+                <p
+                  className="text-sm sm:text-base text-yellow-200/90 mt-0.5 italic"
+                  style={{
+                    fontFamily: '"Noto Serif", "Times New Roman", serif',
+                    textShadow: '0 1px 4px rgba(0,0,0,0.5)',
+                  }}
+                >
+                  {ancestorName}
+                </p>
+              )}
+
+              {/* Subtitle */}
+              {subtitle && (
+                <p className="text-[10px] text-yellow-200/60 mt-0.5 tracking-[0.15em]">
+                  {subtitle}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Bottom decorative tip */}
+          <div className="flex justify-center -mt-[1px]">
+            <div
+              style={{
+                width: '28px',
+                height: '12px',
+                background: 'linear-gradient(180deg, #8b1a1a, #5a1a1a)',
+                clipPath: 'polygon(0 0, 100% 0, 50% 100%)',
+                border: '1px solid #c5942a',
+              }}
+            />
           </div>
         </div>
       </div>
     </div>
   );
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Traditional Scroll (Câu đối)
+// ═══════════════════════════════════════════════════════════════════════════
 
 interface TraditionalScrollProps {
   text: string;
@@ -96,6 +188,10 @@ export function TraditionalScroll({ text, side }: TraditionalScrollProps) {
   );
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// Traditional Footer (Lotus decoration)
+// ═══════════════════════════════════════════════════════════════════════════
+
 export function TraditionalFooter() {
   return (
     <div className="relative h-full w-full select-none pointer-events-none">
@@ -125,6 +221,10 @@ export function TraditionalFooter() {
   );
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// Traditional Border (Gold triple-layer frame)
+// ═══════════════════════════════════════════════════════════════════════════
+
 interface TraditionalBorderProps {
   children: React.ReactNode;
 }
@@ -151,3 +251,5 @@ export function TraditionalBorder({ children }: TraditionalBorderProps) {
     </div>
   );
 }
+
+
