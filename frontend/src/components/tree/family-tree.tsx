@@ -502,8 +502,15 @@ const ConnectionsLayer = memo(function ConnectionsLayer({ connections, offsetX }
     if (kids.length === 0) continue;
 
     if (kids.length === 1) {
-      // Single child: straight vertical line
-      paths.push(`M ${parentX} ${parentY} L ${kids[0].x} ${kids[0].y}`);
+      // Single child: orthogonal path (vertical down, horizontal, vertical down)
+      const midY = parentY + (kids[0].y - parentY) * 0.45;
+      if (Math.abs(parentX - kids[0].x) < 1) {
+        // Directly aligned: simple vertical
+        paths.push(`M ${parentX} ${parentY} L ${parentX} ${kids[0].y}`);
+      } else {
+        // Offset: L-shaped orthogonal
+        paths.push(`M ${parentX} ${parentY} L ${parentX} ${midY} L ${kids[0].x} ${midY} L ${kids[0].x} ${kids[0].y}`);
+      }
     } else {
       // Multiple children: stub down → horizontal bus → vertical drops
       const busY = parentY + (kids[0].y - parentY) * 0.45;
