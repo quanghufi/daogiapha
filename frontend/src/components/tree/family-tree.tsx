@@ -694,7 +694,7 @@ const Minimap = memo(function Minimap({ nodes, viewBox, treeWidth, treeHeight, o
       >
         <g transform={`scale(${scale})`}>
           {visibleNodes.map((node) => {
-            const gen = Math.min((node.person.generation_number || 1) - 1, 13);
+            const gen = Math.min((node.person.generation || 1) - 1, 13);
             const genColors = [
               '#8b1a1a','#a62626','#c43e1e','#d4691e',
               '#b8860b','#8b7d3c','#3d7a3d','#2e8b6e',
