@@ -1084,26 +1084,15 @@ export function buildTreeLayout(
     if (parentIsCollapsed) continue;
 
     const parentPos = fatherPos ?? motherPos!;
-    const familyCenterX = familyCenterById.get(family.id) ?? coupleMidX;
 
-    if (fatherPos && motherPos && Math.abs(familyCenterX - coupleMidX) > 1) {
-      connections.push({
-        id: `family-link-${family.id}`,
-        x1: coupleMidX,
-        y1: parentPos.y + CARD_H / 2,
-        x2: familyCenterX,
-        y2: parentPos.y + CARD_H,
-        type: 'family-link',
-        isVisible: true,
-      });
-    }
-
+    // Always use couple midpoint as the connection origin
+    // This ensures straight vertical lines from parent couple down to children
     children.filter((c) => c.family_id === family.id).forEach((child) => {
       const childPos = personPos.get(child.person_id);
       if (childPos) {
         connections.push({
           id: `child-${family.id}-${child.person_id}`,
-          x1: familyCenterX,
+          x1: coupleMidX,
           y1: parentPos.y + CARD_H,
           x2: childPos.x + CARD_W / 2,
           y2: childPos.y,
