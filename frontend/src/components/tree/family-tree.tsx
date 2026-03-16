@@ -146,21 +146,21 @@ function getCardStyle(person: TreePerson) {
 // Helper: Get generation-based background color (soft pastels for 14 gens)
 // 
 
-const GENERATION_COLORS: Record<number, { bg: string; border: string; badge: string; badgeText: string }> = {
-  1:  { bg: '#fef2f2', border: '#fca5a5', badge: '#fee2e2', badgeText: '#991b1b' },
-  2:  { bg: '#fff7ed', border: '#fdba74', badge: '#ffedd5', badgeText: '#9a3412' },
-  3:  { bg: '#fffbeb', border: '#fcd34d', badge: '#fef3c7', badgeText: '#92400e' },
-  4:  { bg: '#fefce8', border: '#bef264', badge: '#ecfccb', badgeText: '#3f6212' },
-  5:  { bg: '#f0fdf4', border: '#86efac', badge: '#dcfce7', badgeText: '#166534' },
-  6:  { bg: '#ecfdf5', border: '#6ee7b7', badge: '#d1fae5', badgeText: '#065f46' },
-  7:  { bg: '#f0fdfa', border: '#5eead4', badge: '#ccfbf1', badgeText: '#115e59' },
-  8:  { bg: '#ecfeff', border: '#67e8f9', badge: '#cffafe', badgeText: '#155e75' },
-  9:  { bg: '#eff6ff', border: '#93c5fd', badge: '#dbeafe', badgeText: '#1e40af' },
-  10: { bg: '#eef2ff', border: '#a5b4fc', badge: '#e0e7ff', badgeText: '#3730a3' },
-  11: { bg: '#f5f3ff', border: '#c4b5fd', badge: '#ede9fe', badgeText: '#5b21b6' },
-  12: { bg: '#fdf4ff', border: '#d8b4fe', badge: '#f3e8ff', badgeText: '#7e22ce' },
-  13: { bg: '#fdf2f8', border: '#f9a8d4', badge: '#fce7f3', badgeText: '#9d174d' },
-  14: { bg: '#f8fafc', border: '#94a3b8', badge: '#e2e8f0', badgeText: '#334155' },
+const GENERATION_COLORS: Record<number, { bg: string; border: string; badge: string; badgeText: string; text: string }> = {
+  1:  { bg: '#8b1a1a', border: '#c0392b', badge: '#a93226', badgeText: '#fdebd0', text: '#fff' },  // Deep red (ancestors)
+  2:  { bg: '#a93226', border: '#d4503a', badge: '#c0392b', badgeText: '#fdebd0', text: '#fff' },  // Red
+  3:  { bg: '#cb4335', border: '#e74c3c', badge: '#d4503a', badgeText: '#fff', text: '#fff' },      // Red-orange
+  4:  { bg: '#d4731a', border: '#e67e22', badge: '#d4731a', badgeText: '#fff', text: '#fff' },      // Orange
+  5:  { bg: '#d4a017', border: '#f1c40f', badge: '#d4a017', badgeText: '#fff', text: '#fff' },      // Amber/Gold
+  6:  { bg: '#b7950b', border: '#d4ac0d', badge: '#b7950b', badgeText: '#fff', text: '#fff' },      // Dark gold
+  7:  { bg: '#1e8449', border: '#27ae60', badge: '#1e8449', badgeText: '#fff', text: '#fff' },      // Green
+  8:  { bg: '#148f77', border: '#1abc9c', badge: '#148f77', badgeText: '#fff', text: '#fff' },      // Teal
+  9:  { bg: '#117a65', border: '#16a085', badge: '#117a65', badgeText: '#fff', text: '#fff' },      // Dark teal
+  10: { bg: '#1a6e8e', border: '#2e86c1', badge: '#1a6e8e', badgeText: '#fff', text: '#fff' },     // Cyan-blue
+  11: { bg: '#1f618d', border: '#2980b9', badge: '#1f618d', badgeText: '#fff', text: '#fff' },     // Blue
+  12: { bg: '#1a5276', border: '#2471a3', badge: '#1a5276', badgeText: '#fff', text: '#fff' },     // Dark blue
+  13: { bg: '#154360', border: '#1b4f72', badge: '#154360', badgeText: '#fff', text: '#fff' },     // Navy
+  14: { bg: '#1b2631', border: '#2c3e50', badge: '#1b2631', badgeText: '#fff', text: '#fff' },     // Dark slate
 };
 
 function getGenerationColor(generation: number | null | undefined) {
@@ -240,16 +240,8 @@ const PersonCard = memo(function PersonCard({
             {spouseBadge}
           </div>
         )}
-        <div className="flex items-center gap-1.5 px-2 h-full">
-          <div className={`w-5 h-5 rounded-full ${style.avatar} flex items-center justify-center text-[9px] font-bold shrink-0`}>
-            {initials.charAt(0)}
-          </div>
-          <span className="text-[10px] font-medium truncate flex-1">{person.display_name}</span>
-          {person.generation && (
-            <span className="text-[8px] rounded px-1 shrink-0 border" style={{ background: genColor.badge, color: genColor.badgeText, borderColor: genColor.border }}>
-              Đ{person.generation}
-            </span>
-          )}
+        <div className="flex items-center justify-center px-1.5 h-full">
+          <span className="text-[10px] font-bold truncate text-center" style={{ color: genColor.text }}>{person.display_name}</span>
         </div>
         {/* Collapse button */}
         {hasChildren && (
@@ -281,30 +273,15 @@ const PersonCard = memo(function PersonCard({
             {spouseBadge}
           </div>
         )}
-        <div className="flex items-start gap-2.5 p-2.5 h-full">
-          {/* Avatar */}
-          <div className={`w-9 h-9 rounded-full ${style.avatar} flex items-center justify-center text-xs font-bold shrink-0 mt-0.5`}>
-            {initials}
-          </div>
-
-          {/* Info */}
-          <div className="flex-1 min-w-0 flex flex-col justify-center gap-0.5">
-            <span className="text-[11px] font-semibold leading-tight line-clamp-2">
-              {person.display_name}
+        <div className="flex flex-col items-center justify-center p-1.5 h-full gap-0.5">
+          <span className="text-[11px] font-bold leading-tight text-center line-clamp-2" style={{ color: genColor.text }}>
+            {person.display_name}
+          </span>
+          {person.generation && (
+            <span className="text-[8px] rounded px-1 py-0.5 leading-none font-medium" style={{ color: genColor.text, opacity: 0.8 }}>
+              Đời {person.generation}
             </span>
-
-            {/* Year + Status */}
-            <span className={`text-[9px] leading-none ${person.is_living !== false ? 'text-emerald-600' : 'text-amber-600'}`}>
-              {person.is_living !== false ? '●' : '☸'} {yearText}
-            </span>
-
-            {/* Generation badge */}
-            {person.generation && (
-              <span className="text-[9px] rounded px-1 py-0.5 w-fit leading-none border" style={{ background: genColor.badge, color: genColor.badgeText, borderColor: genColor.border }}>
-                Đời {person.generation}
-              </span>
-            )}
-          </div>
+          )}
         </div>
 
         {/* Collapse/Expand button */}
@@ -1738,7 +1715,7 @@ export function FamilyTree() {
           }}
         >
           {/* Subtle overlay */}
-          <div className="absolute inset-0 bg-gradient-to-b from-amber-50/75 via-amber-50/25 to-amber-50/80 pointer-events-none z-0" />
+          <div className="absolute inset-0 pointer-events-none z-0" style={{ background: "linear-gradient(to bottom, #f5e6d3, #f0dcc8, #f5e6d3)" }} />
           <div className="absolute inset-0 pointer-events-none z-0 bg-[radial-gradient(circle_at_top,rgba(255,240,200,0.35),transparent_55%)]" />
 
           {/* Fixed Traditional Overlays */}
