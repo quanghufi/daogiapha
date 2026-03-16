@@ -191,10 +191,8 @@ const PersonCard = memo(function PersonCard({
   branchSummary,
 }: PersonCardProps) {
   const { person, x, y, isCollapsed, hasChildren } = node;
-  const style = getCardStyle(person);
   const genColor = getGenerationColor(person.generation);
-  const initials = getInitials(person.display_name);
-  const selectedRing = isSelected ? 'ring-2 ring-primary ring-offset-2' : '';
+  const selectedRing = isSelected ? 'ring-2 ring-[#b91c1c] ring-offset-2 ring-offset-[#fff6db]' : '';
   const spouseBadge = node.spouseOrder ? `Vợ ${node.spouseOrder}` : null;
 
   // Year/status display
@@ -236,22 +234,26 @@ const PersonCard = memo(function PersonCard({
           left: x,
           top: y,
           width: CARD_W,
-          height: 42,
+          height: 48,
           background: `linear-gradient(180deg, ${genColor.bg}, ${genColor.bg})`,
           border: `2px solid ${genColor.border}`,
-          borderRadius: 12,
-          boxShadow: 'inset 0 0 0 2px rgba(255, 244, 214, 0.42)',
+          borderRadius: 10,
+          boxShadow: 'inset 0 0 0 2px rgba(255, 244, 214, 0.42), 0 3px 10px rgba(120,53,15,0.08)',
           opacity: person.is_living === false ? 0.72 : 1,
         }}
         onClick={() => onSelect(person, x, y)}
       >
+        <div className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 rounded-md border border-[#b45309] bg-[#fff1bf] px-2 py-[2px] text-[8px] font-black uppercase tracking-[0.08em] text-[#9a3412] shadow-sm">
+          Đời {person.generation}
+        </div>
         {spouseBadge && (
           <div className="absolute right-1.5 top-1 z-10 rounded-full border border-rose-200 bg-white/90 px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-[0.08em] text-rose-700 shadow-sm">
             {spouseBadge}
           </div>
         )}
-        <div className="flex items-center justify-center px-1.5 h-full">
-          <span className="text-[10px] font-black uppercase truncate text-center tracking-[0.03em]" style={{ color: genColor.text }}>{person.display_name}</span>
+        <div className="flex h-full flex-col items-center justify-center px-2 pt-2">
+          <span className="line-clamp-2 text-center text-[10px] font-black uppercase tracking-[0.03em]" style={{ color: genColor.text }}>{person.display_name}</span>
+          <span className="mt-0.5 text-[7px] font-semibold uppercase tracking-[0.06em]" style={{ color: genColor.text, opacity: 0.86 }}>{yearText}</span>
         </div>
         {/* Collapse button */}
         {hasChildren && (
@@ -282,26 +284,27 @@ const PersonCard = memo(function PersonCard({
           height: CARD_H,
           background: `linear-gradient(180deg, ${genColor.bg}, ${genColor.bg})`,
           border: `2px solid ${genColor.border}`,
-          borderRadius: 14,
-          boxShadow: 'inset 0 0 0 2px rgba(255, 246, 219, 0.46)',
+          borderRadius: 10,
+          boxShadow: 'inset 0 0 0 2px rgba(255, 246, 219, 0.46), 0 6px 16px rgba(120,53,15,0.10)',
           opacity: person.is_living === false ? 0.72 : 1,
         }}
         onClick={() => onSelect(person, x, y)}
       >
+        <div className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 rounded-md border border-[#b45309] bg-[#fff1bf] px-2.5 py-[3px] text-[8px] font-black uppercase tracking-[0.08em] text-[#9a3412] shadow-sm">
+          Đời {person.generation}
+        </div>
         {spouseBadge && (
           <div className="absolute right-2 top-2 z-10 rounded-full border border-[#fed7aa] bg-[#fff7db] px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-[#9a3412] shadow-sm">
             {spouseBadge}
           </div>
         )}
-        <div className="flex flex-col items-center justify-center p-1.5 h-full gap-0.5">
-          <span className="line-clamp-2 text-center text-[11px] font-black uppercase leading-tight tracking-[0.03em]" style={{ color: genColor.text }}>
+        <div className="flex h-full flex-col items-center justify-center p-2 pt-3">
+          <span className="line-clamp-2 text-center text-[12px] font-black uppercase leading-tight tracking-[0.03em]" style={{ color: genColor.text }}>
             {person.display_name}
           </span>
-          {person.generation && (
-            <span className="rounded px-1 py-0.5 text-[8px] font-semibold leading-none" style={{ color: genColor.text, opacity: 0.9 }}>
-              Đời {person.generation}
-            </span>
-          )}
+          <span className="mt-1 text-[8px] font-semibold uppercase tracking-[0.07em]" style={{ color: genColor.text, opacity: 0.9 }}>
+            {yearText}
+          </span>
         </div>
 
         {/* Collapse/Expand button */}
@@ -640,15 +643,16 @@ const GenerationHeaders = memo(function GenerationHeaders({ nodes }: GenerationH
   }, [nodes]);
 
   return (
-    <div className="absolute left-0 top-0 bottom-0 pointer-events-none z-10" style={{ width: 72 }}>
+    <div className="absolute left-0 top-0 bottom-0 pointer-events-none z-10" style={{ width: 92 }}>
       {generations.map(({ gen, y, count }) => (
         <div
           key={gen}
           className="absolute flex flex-col items-center justify-center"
-          style={{ left: 8, top: y + 4, width: 56, height: CARD_H }}
+          style={{ left: 12, top: y + 2, width: 72, height: CARD_H }}
         >
-          <div className="rounded-xl border-2 border-[#b45309] bg-[#fff6db]/95 px-2 py-1 text-center shadow-[0_4px_10px_rgba(120,53,15,0.12)]">
-            <span className="block leading-none text-[10px] font-black uppercase text-[#9a3412]">Đời {gen}</span>
+          <div className="rounded-md border-2 border-[#b45309] bg-[#fff6db]/95 px-2 py-1 text-center shadow-[0_4px_10px_rgba(120,53,15,0.12)]">
+            <span className="block leading-none text-[8px] font-black uppercase tracking-[0.08em] text-[#9a3412]">Tầng đời</span>
+            <span className="mt-0.5 block leading-none text-[11px] font-black uppercase text-[#9a3412]">Đời {gen}</span>
             <span className="mt-0.5 block leading-none text-[8px] font-semibold text-[#64748b]">{count} người</span>
           </div>
         </div>
@@ -754,7 +758,7 @@ const Minimap = memo(function Minimap({ nodes, viewBox, treeWidth, treeHeight, o
 
 function LegendBar({ hideNgoaiToc }: { hideNgoaiToc?: boolean }) {
   return (
-    <div className="flex flex-wrap items-center gap-3 border-t-2 border-[#d97706]/35 bg-[#fff6db]/90 px-3 py-2 text-[10px] text-[#7c2d12] backdrop-blur-sm">
+    <div className="flex flex-wrap items-center gap-3 border-t-2 border-[#d97706]/35 bg-[#fff6db]/92 px-3 py-2 text-[10px] text-[#7c2d12] backdrop-blur-sm">
       <div className="flex items-center gap-1">
         <div className="h-3 w-3 rounded-full bg-[#315580]" />
         <span>Nam</span>
@@ -783,6 +787,9 @@ function LegendBar({ hideNgoaiToc }: { hideNgoaiToc?: boolean }) {
       <div className="flex items-center gap-1">
         <span className="text-amber-700">☸</span>
         <span>Đã mất</span>
+      </div>
+      <div className="ml-auto hidden text-[9px] font-semibold uppercase tracking-[0.08em] text-[#9a3412] md:block">
+        Phong cách phả hệ truyền thống
       </div>
     </div>
   );
@@ -1304,7 +1311,7 @@ export function FamilyTree() {
   const [collapsedNodes, setCollapsedNodes] = useState<Set<string> | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('all');
   const [hideNgoaiToc, setHideNgoaiToc] = useState(false);
-  const [showMinimap, setShowMinimap] = useState(true);
+  const [showMinimap, setShowMinimap] = useState(false);
   const [showDecorations, setShowDecorations] = useState(true);
   const [filterRootId, setFilterRootId] = useState<string | null>(() =>
     typeof window !== 'undefined'
@@ -1659,9 +1666,9 @@ export function FamilyTree() {
       </div>
 
       {/* Controls */}
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-[#d97706]/25 bg-[#fff6db]/65 px-2 py-2 shadow-[0_4px_10px_rgba(120,53,15,0.05)]">
         {/* Zoom controls */}
-        <div className="flex items-center gap-1 border rounded-lg p-1">
+        <div className="flex items-center gap-1 rounded-lg border border-[#d97706]/30 bg-white/55 p-1">
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleZoomOut} aria-label="Thu nhỏ">
             <ZoomOut className="h-4 w-4" />
           </Button>
@@ -1675,7 +1682,7 @@ export function FamilyTree() {
         </div>
 
         {/* Expand/Collapse all */}
-        <div className="flex items-center gap-1 border rounded-lg p-1">
+        <div className="flex items-center gap-1 rounded-lg border border-[#d97706]/30 bg-white/55 p-1">
           <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={expandAll}>
             <ChevronsUpDown className="h-3.5 w-3.5 mr-1" />
             Mở
@@ -1687,7 +1694,7 @@ export function FamilyTree() {
         </div>
 
         {/* View mode buttons */}
-        <div className="flex items-center gap-1 border rounded-lg p-1">
+        <div className="flex items-center gap-1 rounded-lg border border-[#d97706]/30 bg-white/55 p-1">
           <Button
             variant={viewMode === 'all' ? 'secondary' : 'ghost'}
             size="sm"
@@ -1748,9 +1755,9 @@ export function FamilyTree() {
         </Button>
 
         {/* Instructions */}
-        <div className="ml-auto flex items-center gap-1 text-xs text-muted-foreground">
+        <div className="ml-auto flex items-center gap-1 text-xs text-[#7c2d12]/70">
           <Move className="h-3 w-3" />
-          <span className="hidden sm:inline">Cuộn để zoom · Kéo để di chuyển · Nhấn để xem</span>
+          <span className="hidden sm:inline">Cuộn để zoom · Kéo để di chuyển · Nhấn để xem chi tiết</span>
         </div>
       </div>
 
