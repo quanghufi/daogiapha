@@ -32,7 +32,9 @@ import {
   ChevronsUpDown,
   Crosshair,
   Eye,
+  EyeOff,
   Sparkles,
+  UserX,
 } from 'lucide-react';
 import type { TreePerson } from '@/types';
 import type { TreeData } from '@/lib/supabase-data';
@@ -526,15 +528,19 @@ const ConnectionsLayer = memo(function ConnectionsLayer({ connections, offsetX }
       style={{ width: '100%', height: '100%', overflow: 'visible' }}
     >
       <g transform={`translate(${offsetX}, 0)`}>
-        {familyLinks.map((conn) => (
-          <path
-            key={conn.id}
-            d={`M ${conn.x1} ${conn.y1} L ${conn.x1} ${conn.y2} L ${conn.x2} ${conn.y2}`}
-            fill="none"
-            stroke="#94a3b8"
-            strokeWidth={1.5}
-          />
-        ))}
+        {familyLinks.map((conn) => {
+          // Orthogonal connection: vertical from couple midpoint down, then horizontal to children center
+          const midY = conn.y1 + (conn.y2 - conn.y1) * 0.45;
+          return (
+            <path
+              key={conn.id}
+              d={`M ${conn.x1} ${conn.y1} L ${conn.x1} ${midY} L ${conn.x2} ${midY} L ${conn.x2} ${conn.y2}`}
+              fill="none"
+              stroke="#94a3b8"
+              strokeWidth={1.5}
+            />
+          );
+        })}
 
         {/* Parent-child bus lines */}
         {paths.map((d, i) => (
@@ -685,7 +691,7 @@ const Minimap = memo(function Minimap({ nodes, viewBox, treeWidth, treeHeight, o
 // Legend Bar
 // ═══════════════════════════════════════════════════════════════════════════
 
-function LegendBar() {
+function LegendBar({ hideNgoaiToc }: { hideNgoaiToc?: boolean }) {
   return (
     <div className="flex flex-wrap items-center gap-3 px-3 py-1.5 text-[10px] text-muted-foreground border-t bg-muted/20">
       <div className="flex items-center gap-1">
@@ -696,15 +702,19 @@ function LegendBar() {
         <div className="w-3 h-3 rounded-full bg-rose-400" />
         <span>Nữ</span>
       </div>
-      <div className="flex items-center gap-1">
-        <div className="w-3 h-3 rounded border border-dashed border-stone-400 bg-stone-100" />
-        <span>Ngoại tộc</span>
-      </div>
-      <div className="flex items-center gap-1">
-        <div className="w-6 border-t border-dashed border-slate-400" />
-        <span className="text-[8px]">❤</span>
-        <span>Vợ chồng</span>
-      </div>
+      {!hideNgoaiToc && (
+        <div className="flex items-center gap-1">
+          <div className="w-3 h-3 rounded border border-dashed border-stone-400 bg-stone-100" />
+          <span>Ngoại tộc</span>
+        </div>
+      )}
+      {!hideNgoaiToc && (
+        <div className="flex items-center gap-1">
+          <div className="w-6 border-t border-dashed border-slate-400" />
+          <span className="text-[8px]">❤</span>
+          <span>Vợ chồng</span>
+        </div>
+      )}
       <div className="flex items-center gap-1">
         <span className="text-muted-foreground/60">●</span>
         <span>Còn sống</span>
@@ -726,7 +736,8 @@ export function buildTreeLayout(
   collapsedNodes: Set<string>,
   viewMode: ViewMode,
   focusPersonId: string | null,
-  filterRootId: string | null = null
+  filterRootId: string | null = null,
+  hideNgoaiToc: boolean = false
 ) {
   const { people, families, children } = data;
 
@@ -828,6 +839,12 @@ export function buildTreeLayout(
   };
 
   const visibleIds = getVisiblePeopleIds();
+  // When hideNgoaiToc is enabled, remove all non-patrilineal members from the tree
+  if (hideNgoaiToc) {
+    for (const p of people) {
+      if (p.is_patrilineal === false) visibleIds.delete(p.id);
+    }
+  }
   const visiblePeople = people.filter((p) => visibleIds.has(p.id));
 
   if (visiblePeople.length === 0) {
@@ -1220,6 +1237,7 @@ export function FamilyTree() {
   const [selectedPerson, setSelectedPerson] = useState<TreePerson | null>(null);
   const [collapsedNodes, setCollapsedNodes] = useState<Set<string> | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('all');
+  const [hideNgoaiToc, setHideNgoaiToc] = useState(false);
   const [showMinimap, setShowMinimap] = useState(true);
   const [showDecorations, setShowDecorations] = useState(true);
   const [filterRootId, setFilterRootId] = useState<string | null>(() =>
@@ -1271,8 +1289,8 @@ export function FamilyTree() {
   const focusPersonId = viewMode !== 'all' ? selectedPerson?.id || null : null;
   const layout = useMemo(() => {
     if (!data || data.people.length === 0) return null;
-    return buildTreeLayout(data, activeCollapsedNodes, viewMode, focusPersonId, filterRootId);
-  }, [data, activeCollapsedNodes, viewMode, focusPersonId, filterRootId]);
+    return buildTreeLayout(data, activeCollapsedNodes, viewMode, focusPersonId, filterRootId, hideNgoaiToc);
+  }, [data, activeCollapsedNodes, viewMode, focusPersonId, filterRootId, hideNgoaiToc]);
 
   const firstGenerationCenterX = useMemo(() => {
     if (!layout || layout.nodes.length === 0) return null;
@@ -1644,6 +1662,16 @@ export function FamilyTree() {
           Minimap
         </Button>
         <Button
+          variant={hideNgoaiToc ? 'secondary' : 'ghost'}
+          size="sm"
+          onClick={() => setHideNgoaiToc(!hideNgoaiToc)}
+          className="h-8"
+          title={hideNgoaiToc ? 'Hiện ngoại tộc' : 'Ẩn ngoại tộc'}
+        >
+          {hideNgoaiToc ? <EyeOff className="h-3.5 w-3.5 mr-1" /> : <UserX className="h-3.5 w-3.5 mr-1" />}
+          Ngoại tộc
+        </Button>
+        <Button
           variant={showDecorations ? 'secondary' : 'ghost'}
           size="sm"
           onClick={() => setShowDecorations(!showDecorations)}
@@ -1788,7 +1816,7 @@ export function FamilyTree() {
 
           {/* Legend */}
           <div className="absolute left-2 right-2 bottom-1 z-[6]">
-            <LegendBar />
+            <LegendBar hideNgoaiToc={hideNgoaiToc} />
           </div>
         </div>
       </TraditionalBorder>
