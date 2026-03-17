@@ -1000,8 +1000,8 @@ export function buildTreeLayout(
       : CARD_W + wives.length * (CARD_W + COUPLE_GAP);
     const centerX = startX + sw / 2;
 
-    // Single spouse keeps the classic left-right layout. Multiple spouses use a centered hub layout.
-    const fatherX = hasMultipleSpouses ? centerX - CARD_W / 2 : centerX - spouseRowWidth / 2;
+    // Father always centered — wives placed to the right (patrilineal alignment)
+    const fatherX = centerX - CARD_W / 2;
     xPositions.set(personId, fatherX);
     wives.forEach(({ spouseId, slot }) => {
       if (!spouseId) return;
