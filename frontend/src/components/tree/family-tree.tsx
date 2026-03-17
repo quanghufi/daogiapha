@@ -1395,10 +1395,10 @@ export function FamilyTree() {
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (e.button === 0) {
       setIsPanning(true);
-      setPanStart({ x: e.clientX - effectivePanX, y: e.clientY - pan.y });
+      setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
       setContextMenu(null);
     }
-  }, [effectivePanX, pan.y]);
+  }, [pan.x, pan.y]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (isPanning) {
@@ -1418,12 +1418,12 @@ export function FamilyTree() {
     if (e.touches.length === 1) {
       setIsPanning(true);
       setPanStart({
-        x: e.touches[0].clientX - effectivePanX,
+        x: e.touches[0].clientX - pan.x,
         y: e.touches[0].clientY - pan.y,
       });
       setContextMenu(null);
     }
-  }, [effectivePanX, pan.y]);
+  }, [pan.x, pan.y]);
 
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
     if (isPanning && e.touches.length === 1) {
