@@ -7,7 +7,7 @@
  */
 
 import type { Metadata } from "next";
-import { Inter, Noto_Serif } from "next/font/google";
+import { Be_Vietnam_Pro, Noto_Serif } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/components/auth/auth-provider";
 import { QueryProvider } from "@/components/providers/query-provider";
@@ -15,7 +15,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 import { DEFAULT_CLAN_MOTTO, DEFAULT_CLAN_NAME } from "@/lib/clan-defaults";
 
-const bodyFont = Inter({
+const bodyFont = Be_Vietnam_Pro({
   subsets: ["latin", "vietnamese"],
   variable: "--font-body",
   weight: ["400", "500", "600", "700"],
@@ -63,3 +63,4 @@ export default function RootLayout({
     </html>
   );
 }
+

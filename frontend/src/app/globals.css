@@ -1,4 +1,4 @@
-@import "tailwindcss";
+﻿@import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
@@ -136,7 +136,7 @@
       url("/tree-assets/bg-pattern.png");
     background-size: auto, 320px 320px;
     background-repeat: repeat, repeat;
-    font-family: var(--font-body), "Inter", "Segoe UI", sans-serif;
+    font-family: var(--font-body), "Be Vietnam Pro", "Segoe UI", sans-serif;
   }
 
   h1,
@@ -257,3 +257,4 @@
     size: A4;
   }
 }
+
