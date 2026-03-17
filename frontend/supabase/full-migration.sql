@@ -528,7 +528,7 @@ CREATE TABLE clan_articles (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     title           VARCHAR(255) NOT NULL,
     content         TEXT NOT NULL,
-    category        VARCHAR(50) NOT NULL CHECK (category IN ('gia_huan', 'quy_uoc', 'loi_dan')),
+    category        VARCHAR(50) NOT NULL CHECK (category IN ('gioi_thieu', 'gia_huan', 'quy_uoc', 'loi_dan')),
     sort_order      INTEGER DEFAULT 0,
     is_featured     BOOLEAN DEFAULT false,
     author_id       UUID REFERENCES profiles(id),

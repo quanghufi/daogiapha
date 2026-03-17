@@ -31,6 +31,7 @@ import Link from 'next/link';
 import type { ClanArticle, ClanArticleCategory, CreateClanArticleInput } from '@/types';
 
 const CATEGORY_OPTIONS: { value: ClanArticleCategory; label: string }[] = [
+  { value: 'gioi_thieu', label: 'Giới thiệu dòng họ' },
   { value: 'gia_huan', label: 'Gia huấn' },
   { value: 'quy_uoc', label: 'Quy ước' },
   { value: 'loi_dan', label: 'Lời dặn con cháu' },
@@ -172,7 +173,7 @@ export default function AdminCharterPage() {
           <DialogTrigger asChild>
             <Button><Plus className="h-4 w-4 mr-2" />Thêm bài viết</Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingItem ? 'Sửa bài viết' : 'Thêm bài viết mới'}</DialogTitle>
             </DialogHeader>

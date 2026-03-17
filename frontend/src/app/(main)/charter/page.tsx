@@ -14,10 +14,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
-import { ScrollText, BookOpen, MessageCircle, Star } from 'lucide-react';
+import { ScrollText, BookOpen, MessageCircle, Star, Info } from 'lucide-react';
 import type { ClanArticle, ClanArticleCategory } from '@/types';
 
 const TABS: { value: ClanArticleCategory; label: string; icon: typeof ScrollText }[] = [
+  { value: 'gioi_thieu', label: 'Giới thiệu', icon: Info },
   { value: 'gia_huan', label: 'Gia huấn', icon: BookOpen },
   { value: 'quy_uoc', label: 'Quy ước', icon: ScrollText },
   { value: 'loi_dan', label: 'Lời dặn con cháu', icon: MessageCircle },
@@ -43,19 +44,30 @@ function ArticleCard({ article, index }: { article: ClanArticle; index?: number 
 }
 
 function FeaturedQuote({ article }: { article: ClanArticle }) {
-  // Show first 200 chars as a featured quote
-  const excerpt = article.content.length > 200
-    ? article.content.slice(0, 200) + '...'
-    : article.content;
+  const [expanded, setExpanded] = useState(false);
+  const isLong = article.content.length > 200;
+  const displayContent = expanded || !isLong
+    ? article.content
+    : article.content.slice(0, 200) + '...';
 
   return (
     <Card className="border-amber-200 bg-amber-50/50">
-      <CardContent className="p-6 text-center">
-        <Star className="h-5 w-5 text-amber-500 mx-auto mb-3" />
-        <blockquote className="text-base italic text-amber-900 leading-relaxed">
-          &ldquo;{excerpt}&rdquo;
-        </blockquote>
-        <p className="mt-3 text-sm font-medium text-amber-700">— {article.title}</p>
+      <CardContent className="p-6">
+        <div className="flex items-center justify-center mb-3">
+          <Star className="h-5 w-5 text-amber-500" />
+        </div>
+        <h3 className="text-center font-semibold text-amber-800 mb-3">{article.title}</h3>
+        <div className="text-sm text-amber-900/80 whitespace-pre-wrap leading-relaxed">
+          {displayContent}
+        </div>
+        {isLong && (
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="mt-3 text-sm font-medium text-amber-700 hover:text-amber-900 underline underline-offset-2 block mx-auto"
+          >
+            {expanded ? '↑ Thu gọn' : '↓ Đọc thêm'}
+          </button>
+        )}
       </CardContent>
     </Card>
   );
@@ -96,7 +108,7 @@ function ArticleList({ articles }: { articles: ClanArticle[] }) {
 }
 
 export default function CharterPage() {
-  const [activeTab, setActiveTab] = useState<ClanArticleCategory>('gia_huan');
+  const [activeTab, setActiveTab] = useState<ClanArticleCategory>('gioi_thieu');
   const { data: articles, isLoading } = useClanArticles(activeTab);
 
   return (

@@ -47,12 +47,12 @@ import { TraditionalBorder, TraditionalHeader, TraditionalScroll, TraditionalFoo
 // Constants
 // ═══════════════════════════════════════════════════════════════════════════
 
-const CARD_W = 188;
-const CARD_H = 82;
-const LEVEL_HEIGHT = 146;
+const CARD_W = 180;
+const CARD_H = 80;
+const LEVEL_HEIGHT = 140;
 const FIRST_GENERATION_TOP_OFFSET = 96;
 const SIBLING_GAP = 24;
-const FAMILY_GAP = 84;
+const FAMILY_GAP = 72;
 const COUPLE_GAP = 12;
 const MINIMAP_WIDTH = 160;
 const MINIMAP_HEIGHT = 100;
@@ -147,20 +147,20 @@ function getCardStyle(person: TreePerson) {
 // 
 
 const GENERATION_COLORS: Record<number, { bg: string; border: string; badge: string; badgeText: string; text: string }> = {
-  1:  { bg: '#d62828', border: '#991b1b', badge: '#991b1b', badgeText: '#fde68a', text: '#fff8db' },
-  2:  { bg: '#e23d28', border: '#b91c1c', badge: '#b91c1c', badgeText: '#fde68a', text: '#fff8db' },
-  3:  { bg: '#eb5a2a', border: '#c2410c', badge: '#c2410c', badgeText: '#fff7d1', text: '#fff8db' },
-  4:  { bg: '#f08c2b', border: '#d97706', badge: '#d97706', badgeText: '#fff7d1', text: '#fffdf5' },
-  5:  { bg: '#f7d86f', border: '#d4a017', badge: '#d4a017', badgeText: '#7c2d12', text: '#7c2d12' },
-  6:  { bg: '#f3efcf', border: '#8aa0b2', badge: '#d6d3b0', badgeText: '#274472', text: '#274472' },
-  7:  { bg: '#1fa85b', border: '#0f766e', badge: '#0f766e', badgeText: '#dcfce7', text: '#f0fdf4' },
-  8:  { bg: '#159a56', border: '#0f766e', badge: '#0f766e', badgeText: '#dcfce7', text: '#f0fdf4' },
-  9:  { bg: '#b9dfff', border: '#4f7aa5', badge: '#7ea7d3', badgeText: '#17325c', text: '#17325c' },
-  10: { bg: '#abd5fb', border: '#456d9b', badge: '#78a7d8', badgeText: '#17325c', text: '#17325c' },
-  11: { bg: '#9fcef7', border: '#3f6794', badge: '#6b99cb', badgeText: '#17325c', text: '#17325c' },
-  12: { bg: '#93c4f3', border: '#365d8a', badge: '#648fbf', badgeText: '#17325c', text: '#17325c' },
-  13: { bg: '#87bbee', border: '#315580', badge: '#5b84b2', badgeText: '#17325c', text: '#17325c' },
-  14: { bg: '#7db1e7', border: '#2e4f78', badge: '#5379a5', badgeText: '#17325c', text: '#17325c' },
+  1:  { bg: '#8b1a1a', border: '#c0392b', badge: '#a93226', badgeText: '#fdebd0', text: '#fff' },  // Deep red (ancestors)
+  2:  { bg: '#a93226', border: '#d4503a', badge: '#c0392b', badgeText: '#fdebd0', text: '#fff' },  // Red
+  3:  { bg: '#cb4335', border: '#e74c3c', badge: '#d4503a', badgeText: '#fff', text: '#fff' },      // Red-orange
+  4:  { bg: '#d4731a', border: '#e67e22', badge: '#d4731a', badgeText: '#fff', text: '#fff' },      // Orange
+  5:  { bg: '#d4a017', border: '#f1c40f', badge: '#d4a017', badgeText: '#fff', text: '#fff' },      // Amber/Gold
+  6:  { bg: '#b7950b', border: '#d4ac0d', badge: '#b7950b', badgeText: '#fff', text: '#fff' },      // Dark gold
+  7:  { bg: '#1e8449', border: '#27ae60', badge: '#1e8449', badgeText: '#fff', text: '#fff' },      // Green
+  8:  { bg: '#148f77', border: '#1abc9c', badge: '#148f77', badgeText: '#fff', text: '#fff' },      // Teal
+  9:  { bg: '#117a65', border: '#16a085', badge: '#117a65', badgeText: '#fff', text: '#fff' },      // Dark teal
+  10: { bg: '#1a6e8e', border: '#2e86c1', badge: '#1a6e8e', badgeText: '#fff', text: '#fff' },     // Cyan-blue
+  11: { bg: '#1f618d', border: '#2980b9', badge: '#1f618d', badgeText: '#fff', text: '#fff' },     // Blue
+  12: { bg: '#1a5276', border: '#2471a3', badge: '#1a5276', badgeText: '#fff', text: '#fff' },     // Dark blue
+  13: { bg: '#154360', border: '#1b4f72', badge: '#154360', badgeText: '#fff', text: '#fff' },     // Navy
+  14: { bg: '#1b2631', border: '#2c3e50', badge: '#1b2631', badgeText: '#fff', text: '#fff' },     // Dark slate
 };
 
 function getGenerationColor(generation: number | null | undefined) {
@@ -191,8 +191,10 @@ const PersonCard = memo(function PersonCard({
   branchSummary,
 }: PersonCardProps) {
   const { person, x, y, isCollapsed, hasChildren } = node;
+  const style = getCardStyle(person);
   const genColor = getGenerationColor(person.generation);
-  const selectedRing = isSelected ? 'ring-2 ring-[#b91c1c] ring-offset-2 ring-offset-[#fff6db]' : '';
+  const initials = getInitials(person.display_name);
+  const selectedRing = isSelected ? 'ring-2 ring-primary ring-offset-2' : '';
   const spouseBadge = node.spouseOrder ? `Vợ ${node.spouseOrder}` : null;
 
   // Year/status display
@@ -229,36 +231,22 @@ const PersonCard = memo(function PersonCard({
   if (zoomLevel === 'compact') {
     return (
       <div
-        className={`absolute cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_14px_rgba(120,53,15,0.16)] ${selectedRing} ${person.is_patrilineal === false ? 'border-dashed' : ''}`}
-        style={{
-          left: x,
-          top: y,
-          width: CARD_W,
-          height: 48,
-          background: `linear-gradient(180deg, ${genColor.bg}, ${genColor.bg})`,
-          border: `2px solid ${genColor.border}`,
-          borderRadius: 10,
-          boxShadow: 'inset 0 0 0 2px rgba(255, 244, 214, 0.42), 0 3px 10px rgba(120,53,15,0.08)',
-          opacity: person.is_living === false ? 0.72 : 1,
-        }}
+        className={`absolute rounded-lg border-[1.5px] cursor-pointer hover:shadow-md transition-all ${selectedRing} ${person.is_patrilineal === false ? 'border-dashed' : ''}`}
+        style={{ left: x, top: y, width: CARD_W, height: 40, background: genColor.bg, borderColor: genColor.border, opacity: person.is_living === false ? 0.7 : 1 }}
         onClick={() => onSelect(person, x, y)}
       >
-        <div className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 rounded-md border border-[#b45309] bg-[#fff1bf] px-2 py-[2px] text-[8px] font-black uppercase tracking-[0.08em] text-[#9a3412] shadow-sm">
-          Đời {person.generation}
-        </div>
         {spouseBadge && (
           <div className="absolute right-1.5 top-1 z-10 rounded-full border border-rose-200 bg-white/90 px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-[0.08em] text-rose-700 shadow-sm">
             {spouseBadge}
           </div>
         )}
-        <div className="flex h-full flex-col items-center justify-center px-2 pt-2">
-          <span className="line-clamp-2 text-center text-[10px] font-black uppercase tracking-[0.03em]" style={{ color: genColor.text }}>{person.display_name}</span>
-          <span className="mt-0.5 text-[7px] font-semibold uppercase tracking-[0.06em]" style={{ color: genColor.text, opacity: 0.86 }}>{yearText}</span>
+        <div className="flex items-center justify-center px-1.5 h-full">
+          <span className="text-[10px] font-bold truncate text-center" style={{ color: genColor.text }}>{person.display_name}</span>
         </div>
         {/* Collapse button */}
         {hasChildren && (
           <button
-            className="absolute -bottom-2.5 left-1/2 z-10 flex h-5 w-5 -translate-x-1/2 items-center justify-center rounded-full border bg-[#fff6db] shadow-sm hover:bg-[#fff1bf]"
+            className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 w-5 h-5 bg-white border rounded-full flex items-center justify-center shadow-sm hover:bg-gray-50 z-10"
             aria-label={isCollapsed ? 'Mở rộng' : 'Thu gọn'}
             onClick={(e) => {
               e.stopPropagation();
@@ -276,41 +264,30 @@ const PersonCard = memo(function PersonCard({
   return (
     <>
       <div
-        className={`absolute cursor-pointer transition-all hover:-translate-y-1 hover:shadow-[0_10px_18px_rgba(120,53,15,0.18)] ${selectedRing} ${person.is_patrilineal === false ? 'border-dashed' : ''}`}
-        style={{
-          left: x,
-          top: y,
-          width: CARD_W,
-          height: CARD_H,
-          background: `linear-gradient(180deg, ${genColor.bg}, ${genColor.bg})`,
-          border: `2px solid ${genColor.border}`,
-          borderRadius: 10,
-          boxShadow: 'inset 0 0 0 2px rgba(255, 246, 219, 0.46), 0 6px 16px rgba(120,53,15,0.10)',
-          opacity: person.is_living === false ? 0.72 : 1,
-        }}
+        className={`absolute rounded-xl border-[1.5px] cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all ${selectedRing} ${person.is_patrilineal === false ? 'border-dashed' : ''}`}
+        style={{ left: x, top: y, width: CARD_W, height: CARD_H, background: genColor.bg, borderColor: genColor.border, opacity: person.is_living === false ? 0.7 : 1 }}
         onClick={() => onSelect(person, x, y)}
       >
-        <div className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 rounded-md border border-[#b45309] bg-[#fff1bf] px-2.5 py-[3px] text-[8px] font-black uppercase tracking-[0.08em] text-[#9a3412] shadow-sm">
-          Đời {person.generation}
-        </div>
         {spouseBadge && (
-          <div className="absolute right-2 top-2 z-10 rounded-full border border-[#fed7aa] bg-[#fff7db] px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-[#9a3412] shadow-sm">
+          <div className="absolute right-2 top-2 z-10 rounded-full border border-rose-200 bg-white/90 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-rose-700 shadow-sm">
             {spouseBadge}
           </div>
         )}
-        <div className="flex h-full flex-col items-center justify-center p-2 pt-3">
-          <span className="line-clamp-2 text-center text-[12px] font-black uppercase leading-tight tracking-[0.03em]" style={{ color: genColor.text }}>
+        <div className="flex flex-col items-center justify-center p-1.5 h-full gap-0.5">
+          <span className="text-[11px] font-bold leading-tight text-center line-clamp-2" style={{ color: genColor.text }}>
             {person.display_name}
           </span>
-          <span className="mt-1 text-[8px] font-semibold uppercase tracking-[0.07em]" style={{ color: genColor.text, opacity: 0.9 }}>
-            {yearText}
-          </span>
+          {person.generation && (
+            <span className="text-[8px] rounded px-1 py-0.5 leading-none font-medium" style={{ color: genColor.text, opacity: 0.8 }}>
+              Đời {person.generation}
+            </span>
+          )}
         </div>
 
         {/* Collapse/Expand button */}
         {hasChildren && (
           <button
-            className="absolute -bottom-3 left-1/2 z-10 flex h-6 w-6 -translate-x-1/2 items-center justify-center rounded-full border bg-[#fff6db] shadow-sm transition-colors hover:bg-[#fff1bf]"
+            className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-6 h-6 bg-white border rounded-full flex items-center justify-center shadow-sm hover:bg-gray-50 transition-colors z-10"
             aria-label={isCollapsed ? 'Mở rộng' : 'Thu gọn'}
             onClick={(e) => {
               e.stopPropagation();
@@ -572,15 +549,15 @@ const ConnectionsLayer = memo(function ConnectionsLayer({ connections, offsetX }
               key={conn.id}
               d={`M ${conn.x1} ${conn.y1} L ${conn.x1} ${midY} L ${conn.x2} ${midY} L ${conn.x2} ${conn.y2}`}
               fill="none"
-              stroke="#6b7f99"
-              strokeWidth={2}
+              stroke="#94a3b8"
+              strokeWidth={1.5}
             />
           );
         })}
 
         {/* Parent-child bus lines */}
         {paths.map((d, i) => (
-          <path key={`pc-${i}`} d={d} fill="none" stroke="#6b7f99" strokeWidth={2} />
+          <path key={`pc-${i}`} d={d} fill="none" stroke="#94a3b8" strokeWidth={1.5} />
         ))}
 
         {/* Couple lines (dashed) */}
@@ -591,8 +568,8 @@ const ConnectionsLayer = memo(function ConnectionsLayer({ connections, offsetX }
               y1={conn.y1}
               x2={conn.x2}
               y2={conn.y2}
-              stroke="#94a3b8"
-              strokeWidth={1.75}
+              stroke="#cbd5e1"
+              strokeWidth={1.5}
               strokeDasharray="4,3"
             />
             {/* Heart icon in the middle */}
@@ -601,7 +578,6 @@ const ConnectionsLayer = memo(function ConnectionsLayer({ connections, offsetX }
               y={conn.y1 - 4}
               textAnchor="middle"
               fontSize={8}
-              fill="#b91c1c"
               className="select-none"
             >
               ❤
@@ -643,17 +619,16 @@ const GenerationHeaders = memo(function GenerationHeaders({ nodes }: GenerationH
   }, [nodes]);
 
   return (
-    <div className="absolute left-0 top-0 bottom-0 pointer-events-none z-10" style={{ width: 92 }}>
+    <div className="absolute left-0 top-0 bottom-0 pointer-events-none z-10" style={{ width: 56 }}>
       {generations.map(({ gen, y, count }) => (
         <div
           key={gen}
           className="absolute flex flex-col items-center justify-center"
-          style={{ left: 12, top: y + 2, width: 72, height: CARD_H }}
+          style={{ left: 4, top: y, width: 48, height: CARD_H }}
         >
-          <div className="rounded-md border-2 border-[#b45309] bg-[#fff6db]/95 px-2 py-1 text-center shadow-[0_4px_10px_rgba(120,53,15,0.12)]">
-            <span className="block leading-none text-[8px] font-black uppercase tracking-[0.08em] text-[#9a3412]">Tầng đời</span>
-            <span className="mt-0.5 block leading-none text-[11px] font-black uppercase text-[#9a3412]">Đời {gen}</span>
-            <span className="mt-0.5 block leading-none text-[8px] font-semibold text-[#64748b]">{count} người</span>
+          <div className="bg-white/80 backdrop-blur-sm border border-slate-200 rounded-lg px-2 py-1 text-center shadow-sm">
+            <span className="text-[10px] font-semibold text-slate-600 block leading-none">Đời {gen}</span>
+            <span className="text-[8px] text-slate-400 block leading-none mt-0.5">{count} người</span>
           </div>
         </div>
       ))}
@@ -688,63 +663,36 @@ const Minimap = memo(function Minimap({ nodes, viewBox, treeWidth, treeHeight, o
   const visibleNodes = nodes.filter(n => n.isVisible);
 
   return (
-    <div
-      className="absolute bottom-4 right-4 z-[15] overflow-hidden rounded-xl shadow-xl"
-      style={{
-        border: '2px solid #b45309',
-        boxShadow: '0 8px 20px rgba(120,53,15,0.25), 0 0 0 1px #facc15',
-      }}
-    >
-      {/* Title bar */}
-      <div
-        className="flex items-center justify-between px-2.5 py-1"
-        style={{
-          background: 'linear-gradient(180deg, #b91c1c, #991b1b)',
-          borderBottom: '1px solid #facc15',
-        }}
-      >
-        <span
-          className="text-[10px] font-bold tracking-[0.18em] text-[#fde68a]"
-          style={{ fontFamily: '"Noto Serif", serif' }}
-        >
-          Tree Overview
-        </span>
-      </div>
+    <div className="absolute bottom-4 right-4 bg-white/90 border rounded-lg p-2 shadow-lg">
       <svg
         width={MINIMAP_WIDTH}
         height={MINIMAP_HEIGHT}
-        className="cursor-pointer block"
-        style={{ background: 'rgba(255, 247, 219, 0.95)' }}
+        className="cursor-pointer"
         onClick={handleClick}
       >
         <g transform={`scale(${scale})`}>
-          {visibleNodes.map((node) => {
-            const gen = Math.min((node.person.generation || 1) - 1, 13);
-            const genColors = [
-              '#8b1a1a','#a62626','#c43e1e','#d4691e',
-              '#b8860b','#8b7d3c','#3d7a3d','#2e8b6e',
-              '#1e7a7a','#1e5a8b','#2a4a8b','#2e3a7a',
-              '#1a2a5c','#0f1a3d',
-            ];
-            return (
-              <rect
-                key={node.person.id}
-                x={node.x + CARD_W / 2 - 2 / scale}
-                y={node.y + CARD_H / 2 - 1.5 / scale}
-                width={4 / scale}
-                height={3 / scale}
-                fill={genColors[gen] || '#666'}
-              />
-            );
-          })}
+          {visibleNodes.map((node) => (
+            <circle
+              key={node.person.id}
+              cx={node.x + CARD_W / 2}
+              cy={node.y + CARD_H / 2}
+              r={4 / scale}
+              className={
+                node.person.gender === GENDER.MALE
+                  ? (node.person.is_patrilineal !== false ? 'fill-indigo-400' : 'fill-stone-400')
+                  : (node.person.is_patrilineal !== false ? 'fill-rose-400' : 'fill-stone-400')
+              }
+            />
+          ))}
           <rect
             x={viewBox.x}
             y={viewBox.y}
             width={viewBox.width}
             height={viewBox.height}
-            fill="rgba(197, 148, 42, 0.08)"
-            stroke="#c5942a"
+            fill="none"
+            stroke="hsl(var(--primary))"
             strokeWidth={2 / scale}
+            className="opacity-50"
           />
         </g>
       </svg>
@@ -758,38 +706,35 @@ const Minimap = memo(function Minimap({ nodes, viewBox, treeWidth, treeHeight, o
 
 function LegendBar({ hideNgoaiToc }: { hideNgoaiToc?: boolean }) {
   return (
-    <div className="flex flex-wrap items-center gap-3 border-t-2 border-[#d97706]/35 bg-[#fff6db]/92 px-3 py-2 text-[10px] text-[#7c2d12] backdrop-blur-sm">
+    <div className="flex flex-wrap items-center gap-3 px-3 py-1.5 text-[10px] text-muted-foreground border-t bg-muted/20">
       <div className="flex items-center gap-1">
-        <div className="h-3 w-3 rounded-full bg-[#315580]" />
+        <div className="w-3 h-3 rounded-full bg-indigo-400" />
         <span>Nam</span>
       </div>
       <div className="flex items-center gap-1">
-        <div className="h-3 w-3 rounded-full bg-[#b91c1c]" />
+        <div className="w-3 h-3 rounded-full bg-rose-400" />
         <span>Nữ</span>
       </div>
       {!hideNgoaiToc && (
         <div className="flex items-center gap-1">
-          <div className="h-3 w-3 rounded border border-dashed border-stone-500 bg-stone-100" />
+          <div className="w-3 h-3 rounded border border-dashed border-stone-400 bg-stone-100" />
           <span>Ngoại tộc</span>
         </div>
       )}
       {!hideNgoaiToc && (
         <div className="flex items-center gap-1">
-          <div className="w-6 border-t border-dashed border-slate-500" />
-          <span className="text-[8px] text-[#b91c1c]">❤</span>
+          <div className="w-6 border-t border-dashed border-slate-400" />
+          <span className="text-[8px]">❤</span>
           <span>Vợ chồng</span>
         </div>
       )}
       <div className="flex items-center gap-1">
-        <span className="text-[#315580]">●</span>
+        <span className="text-muted-foreground/60">●</span>
         <span>Còn sống</span>
       </div>
       <div className="flex items-center gap-1">
-        <span className="text-amber-700">☸</span>
+        <span className="text-amber-600">☸</span>
         <span>Đã mất</span>
-      </div>
-      <div className="ml-auto hidden text-[9px] font-semibold uppercase tracking-[0.08em] text-[#9a3412] md:block">
-        Phong cách phả hệ truyền thống
       </div>
     </div>
   );
@@ -1055,8 +1000,8 @@ export function buildTreeLayout(
       : CARD_W + wives.length * (CARD_W + COUPLE_GAP);
     const centerX = startX + sw / 2;
 
-    // Single spouse keeps the classic left-right layout. Multiple spouses use a centered hub layout.
-    const fatherX = hasMultipleSpouses ? centerX - CARD_W / 2 : centerX - spouseRowWidth / 2;
+    // Father always centered — wives placed to the right (patrilineal alignment)
+    const fatherX = centerX - CARD_W / 2;
     xPositions.set(personId, fatherX);
     wives.forEach(({ spouseId, slot }) => {
       if (!spouseId) return;
@@ -1127,10 +1072,8 @@ export function buildTreeLayout(
 
     const fatherCenterX = fatherPos ? fatherPos.x + CARD_W / 2 : null;
     const motherCenterX = motherPos ? motherPos.x + CARD_W / 2 : null;
-    const coupleMidX =
-      fatherCenterX !== null && motherCenterX !== null
-        ? (fatherCenterX + motherCenterX) / 2
-        : (fatherCenterX ?? motherCenterX ?? 0);
+    // Always originate branches from the father (patrilineal tree)
+    const coupleMidX = fatherCenterX ?? motherCenterX ?? 0;
 
     // Couple line (horizontal, between nodes)
     if (fatherPos && motherPos) {
@@ -1186,20 +1129,12 @@ export function buildTreeLayout(
   }
   if (!isFinite(minX)) { minX = 0; maxX = 0; }
 
-  // Align the first generation lane to the horizontal center axis of the tree.
-  let firstGenerationCenterOffset = 0;
-  if (isFinite(firstGenerationMinX) && isFinite(firstGenerationMaxX)) {
-    const firstGenerationCenterX = (firstGenerationMinX + firstGenerationMaxX) / 2;
-    const treeCenterX = (minX + maxX) / 2;
-    firstGenerationCenterOffset = treeCenterX - firstGenerationCenterX;
-  }
-
   return {
     nodes,
     connections,
     width: Math.max(800, maxX - minX + 240),
     height: maxY + 120, // Bottom breathing room
-    offsetX: -minX + 120 + firstGenerationCenterOffset, // Space + first-generation centering
+    offsetX: -minX + 120, // Centering handled by autoAlignPanX in the component
   };
 }
 
@@ -1283,22 +1218,6 @@ export function FamilyTree() {
   const { data: clanSettings } = useClanSettings();
   const clanName = clanSettings?.clan_name?.trim() || DEFAULT_CLAN_NAME;
   const clanMotto = clanSettings?.clan_motto?.trim() || DEFAULT_CLAN_MOTTO;
-  const rootAncestorName = useMemo(() => {
-    if (!data?.people?.length) return undefined;
-
-    const minGeneration = Math.min(...data.people.map((person) => person.generation || 1));
-    const rootCandidates = data.people
-      .filter((person) => (person.generation || 1) === minGeneration)
-      .sort((left, right) => {
-        const leftYear = left.birth_year ?? Number.MAX_SAFE_INTEGER;
-        const rightYear = right.birth_year ?? Number.MAX_SAFE_INTEGER;
-        if (leftYear !== rightYear) return leftYear - rightYear;
-        return left.display_name.localeCompare(right.display_name, 'vi');
-      });
-
-    const rootPerson = rootCandidates[0];
-    return rootPerson ? `Cụ: ${rootPerson.display_name}` : undefined;
-  }, [data]);
 
   // State
   const [scale, setScale] = useState(() =>
@@ -1310,9 +1229,9 @@ export function FamilyTree() {
   const [selectedPerson, setSelectedPerson] = useState<TreePerson | null>(null);
   const [collapsedNodes, setCollapsedNodes] = useState<Set<string> | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('all');
-  const [hideNgoaiToc, setHideNgoaiToc] = useState(false);
-  const [showMinimap, setShowMinimap] = useState(false);
-  const [showDecorations, setShowDecorations] = useState(true);
+  const [hideNgoaiToc, setHideNgoaiToc] = useState(true);
+  const [showMinimap, setShowMinimap] = useState(true);
+  const [showDecorations, setShowDecorations] = useState(false);
   const [filterRootId, setFilterRootId] = useState<string | null>(() =>
     typeof window !== 'undefined'
       ? new URLSearchParams(window.location.search).get('root')
@@ -1464,7 +1383,8 @@ export function FamilyTree() {
     setCollapsedNodes(allParents);
   }, [data]);
 
-  // Pan handlers
+  // Pan handlers — panStart captures the visual position (effectivePanX),
+  // move handler subtracts autoAlignPanX so pan.x stays correct.
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (e.button === 0) {
       setIsPanning(true);
@@ -1476,11 +1396,11 @@ export function FamilyTree() {
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (isPanning) {
       setPan({
-        x: e.clientX - panStart.x,
+        x: e.clientX - panStart.x - autoAlignPanX,
         y: e.clientY - panStart.y,
       });
     }
-  }, [isPanning, panStart.x, panStart.y]);
+  }, [isPanning, panStart.x, panStart.y, autoAlignPanX]);
 
   const handleMouseUp = useCallback(() => {
     setIsPanning(false);
@@ -1501,11 +1421,11 @@ export function FamilyTree() {
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
     if (isPanning && e.touches.length === 1) {
       setPan({
-        x: e.touches[0].clientX - panStart.x,
+        x: e.touches[0].clientX - panStart.x - autoAlignPanX,
         y: e.touches[0].clientY - panStart.y,
       });
     }
-  }, [isPanning, panStart.x, panStart.y]);
+  }, [isPanning, panStart.x, panStart.y, autoAlignPanX]);
 
   const handleTouchEnd = useCallback(() => {
     setIsPanning(false);
@@ -1666,9 +1586,9 @@ export function FamilyTree() {
       </div>
 
       {/* Controls */}
-      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-[#d97706]/25 bg-[#fff6db]/65 px-2 py-2 shadow-[0_4px_10px_rgba(120,53,15,0.05)]">
+      <div className="flex flex-wrap items-center gap-2">
         {/* Zoom controls */}
-        <div className="flex items-center gap-1 rounded-lg border border-[#d97706]/30 bg-white/55 p-1">
+        <div className="flex items-center gap-1 border rounded-lg p-1">
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleZoomOut} aria-label="Thu nhỏ">
             <ZoomOut className="h-4 w-4" />
           </Button>
@@ -1682,7 +1602,7 @@ export function FamilyTree() {
         </div>
 
         {/* Expand/Collapse all */}
-        <div className="flex items-center gap-1 rounded-lg border border-[#d97706]/30 bg-white/55 p-1">
+        <div className="flex items-center gap-1 border rounded-lg p-1">
           <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={expandAll}>
             <ChevronsUpDown className="h-3.5 w-3.5 mr-1" />
             Mở
@@ -1694,7 +1614,7 @@ export function FamilyTree() {
         </div>
 
         {/* View mode buttons */}
-        <div className="flex items-center gap-1 rounded-lg border border-[#d97706]/30 bg-white/55 p-1">
+        <div className="flex items-center gap-1 border rounded-lg p-1">
           <Button
             variant={viewMode === 'all' ? 'secondary' : 'ghost'}
             size="sm"
@@ -1755,9 +1675,9 @@ export function FamilyTree() {
         </Button>
 
         {/* Instructions */}
-        <div className="ml-auto flex items-center gap-1 text-xs text-[#7c2d12]/70">
+        <div className="ml-auto flex items-center gap-1 text-xs text-muted-foreground">
           <Move className="h-3 w-3" />
-          <span className="hidden sm:inline">Cuộn để zoom · Kéo để di chuyển · Nhấn để xem chi tiết</span>
+          <span className="hidden sm:inline">Cuộn để zoom · Kéo để di chuyển · Nhấn để xem</span>
         </div>
       </div>
 
@@ -1776,44 +1696,44 @@ export function FamilyTree() {
       {/* Tree container */}
       <TraditionalBorder>
         <div
-          className={`relative overflow-hidden rounded-[24px] bg-[#f8dc52] ${
-            showDecorations ? 'h-[76vh] min-h-[680px]' : 'h-[78vh] min-h-[640px]'
+          className={`relative overflow-hidden bg-amber-50 rounded-xl ${
+            showDecorations ? 'h-[74vh] min-h-[640px]' : 'h-[76vh] min-h-[620px]'
           }`}
           style={{
             backgroundImage: 'url(/tree-assets/bg-pattern.png)',
             backgroundRepeat: 'repeat',
-            backgroundSize: '360px 360px',
+            backgroundSize: '320px 320px',
           }}
         >
-          <div className="absolute inset-0 pointer-events-none z-0 bg-[linear-gradient(180deg,rgba(255,239,131,0.96),rgba(250,222,86,0.94),rgba(252,235,128,0.96))]" />
-          <div className="absolute inset-0 pointer-events-none z-0 opacity-[0.14]" style={{ backgroundImage: 'url(/tree-assets/temple-header.png)', backgroundSize: '680px auto', backgroundPosition: 'center 140px', backgroundRepeat: 'no-repeat' }} />
-          <div className="absolute inset-0 pointer-events-none z-0 bg-[radial-gradient(circle_at_top,rgba(255,249,196,0.58),transparent_38%),radial-gradient(circle_at_center,rgba(255,255,255,0.12),transparent_42%)]" />
+          {/* Subtle overlay */}
+          <div className="absolute inset-0 pointer-events-none z-0" style={{ background: "linear-gradient(to bottom, #f5e6d3, #f0dcc8, #f5e6d3)" }} />
+          <div className="absolute inset-0 pointer-events-none z-0 bg-[radial-gradient(circle_at_top,rgba(255,240,200,0.35),transparent_55%)]" />
 
           {/* Fixed Traditional Overlays */}
           {showDecorations && (
             <>
-              <div className="absolute inset-x-0 top-0 h-[170px] z-[1] pointer-events-none">
-                <TraditionalHeader familyName={clanName} subtitle={clanMotto} ancestorName={rootAncestorName} />
+              <div className="absolute inset-x-0 top-2 h-[108px] z-[1] pointer-events-none">
+                <TraditionalHeader familyName={clanName} subtitle={clanMotto} />
               </div>
               <TraditionalScroll text="Phúc Đức Tổ Tiên" side="left" />
               <TraditionalScroll text="Con Cháu Thảo Hiền" side="right" />
-              <div className="absolute inset-x-0 bottom-7 h-[56px] z-[1] pointer-events-none opacity-85">
+              <div className="absolute inset-x-0 bottom-7 h-[56px] z-[1] pointer-events-none opacity-80">
                 <TraditionalFooter />
               </div>
-              <div className="absolute left-8 right-8 top-[170px] z-[2] border-t-2 border-[#b45309]/35 pointer-events-none" />
+              <div className="absolute left-3 right-3 top-[122px] border-t border-amber-700/30 z-[2] pointer-events-none" />
             </>
           )}
 
           <div
             className={`absolute rounded-lg overflow-hidden ${
               showDecorations
-                ? 'left-2 right-2 top-[172px] bottom-6 md:left-3 md:right-3 lg:left-[92px] lg:right-[92px]'
+                ? 'left-2 right-2 top-[120px] bottom-6 md:left-3 md:right-3 lg:left-[76px] lg:right-[76px]'
                 : 'left-2 right-2 top-2 bottom-8 md:left-3 md:right-3 md:top-3 md:bottom-9'
             }`}
           >
             <div
               ref={containerRef}
-              className="relative z-[5] h-full w-full overflow-hidden rounded-xl border border-[#d97706]/35 bg-[#fff6db]/18 select-none"
+              className="overflow-hidden relative select-none z-[5] h-full w-full"
               style={{ cursor: isPanning ? 'grabbing' : 'grab' }}
               onMouseDown={handleMouseDown}
               onMouseMove={handleMouseMove}
