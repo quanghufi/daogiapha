@@ -1,0 +1,105 @@
+{
+    "updated_at": "2026-03-10T13:44:00+07:00",
+    "working_on": {
+        "feature": "Multi-AI Review Loop (Codex + Claude + Antigravity)",
+        "task": "Claude Code CLI integration into codex_bridge_mcp.py",
+        "status": "blocked",
+        "files": [
+            "scripts/codex_bridge_mcp.py",
+            "scripts/test_codex_bridge_mcp.py",
+            ".agent/workflows/codex-review-loop.md"
+        ],
+        "blockers": [
+            "claude -p (print mode) hangs on Windows — CLI bug, not code bug"
+        ],
+        "notes": "Bridge code is correct. Claude CLI -p mode doesn't work on Windows. Need HTTP API alternative."
+    },
+    "pending_tasks": [
+        {
+            "task": "Implement Claude HTTP API fallback (replace CLI with requests to 9router)",
+            "priority": "high",
+            "notes": "Call localhost:20128/v1/messages directly instead of claude -p CLI"
+        },
+        {
+            "task": "Re-run dual review loop once Claude works",
+            "priority": "medium",
+            "notes": "Codex-only review found and fixed 4 bugs across 2 rounds"
+        }
+    ],
+    "recent_changes": [
+        {
+            "timestamp": "2026-03-10T09:00:00+07:00",
+            "type": "feature",
+            "description": "Added claude_ask tool to codex_bridge_mcp.py (run_claude_ask method, tool registration, dispatch wiring)",
+            "files": [
+                "scripts/codex_bridge_mcp.py"
+            ]
+        },
+        {
+            "timestamp": "2026-03-10T09:30:00+07:00",
+            "type": "feature",
+            "description": "Updated codex-review-loop.md workflow for dual/single+debate modes with Claude",
+            "files": [
+                ".agent/workflows/codex-review-loop.md"
+            ]
+        },
+        {
+            "timestamp": "2026-03-10T10:00:00+07:00",
+            "type": "bugfix",
+            "description": "Added --claude-command CLI arg with CLAUDE_COMMAND env fallback",
+            "files": [
+                "scripts/codex_bridge_mcp.py"
+            ]
+        },
+        {
+            "timestamp": "2026-03-10T10:00:00+07:00",
+            "type": "bugfix",
+            "description": "Updated provide_context description to mention both Codex and Claude",
+            "files": [
+                "scripts/codex_bridge_mcp.py"
+            ]
+        },
+        {
+            "timestamp": "2026-03-10T10:30:00+07:00",
+            "type": "bugfix",
+            "description": "Added -- separator before prompt in Claude CLI command to prevent flag injection",
+            "files": [
+                "scripts/codex_bridge_mcp.py"
+            ]
+        },
+        {
+            "timestamp": "2026-03-10T12:00:00+07:00",
+            "type": "bugfix",
+            "description": "Read 9router env (ANTHROPIC_BASE_URL, ANTHROPIC_AUTH_TOKEN) from ~/.claude/settings.json instead of hardcoding",
+            "files": [
+                "scripts/codex_bridge_mcp.py"
+            ]
+        }
+    ],
+    "errors_encountered": [
+        {
+            "error": "Claude CLI -p mode hangs on Windows (never returns, ignores terminate signal)",
+            "solution": "Known Windows bug. Workaround: use HTTP API via 9router instead of CLI",
+            "resolved": false
+        },
+        {
+            "error": "Auth conflict: ANTHROPIC_API_KEY (Antigravity proxy) + ANTHROPIC_AUTH_TOKEN (Claude) causes hang",
+            "solution": "Remove ANTHROPIC_API_KEY and set correct 9router env from ~/.claude/settings.json",
+            "resolved": true
+        }
+    ],
+    "decisions_made": [
+        {
+            "decision": "provide_context uses superseding (latest only) not additive context",
+            "reason": "Avoid prompt bloat from compound duplication. Debated with Codex — agreed this is valid trade-off."
+        },
+        {
+            "decision": "Read 9router settings from ~/.claude/settings.json dynamically",
+            "reason": "Don't hardcode auth tokens in source code. Portable across environments."
+        },
+        {
+            "decision": "Use -- separator before prompt in claude CLI command",
+            "reason": "Prevent user-supplied prompts starting with - from being parsed as CLI flags."
+        }
+    ]
+}

@@ -1,0 +1,80 @@
+{
+    "meta": {
+        "schema_version": "1.1.0",
+        "awf_version": "4.0.2",
+        "updated_at": "2026-03-10T13:44:00+07:00"
+    },
+    "project": {
+        "name": "Gia Phả (Họ Đào)",
+        "type": "fullstack-web",
+        "status": "active",
+        "description": "Family tree management app with AI-powered review tooling"
+    },
+    "tech_stack": {
+        "frontend": {
+            "framework": "Next.js",
+            "language": "TypeScript"
+        },
+        "backend": {
+            "framework": "Go",
+            "database": "Supabase (PostgreSQL)"
+        },
+        "tooling": {
+            "mcp_bridge": "scripts/codex_bridge_mcp.py (Python MCP server)",
+            "review_cli": [
+                "Codex CLI (GPT, working)",
+                "Claude Code CLI (Claude, -p broken on Windows)"
+            ],
+            "proxy": "9router (localhost:20128)"
+        }
+    },
+    "knowledge_items": {
+        "patterns": [
+            {
+                "name": "MCP Bridge Architecture",
+                "description": "codex_bridge_mcp.py acts as MCP server exposing 7 tools: codex_ask, codex_delegate, claude_ask, provide_context, get_session_status, run_codex_review, get_last_codex_review",
+                "files": [
+                    "scripts/codex_bridge_mcp.py"
+                ]
+            },
+            {
+                "name": "Multi-AI Review Loop",
+                "description": "3 AI review: Codex + Claude + Antigravity. Dual mode (both available) or Single+Debate (one fails, Antigravity plays devil's advocate). Max 5 rounds.",
+                "files": [
+                    ".agent/workflows/codex-review-loop.md"
+                ]
+            }
+        ],
+        "gotchas": [
+            {
+                "issue": "Claude -p (print/headless mode) hangs on Windows",
+                "detail": "subprocess.run with claude -p never returns. Even terminate() signal is ignored. Claude interactive mode works fine. This is a Claude CLI Windows bug.",
+                "diagnostic": ".agent/handoff/claude_diag.txt — 5 tests all TIMEOUT at 15s",
+                "workaround": "Use HTTP API via 9router (localhost:20128/v1/messages) instead of CLI",
+                "status": "unresolved"
+            },
+            {
+                "issue": "Antigravity proxy env conflicts with Claude CLI",
+                "detail": "Antigravity sets ANTHROPIC_API_KEY (dummy) and ANTHROPIC_BASE_URL (Cloud Run). Claude Code uses ANTHROPIC_AUTH_TOKEN via 9router (localhost:20128). Both present = auth conflict = hang.",
+                "solution": "Remove ANTHROPIC_API_KEY, read ANTHROPIC_BASE_URL and ANTHROPIC_AUTH_TOKEN from ~/.claude/settings.json",
+                "status": "resolved"
+            },
+            {
+                "issue": "Prompt injection via positional CLI arg",
+                "detail": "Prompts starting with - parsed as CLI flags when passed as positional arg",
+                "solution": "Insert -- before prompt in command array",
+                "status": "resolved"
+            }
+        ],
+        "conventions": [
+            {
+                "name": "9router config location",
+                "detail": "Claude: ~/.claude/settings.json → env.ANTHROPIC_BASE_URL, env.ANTHROPIC_AUTH_TOKEN. Codex: uses --profile 9router flag."
+            },
+            {
+                "name": "Bridge registration",
+                "detail": "Run scripts/register_antigravity_codex_bridge.ps1 after any bridge code change"
+            }
+        ]
+    }
+}

@@ -1239,9 +1239,9 @@ export function FamilyTree() {
   const [selectedPerson, setSelectedPerson] = useState<TreePerson | null>(null);
   const [collapsedNodes, setCollapsedNodes] = useState<Set<string> | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('all');
-  const [hideNgoaiToc, setHideNgoaiToc] = useState(false);
+  const [hideNgoaiToc, setHideNgoaiToc] = useState(true);
   const [showMinimap, setShowMinimap] = useState(true);
-  const [showDecorations, setShowDecorations] = useState(true);
+  const [showDecorations, setShowDecorations] = useState(false);
   const [filterRootId, setFilterRootId] = useState<string | null>(() =>
     typeof window !== 'undefined'
       ? new URLSearchParams(window.location.search).get('root')
