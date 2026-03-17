@@ -1391,23 +1391,24 @@ export function FamilyTree() {
     setCollapsedNodes(allParents);
   }, [data]);
 
-  // Pan handlers
+  // Pan handlers — panStart captures the visual position (effectivePanX),
+  // move handler subtracts autoAlignPanX so pan.x stays correct.
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (e.button === 0) {
       setIsPanning(true);
-      setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
+      setPanStart({ x: e.clientX - effectivePanX, y: e.clientY - pan.y });
       setContextMenu(null);
     }
-  }, [pan.x, pan.y]);
+  }, [effectivePanX, pan.y]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (isPanning) {
       setPan({
-        x: e.clientX - panStart.x,
+        x: e.clientX - panStart.x - autoAlignPanX,
         y: e.clientY - panStart.y,
       });
     }
-  }, [isPanning, panStart.x, panStart.y]);
+  }, [isPanning, panStart.x, panStart.y, autoAlignPanX]);
 
   const handleMouseUp = useCallback(() => {
     setIsPanning(false);
@@ -1418,21 +1419,21 @@ export function FamilyTree() {
     if (e.touches.length === 1) {
       setIsPanning(true);
       setPanStart({
-        x: e.touches[0].clientX - pan.x,
+        x: e.touches[0].clientX - effectivePanX,
         y: e.touches[0].clientY - pan.y,
       });
       setContextMenu(null);
     }
-  }, [pan.x, pan.y]);
+  }, [effectivePanX, pan.y]);
 
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
     if (isPanning && e.touches.length === 1) {
       setPan({
-        x: e.touches[0].clientX - panStart.x,
+        x: e.touches[0].clientX - panStart.x - autoAlignPanX,
         y: e.touches[0].clientY - panStart.y,
       });
     }
-  }, [isPanning, panStart.x, panStart.y]);
+  }, [isPanning, panStart.x, panStart.y, autoAlignPanX]);
 
   const handleTouchEnd = useCallback(() => {
     setIsPanning(false);
