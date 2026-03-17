@@ -232,7 +232,7 @@ const PersonCard = memo(function PersonCard({
     return (
       <div
         className={`absolute rounded-lg border-[1.5px] cursor-pointer hover:shadow-md transition-all ${selectedRing} ${person.is_patrilineal === false ? 'border-dashed' : ''}`}
-        style={{ left: x, top: y, width: CARD_W, height: 40, background: genColor.bg, borderColor: genColor.border, opacity: person.is_living === false ? 0.7 : 1 }}
+        style={{ left: x, top: y, width: CARD_W, height: 40, background: genColor.bg, borderColor: genColor.border, opacity: person.is_living === false ? 0.7 : 1, overflow: 'visible' }}
         onClick={() => onSelect(person, x, y)}
       >
         {spouseBadge && (
@@ -240,8 +240,8 @@ const PersonCard = memo(function PersonCard({
             {spouseBadge}
           </div>
         )}
-        <div className="flex items-center justify-center px-1.5 h-full">
-          <span className="text-[10px] font-bold truncate text-center" style={{ color: genColor.text, fontFamily: 'var(--font-body), "Be Vietnam Pro", sans-serif', lineHeight: 1.4 }}>{person.display_name}</span>
+        <div className="flex items-center justify-center px-1.5 h-full overflow-visible">
+          <span className="text-[10px] font-bold text-center" style={{ color: genColor.text, lineHeight: 1.5, overflow: 'visible' }}>{person.display_name}</span>
         </div>
         {/* Collapse button */}
         {hasChildren && (
@@ -265,7 +265,7 @@ const PersonCard = memo(function PersonCard({
     <>
       <div
         className={`absolute rounded-xl border-[1.5px] cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all ${selectedRing} ${person.is_patrilineal === false ? 'border-dashed' : ''}`}
-        style={{ left: x, top: y, width: CARD_W, height: CARD_H, background: genColor.bg, borderColor: genColor.border, opacity: person.is_living === false ? 0.7 : 1 }}
+        style={{ left: x, top: y, width: CARD_W, height: CARD_H, background: genColor.bg, borderColor: genColor.border, opacity: person.is_living === false ? 0.7 : 1, overflow: 'visible' }}
         onClick={() => onSelect(person, x, y)}
       >
         {spouseBadge && (
@@ -273,8 +273,8 @@ const PersonCard = memo(function PersonCard({
             {spouseBadge}
           </div>
         )}
-        <div className="flex flex-col items-center justify-center p-1.5 h-full gap-0.5">
-          <span className="text-[11px] font-bold text-center line-clamp-2" style={{ color: genColor.text, fontFamily: 'var(--font-body), "Be Vietnam Pro", sans-serif', lineHeight: 1.4 }}>
+        <div className="flex flex-col items-center justify-center p-1.5 h-full gap-0.5 overflow-visible">
+          <span className="text-[11px] font-bold text-center" style={{ color: genColor.text, lineHeight: 1.5, overflow: 'visible', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const }}>
             {person.display_name}
           </span>
           {person.generation && (

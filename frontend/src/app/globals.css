@@ -130,6 +130,7 @@
   body {
     @apply bg-background text-foreground antialiased;
     min-height: 100dvh;
+    line-height: 1.5;
     background-image:
       linear-gradient(to bottom, rgba(255, 248, 230, 0.92), rgba(246, 239, 223, 0.98)),
       url("/tree-assets/bg-pattern.png");
