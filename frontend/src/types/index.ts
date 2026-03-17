@@ -292,7 +292,7 @@ export type CreateScholarshipInput = Omit<Scholarship, 'id' | 'approved_by' | 'a
 
 // ─── Clan Article (Hương ước) ─────────────────────────────────────────────────
 
-export type ClanArticleCategory = 'gia_huan' | 'quy_uoc' | 'loi_dan';
+export type ClanArticleCategory = 'gioi_thieu' | 'gia_huan' | 'quy_uoc' | 'loi_dan';
 
 export interface ClanArticle {
   id: string;

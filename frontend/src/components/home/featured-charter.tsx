@@ -16,6 +16,7 @@ import { ArrowRight, BookOpen } from 'lucide-react';
 import { useFeaturedArticles } from '@/hooks/use-clan-articles';
 
 const categoryLabels: Record<string, string> = {
+  gioi_thieu: 'Giới thiệu',
   gia_huan: 'Gia huấn',
   quy_uoc: 'Quy ước',
   loi_dan: 'Lời dặn',

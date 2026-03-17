@@ -31,6 +31,7 @@ import Link from 'next/link';
 import type { ClanArticle, ClanArticleCategory, CreateClanArticleInput } from '@/types';
 
 const CATEGORY_OPTIONS: { value: ClanArticleCategory; label: string }[] = [
+  { value: 'gioi_thieu', label: 'Giới thiệu dòng họ' },
   { value: 'gia_huan', label: 'Gia huấn' },
   { value: 'quy_uoc', label: 'Quy ước' },
   { value: 'loi_dan', label: 'Lời dặn con cháu' },

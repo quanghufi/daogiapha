@@ -14,10 +14,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
-import { ScrollText, BookOpen, MessageCircle, Star } from 'lucide-react';
+import { ScrollText, BookOpen, MessageCircle, Star, Info } from 'lucide-react';
 import type { ClanArticle, ClanArticleCategory } from '@/types';
 
 const TABS: { value: ClanArticleCategory; label: string; icon: typeof ScrollText }[] = [
+  { value: 'gioi_thieu', label: 'Giới thiệu', icon: Info },
   { value: 'gia_huan', label: 'Gia huấn', icon: BookOpen },
   { value: 'quy_uoc', label: 'Quy ước', icon: ScrollText },
   { value: 'loi_dan', label: 'Lời dặn con cháu', icon: MessageCircle },
@@ -96,7 +97,7 @@ function ArticleList({ articles }: { articles: ClanArticle[] }) {
 }
 
 export default function CharterPage() {
-  const [activeTab, setActiveTab] = useState<ClanArticleCategory>('gia_huan');
+  const [activeTab, setActiveTab] = useState<ClanArticleCategory>('gioi_thieu');
   const { data: articles, isLoading } = useClanArticles(activeTab);
 
   return (
