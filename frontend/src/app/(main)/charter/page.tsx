@@ -112,7 +112,7 @@ export default function CharterPage() {
   const { data: articles, isLoading } = useClanArticles(activeTab);
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-3xl space-y-6">
+    <div className="container mx-auto px-4 py-8 max-w-5xl space-y-6">
       <div>
         <h1 className="text-2xl font-bold flex items-center gap-2">
           <ScrollText className="h-6 w-6" />
