@@ -173,7 +173,7 @@ export default function AdminCharterPage() {
           <DialogTrigger asChild>
             <Button><Plus className="h-4 w-4 mr-2" />Thêm bài viết</Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingItem ? 'Sửa bài viết' : 'Thêm bài viết mới'}</DialogTitle>
             </DialogHeader>
