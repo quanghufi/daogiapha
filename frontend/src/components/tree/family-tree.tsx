@@ -1129,20 +1129,12 @@ export function buildTreeLayout(
   }
   if (!isFinite(minX)) { minX = 0; maxX = 0; }
 
-  // Align the first generation lane to the horizontal center axis of the tree.
-  let firstGenerationCenterOffset = 0;
-  if (isFinite(firstGenerationMinX) && isFinite(firstGenerationMaxX)) {
-    const firstGenerationCenterX = (firstGenerationMinX + firstGenerationMaxX) / 2;
-    const treeCenterX = (minX + maxX) / 2;
-    firstGenerationCenterOffset = treeCenterX - firstGenerationCenterX;
-  }
-
   return {
     nodes,
     connections,
     width: Math.max(800, maxX - minX + 240),
     height: maxY + 120, // Bottom breathing room
-    offsetX: -minX + 120 + firstGenerationCenterOffset, // Space + first-generation centering
+    offsetX: -minX + 120, // Centering handled by autoAlignPanX in the component
   };
 }
 
