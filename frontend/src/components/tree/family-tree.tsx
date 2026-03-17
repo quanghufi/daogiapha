@@ -1072,10 +1072,8 @@ export function buildTreeLayout(
 
     const fatherCenterX = fatherPos ? fatherPos.x + CARD_W / 2 : null;
     const motherCenterX = motherPos ? motherPos.x + CARD_W / 2 : null;
-    const coupleMidX =
-      fatherCenterX !== null && motherCenterX !== null
-        ? (fatherCenterX + motherCenterX) / 2
-        : (fatherCenterX ?? motherCenterX ?? 0);
+    // Always originate branches from the father (patrilineal tree)
+    const coupleMidX = fatherCenterX ?? motherCenterX ?? 0;
 
     // Couple line (horizontal, between nodes)
     if (fatherPos && motherPos) {
