@@ -127,6 +127,15 @@
     @apply border-border outline-ring/50;
   }
 
+  input,
+  textarea,
+  select,
+  button {
+    font-family: var(--font-body), "Be Vietnam Pro", "Segoe UI", sans-serif;
+    line-height: 1.5;
+    font-feature-settings: normal;
+  }
+
   body {
     @apply bg-background text-foreground antialiased;
     min-height: 100dvh;
