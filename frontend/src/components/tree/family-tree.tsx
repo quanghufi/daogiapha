@@ -241,7 +241,7 @@ const PersonCard = memo(function PersonCard({
           </div>
         )}
         <div className="flex items-center justify-center px-1.5 h-full">
-          <span className="text-[10px] font-bold truncate text-center" style={{ color: genColor.text }}>{person.display_name}</span>
+          <span className="text-[10px] font-bold truncate text-center" style={{ color: genColor.text, fontFamily: 'var(--font-body), "Be Vietnam Pro", sans-serif', lineHeight: 1.4 }}>{person.display_name}</span>
         </div>
         {/* Collapse button */}
         {hasChildren && (
@@ -274,7 +274,7 @@ const PersonCard = memo(function PersonCard({
           </div>
         )}
         <div className="flex flex-col items-center justify-center p-1.5 h-full gap-0.5">
-          <span className="text-[11px] font-bold leading-tight text-center line-clamp-2" style={{ color: genColor.text }}>
+          <span className="text-[11px] font-bold text-center line-clamp-2" style={{ color: genColor.text, fontFamily: 'var(--font-body), "Be Vietnam Pro", sans-serif', lineHeight: 1.4 }}>
             {person.display_name}
           </span>
           {person.generation && (
