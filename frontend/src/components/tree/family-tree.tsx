@@ -150,17 +150,17 @@ const GENERATION_COLORS: Record<number, { bg: string; border: string; badge: str
   1:  { bg: '#8b0000', border: '#ffd700', badge: '#a52a2a', badgeText: '#ffd700', text: '#ffd700' },  // Đời 1: đỏ đậm, chữ vàng kim
   2:  { bg: '#a52a2a', border: '#daa520', badge: '#b22222', badgeText: '#ffd700', text: '#fff5e1' },  // Đời 2: nâu đỏ, chữ vàng nhạt
   3:  { bg: '#b22222', border: '#cd853f', badge: '#c0392b', badgeText: '#fff', text: '#fff' },       // Đời 3: đỏ gạch, chữ trắng
-  4:  { bg: '#c0392b', border: '#e74c3c', badge: '#d4503a', badgeText: '#fff', text: '#fff' },       // Đời 4: đỏ tươi
-  5:  { bg: '#cc3333', border: '#e05555', badge: '#cc3333', badgeText: '#fff', text: '#fff' },       // Đời 5
-  6:  { bg: '#d44444', border: '#e86666', badge: '#d44444', badgeText: '#fff', text: '#fff' },       // Đời 6
-  7:  { bg: '#c94040', border: '#dd6060', badge: '#c94040', badgeText: '#fff', text: '#fff' },       // Đời 7
-  8:  { bg: '#b33636', border: '#cc5555', badge: '#b33636', badgeText: '#fff', text: '#fff' },       // Đời 8
-  9:  { bg: '#a03030', border: '#bb4e4e', badge: '#a03030', badgeText: '#fff', text: '#fff' },       // Đời 9
-  10: { bg: '#8d2a2a', border: '#aa4444', badge: '#8d2a2a', badgeText: '#fff', text: '#fff' },      // Đời 10
-  11: { bg: '#7a2424', border: '#993d3d', badge: '#7a2424', badgeText: '#fff', text: '#fff' },      // Đời 11
-  12: { bg: '#6b1f1f', border: '#883636', badge: '#6b1f1f', badgeText: '#fff', text: '#fff' },      // Đời 12
-  13: { bg: '#5c1a1a', border: '#773030', badge: '#5c1a1a', badgeText: '#fff', text: '#fff' },      // Đời 13
-  14: { bg: '#4d1515', border: '#662a2a', badge: '#4d1515', badgeText: '#fff', text: '#fff' },      // Đời 14
+  4:  { bg: '#fff8dc', border: '#c0392b', badge: '#c0392b', badgeText: '#fff', text: '#8b0000' },    // Đời 4+: nền kem, chữ đỏ đậm
+  5:  { bg: '#fff8dc', border: '#cc3333', badge: '#cc3333', badgeText: '#fff', text: '#8b0000' },
+  6:  { bg: '#fff3cd', border: '#d44444', badge: '#d44444', badgeText: '#fff', text: '#8b0000' },
+  7:  { bg: '#fff3cd', border: '#c94040', badge: '#c94040', badgeText: '#fff', text: '#8b0000' },
+  8:  { bg: '#ffeeba', border: '#b33636', badge: '#b33636', badgeText: '#fff', text: '#7a0000' },
+  9:  { bg: '#ffeeba', border: '#a03030', badge: '#a03030', badgeText: '#fff', text: '#7a0000' },
+  10: { bg: '#ffe9a8', border: '#8d2a2a', badge: '#8d2a2a', badgeText: '#fff', text: '#6b0000' },
+  11: { bg: '#ffe9a8', border: '#7a2424', badge: '#7a2424', badgeText: '#fff', text: '#6b0000' },
+  12: { bg: '#ffe49a', border: '#6b1f1f', badge: '#6b1f1f', badgeText: '#fff', text: '#5c0000' },
+  13: { bg: '#ffe49a', border: '#5c1a1a', badge: '#5c1a1a', badgeText: '#fff', text: '#5c0000' },
+  14: { bg: '#ffdf8c', border: '#4d1515', badge: '#4d1515', badgeText: '#fff', text: '#4d0000' },
 };
 
 function getGenerationColor(generation: number | null | undefined) {
