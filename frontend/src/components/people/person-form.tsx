@@ -94,7 +94,7 @@ export function PersonForm({ person, defaultValues: extraDefaults, lockedGenerat
             <CardTitle className="text-base">Thông tin cơ bản</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
               <FormField
                 control={form.control}
                 name="display_name"
@@ -113,7 +113,7 @@ export function PersonForm({ person, defaultValues: extraDefaults, lockedGenerat
                 control={form.control}
                 name="handle"
                 render={({ field }) => (
-                  <FormItem className="md:col-span-2">
+                  <FormItem className="md:col-span-3">
                     <FormLabel>Handle *</FormLabel>
                     <FormControl>
                       <Input placeholder="dao-van-a" {...field} />
@@ -125,12 +125,12 @@ export function PersonForm({ person, defaultValues: extraDefaults, lockedGenerat
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
               <FormField
                 control={form.control}
                 name="surname"
                 render={({ field }) => (
-                  <FormItem className="md:col-span-1">
+                  <FormItem className="md:col-span-2">
                     <FormLabel>Họ</FormLabel>
                     <FormControl>
                       <Input placeholder="Đào" {...field} />
@@ -167,12 +167,12 @@ export function PersonForm({ person, defaultValues: extraDefaults, lockedGenerat
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
               <FormField
                 control={form.control}
                 name="pen_name"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="md:col-span-3">
                     <FormLabel>Tên tự</FormLabel>
                     <FormControl>
                       <Input placeholder="Tên tự (courtesy name)" {...field} />
@@ -186,7 +186,7 @@ export function PersonForm({ person, defaultValues: extraDefaults, lockedGenerat
                 control={form.control}
                 name="taboo_name"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="md:col-span-3">
                     <FormLabel>Tên húy</FormLabel>
                     <FormControl>
                       <Input placeholder="Tên húy (taboo name)" {...field} />
@@ -198,12 +198,12 @@ export function PersonForm({ person, defaultValues: extraDefaults, lockedGenerat
               />
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-12 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
               <FormField
                 control={form.control}
                 name="gender"
                 render={({ field }) => (
-                  <FormItem className="md:col-span-2">
+                  <FormItem className="md:col-span-1">
                     <FormLabel>Giới tính *</FormLabel>
                     <Select onValueChange={(v) => field.onChange(parseInt(v) as 1 | 2)} defaultValue={field.value?.toString()}>
                       <FormControl>
@@ -225,7 +225,7 @@ export function PersonForm({ person, defaultValues: extraDefaults, lockedGenerat
                 control={form.control}
                 name="generation"
                 render={({ field }) => (
-                  <FormItem className="md:col-span-2">
+                  <FormItem className="md:col-span-1">
                     <FormLabel>Đời *</FormLabel>
                     <FormControl>
                       <Input
@@ -251,7 +251,7 @@ export function PersonForm({ person, defaultValues: extraDefaults, lockedGenerat
                 control={form.control}
                 name="chi"
                 render={({ field }) => (
-                  <FormItem className="md:col-span-2">
+                  <FormItem className="md:col-span-1">
                     <FormLabel>Chi</FormLabel>
                     <FormControl>
                       <Input 
@@ -272,7 +272,7 @@ export function PersonForm({ person, defaultValues: extraDefaults, lockedGenerat
                 control={form.control}
                 name="privacy_level"
                 render={({ field }) => (
-                  <FormItem className="md:col-span-6">
+                  <FormItem className="md:col-span-3">
                     <FormLabel>Quyền riêng tư</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value?.toString()}>
                       <FormControl>
