@@ -811,8 +811,12 @@ export function buildTreeLayout(
   viewMode: ViewMode,
   focusPersonId: string | null,
   filterRootId: string | null = null,
-  hideNgoaiToc: boolean = false
+  hideNgoaiToc: boolean = false,
+  resizedNodes?: Map<string, { w: number; h: number }>
 ) {
+  // Helpers: get custom or default card dimensions per person
+  const getW = (personId: string) => resizedNodes?.get(personId)?.w ?? CARD_W;
+  const getH = (personId: string) => resizedNodes?.get(personId)?.h ?? CARD_H;
   const { people, families, children } = data;
 
   // Build relationship maps
@@ -1131,8 +1135,13 @@ export function buildTreeLayout(
     const motherPos = family.mother_id ? personPos.get(family.mother_id) : null;
     if (!fatherPos && !motherPos) continue;
 
-    const fatherCenterX = fatherPos ? fatherPos.x + CARD_W / 2 : null;
-    const motherCenterX = motherPos ? motherPos.x + CARD_W / 2 : null;
+    const fatherW = family.father_id ? getW(family.father_id) : CARD_W;
+    const fatherH = family.father_id ? getH(family.father_id) : CARD_H;
+    const motherW = family.mother_id ? getW(family.mother_id) : CARD_W;
+    const motherH = family.mother_id ? getH(family.mother_id) : CARD_H;
+
+    const fatherCenterX = fatherPos ? fatherPos.x + fatherW / 2 : null;
+    const motherCenterX = motherPos ? motherPos.x + motherW / 2 : null;
     // Always originate branches from the father (patrilineal tree)
     const coupleMidX = fatherCenterX ?? motherCenterX ?? 0;
 
@@ -1141,10 +1150,10 @@ export function buildTreeLayout(
       const fatherToRight = fatherPos.x < motherPos.x;
       connections.push({
         id: `couple-${family.id}`,
-        x1: fatherToRight ? fatherPos.x + CARD_W : fatherPos.x,
-        y1: fatherPos.y + CARD_H / 2,
-        x2: fatherToRight ? motherPos.x : motherPos.x + CARD_W,
-        y2: motherPos.y + CARD_H / 2,
+        x1: fatherToRight ? fatherPos.x + fatherW : fatherPos.x,
+        y1: fatherPos.y + fatherH / 2,
+        x2: fatherToRight ? motherPos.x : motherPos.x + motherW,
+        y2: motherPos.y + motherH / 2,
         type: 'couple',
         isVisible: true,
       });
@@ -1156,17 +1165,19 @@ export function buildTreeLayout(
     if (parentIsCollapsed) continue;
 
     const parentPos = fatherPos ?? motherPos!;
+    const parentH = family.father_id ? fatherH : motherH;
 
     // Always use couple midpoint as the connection origin
     // This ensures straight vertical lines from parent couple down to children
     children.filter((c) => c.family_id === family.id).forEach((child) => {
       const childPos = personPos.get(child.person_id);
       if (childPos) {
+        const childW = getW(child.person_id);
         connections.push({
           id: `child-${family.id}-${child.person_id}`,
           x1: coupleMidX,
-          y1: parentPos.y + CARD_H,
-          x2: childPos.x + CARD_W / 2,
+          y1: parentPos.y + parentH,
+          x2: childPos.x + childW / 2,
           y2: childPos.y,
           type: 'parent-child',
           isVisible: true,
@@ -1179,13 +1190,15 @@ export function buildTreeLayout(
   let minX = Infinity, maxX = -Infinity, maxY = 0;
   let firstGenerationMinX = Infinity, firstGenerationMaxX = -Infinity;
   for (const n of nodes) {
+    const nW = getW(n.person.id);
+    const nH = getH(n.person.id);
     minX = Math.min(minX, n.x);
-    maxX = Math.max(maxX, n.x + CARD_W);
-    maxY = Math.max(maxY, n.y + CARD_H);
+    maxX = Math.max(maxX, n.x + nW);
+    maxY = Math.max(maxY, n.y + nH);
     const generation = n.person.generation || rootGeneration;
     if (generation === rootGeneration) {
       firstGenerationMinX = Math.min(firstGenerationMinX, n.x);
-      firstGenerationMaxX = Math.max(firstGenerationMaxX, n.x + CARD_W);
+      firstGenerationMaxX = Math.max(firstGenerationMaxX, n.x + nW);
     }
   }
   if (!isFinite(minX)) { minX = 0; maxX = 0; }
@@ -1367,8 +1380,8 @@ export function FamilyTree() {
   const focusPersonId = viewMode !== 'all' ? selectedPerson?.id || null : null;
   const layout = useMemo(() => {
     if (!data || data.people.length === 0) return null;
-    return buildTreeLayout(data, activeCollapsedNodes, viewMode, focusPersonId, filterRootId, hideNgoaiToc);
-  }, [data, activeCollapsedNodes, viewMode, focusPersonId, filterRootId, hideNgoaiToc]);
+    return buildTreeLayout(data, activeCollapsedNodes, viewMode, focusPersonId, filterRootId, hideNgoaiToc, resizedNodes);
+  }, [data, activeCollapsedNodes, viewMode, focusPersonId, filterRootId, hideNgoaiToc, resizedNodes]);
 
   // No autoAlignPanX needed — layout.offsetX already centers first gen at x=0.
   // CSS left:50% on the content div centers it in the container.
