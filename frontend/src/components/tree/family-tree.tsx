@@ -1416,6 +1416,11 @@ export function FamilyTree() {
     setPan({ x: 0, y: 0 });
   }, []);
 
+  const handleResetCardSizes = useCallback(() => {
+    setResizedNodes(new Map());
+    try { localStorage.removeItem('tree-card-sizes'); } catch { /* ignore */ }
+  }, []);
+
   const handleNodeSelect = useCallback((person: TreePerson, nodeX: number, nodeY: number) => {
     setSelectedPerson(person);
     setContextMenu({ person, x: nodeX, y: nodeY });
@@ -1755,6 +1760,18 @@ export function FamilyTree() {
           <Sparkles className="h-3.5 w-3.5 mr-1" />
           Trang trí
         </Button>
+        {resizedNodes.size > 0 && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleResetCardSizes}
+            className="h-8 text-xs text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+            title="Đưa tất cả ô về kích thước mặc định"
+          >
+            <RotateCcw className="h-3.5 w-3.5 mr-1" />
+            Reset ô
+          </Button>
+        )}
 
         {/* Instructions */}
         <div className="ml-auto flex items-center gap-1 text-xs text-muted-foreground">
