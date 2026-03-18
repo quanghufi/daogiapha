@@ -1129,12 +1129,18 @@ export function buildTreeLayout(
   }
   if (!isFinite(minX)) { minX = 0; maxX = 0; }
 
+  // Center first generation at x=0 so CSS left:50% naturally centers the tree
+  const firstGenCenterRaw = isFinite(firstGenerationMinX)
+    ? (firstGenerationMinX + firstGenerationMaxX) / 2
+    : (minX + maxX) / 2;
+  const offsetX = -firstGenCenterRaw;
+
   return {
     nodes,
     connections,
     width: Math.max(800, maxX - minX + 240),
-    height: maxY + 120, // Bottom breathing room
-    offsetX: -minX + 120, // Centering handled by autoAlignPanX in the component
+    height: maxY + 120,
+    offsetX,
   };
 }
 
@@ -1284,25 +1290,9 @@ export function FamilyTree() {
     return buildTreeLayout(data, activeCollapsedNodes, viewMode, focusPersonId, filterRootId, hideNgoaiToc);
   }, [data, activeCollapsedNodes, viewMode, focusPersonId, filterRootId, hideNgoaiToc]);
 
-  const firstGenerationCenterX = useMemo(() => {
-    if (!layout || layout.nodes.length === 0) return null;
-    const firstGeneration = Math.min(...layout.nodes.map((node) => node.person.generation || 1));
-    const firstGenerationNodes = layout.nodes.filter(
-      (node) => (node.person.generation || 1) === firstGeneration
-    );
-    if (firstGenerationNodes.length === 0) return null;
-    const minX = Math.min(...firstGenerationNodes.map((node) => node.x));
-    const maxX = Math.max(...firstGenerationNodes.map((node) => node.x + CARD_W));
-    return (minX + maxX) / 2 + layout.offsetX;
-  }, [layout]);
-
-  // Keep first generation centered under the temple header.
-  const autoAlignPanX = useMemo(() => {
-    if (firstGenerationCenterX == null || containerSize.width <= 0) return 0;
-    return containerSize.width / 2 - firstGenerationCenterX * scale;
-  }, [firstGenerationCenterX, containerSize.width, scale]);
-
-  const effectivePanX = pan.x + autoAlignPanX;
+  // No autoAlignPanX needed — layout.offsetX already centers first gen at x=0.
+  // CSS left:50% on the content div centers it in the container.
+  // pan.x is purely user drag offset.
 
   // Zoom level
   const zoomLevel = useMemo<ZoomLevel>(() => getZoomLevel(scale), [scale]);
@@ -1346,10 +1336,10 @@ export function FamilyTree() {
     if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
     setPan({
-      x: rect.width / 2 - nodeX * scale - autoAlignPanX,
+      x: rect.width / 2 - nodeX * scale,
       y: rect.height / 2 - nodeY * scale,
     });
-  }, [scale, autoAlignPanX]);
+  }, [scale]);
 
   const handleToggleCollapse = useCallback((personId: string) => {
     setCollapsedNodes((prev) => {
@@ -1383,24 +1373,23 @@ export function FamilyTree() {
     setCollapsedNodes(allParents);
   }, [data]);
 
-  // Pan handlers — panStart captures the visual position (effectivePanX),
-  // move handler subtracts autoAlignPanX so pan.x stays correct.
+  // Pan handlers — panStart captures clientX - pan.x, move sets pan.x directly.
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (e.button === 0) {
       setIsPanning(true);
-      setPanStart({ x: e.clientX - effectivePanX, y: e.clientY - pan.y });
+      setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
       setContextMenu(null);
     }
-  }, [effectivePanX, pan.y]);
+  }, [pan.x, pan.y]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (isPanning) {
       setPan({
-        x: e.clientX - panStart.x - autoAlignPanX,
+        x: e.clientX - panStart.x,
         y: e.clientY - panStart.y,
       });
     }
-  }, [isPanning, panStart.x, panStart.y, autoAlignPanX]);
+  }, [isPanning, panStart.x, panStart.y]);
 
   const handleMouseUp = useCallback(() => {
     setIsPanning(false);
@@ -1411,21 +1400,21 @@ export function FamilyTree() {
     if (e.touches.length === 1) {
       setIsPanning(true);
       setPanStart({
-        x: e.touches[0].clientX - effectivePanX,
+        x: e.touches[0].clientX - pan.x,
         y: e.touches[0].clientY - pan.y,
       });
       setContextMenu(null);
     }
-  }, [effectivePanX, pan.y]);
+  }, [pan.x, pan.y]);
 
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
     if (isPanning && e.touches.length === 1) {
       setPan({
-        x: e.touches[0].clientX - panStart.x - autoAlignPanX,
+        x: e.touches[0].clientX - panStart.x,
         y: e.touches[0].clientY - panStart.y,
       });
     }
-  }, [isPanning, panStart.x, panStart.y, autoAlignPanX]);
+  }, [isPanning, panStart.x, panStart.y]);
 
   const handleTouchEnd = useCallback(() => {
     setIsPanning(false);
@@ -1450,10 +1439,10 @@ export function FamilyTree() {
     if (!containerRef.current || !layout) return;
     const rect = containerRef.current.getBoundingClientRect();
     setPan({
-      x: -(x - rect.width / 2 / scale) - autoAlignPanX,
+      x: -(x - rect.width / 2 / scale),
       y: -(y - rect.height / 2 / scale),
     });
-  }, [layout, scale, autoAlignPanX]);
+  }, [layout, scale]);
 
   // View mode change
   const handleViewModeChange = useCallback((mode: ViewMode) => {
@@ -1465,11 +1454,11 @@ export function FamilyTree() {
 
   // Computed viewBox for minimap
   const viewBox = useMemo(() => ({
-    x: -effectivePanX / scale,
+    x: -pan.x / scale,
     y: -pan.y / scale,
     width: containerSize.width / scale,
     height: containerSize.height / scale,
-  }), [effectivePanX, pan.y, scale, containerSize.width, containerSize.height]);
+  }), [pan.x, pan.y, scale, containerSize.width, containerSize.height]);
 
   const filterSearchResults = useMemo(() => {
     if (!data?.people || filterSearch.length < 2) return [];
@@ -1749,10 +1738,11 @@ export function FamilyTree() {
               {/* Transformed content */}
               <div
                 style={{
-                  transform: `translate(${effectivePanX}px, ${pan.y}px) scale(${scale})`,
+                  transform: `translate(${pan.x}px, ${pan.y}px) scale(${scale})`,
                   transformOrigin: '0 0',
-                  position: 'relative',
-                  width: layout.width + layout.offsetX,
+                  position: 'absolute',
+                  left: '50%',
+                  width: layout.width,
                   height: layout.height,
                 }}
               >
