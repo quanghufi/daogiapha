@@ -108,7 +108,7 @@ export function PersonForm({ person, defaultValues: extraDefaults, lockedGenerat
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="handle"
@@ -254,12 +254,12 @@ export function PersonForm({ person, defaultValues: extraDefaults, lockedGenerat
                   <FormItem>
                     <FormLabel>Chi</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="number" 
-                        min={1} 
-                        max={10} 
-                        {...field} 
-                        value={field.value ?? ''} 
+                      <Input
+                        type="number"
+                        min={1}
+                        max={10}
+                        {...field}
+                        value={field.value ?? ''}
                         onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
                       />
                     </FormControl>
@@ -305,7 +305,7 @@ export function PersonForm({ person, defaultValues: extraDefaults, lockedGenerat
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="is_patrilineal"
@@ -336,9 +336,9 @@ export function PersonForm({ person, defaultValues: extraDefaults, lockedGenerat
                   <FormItem>
                     <FormLabel>Năm sinh</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="number" 
-                        placeholder="1990" 
+                      <Input
+                        type="number"
+                        placeholder="1990"
                         {...field}
                         value={field.value ?? ''}
                         onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
@@ -385,9 +385,9 @@ export function PersonForm({ person, defaultValues: extraDefaults, lockedGenerat
                     <FormItem>
                       <FormLabel>Năm mất</FormLabel>
                       <FormControl>
-                        <Input 
-                          type="number" 
-                          placeholder="2020" 
+                        <Input
+                          type="number"
+                          placeholder="2020"
                           {...field}
                           value={field.value ?? ''}
                           onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
@@ -416,7 +416,6 @@ export function PersonForm({ person, defaultValues: extraDefaults, lockedGenerat
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Ngày giỗ (Âm)</FormLabel>
-                      <FormDescription className="text-xs mt-0">DD/MM</FormDescription>
                       <FormControl>
                         <Input placeholder="15/7" {...field} />
                       </FormControl>
