@@ -1,4 +1,4 @@
-﻿@import "tailwindcss";
+@import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
@@ -132,7 +132,7 @@
   select,
   button {
     font-family: var(--font-body), "Be Vietnam Pro", "Segoe UI", sans-serif;
-    line-height: 1.5;
+    line-height: 1.7;
     font-feature-settings: normal;
   }
 
