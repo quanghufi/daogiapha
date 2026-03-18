@@ -416,10 +416,10 @@ export function PersonForm({ person, defaultValues: extraDefaults, lockedGenerat
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Ngày giỗ (Âm)</FormLabel>
+                      <FormDescription className="text-xs mt-0">DD/MM</FormDescription>
                       <FormControl>
                         <Input placeholder="15/7" {...field} />
                       </FormControl>
-                      <FormDescription>DD/MM</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
