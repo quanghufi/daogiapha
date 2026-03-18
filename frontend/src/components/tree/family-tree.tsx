@@ -147,26 +147,35 @@ function getCardStyle(person: TreePerson) {
 // 
 
 const GENERATION_COLORS: Record<number, { bg: string; border: string; badge: string; badgeText: string; text: string }> = {
-  1:  { bg: '#8b1a1a', border: '#c0392b', badge: '#a93226', badgeText: '#fdebd0', text: '#fff' },  // Deep red (ancestors)
-  2:  { bg: '#a93226', border: '#d4503a', badge: '#c0392b', badgeText: '#fdebd0', text: '#fff' },  // Red
-  3:  { bg: '#cb4335', border: '#e74c3c', badge: '#d4503a', badgeText: '#fff', text: '#fff' },      // Red-orange
-  4:  { bg: '#d4731a', border: '#e67e22', badge: '#d4731a', badgeText: '#fff', text: '#fff' },      // Orange
-  5:  { bg: '#d4a017', border: '#f1c40f', badge: '#d4a017', badgeText: '#fff', text: '#fff' },      // Amber/Gold
-  6:  { bg: '#b7950b', border: '#d4ac0d', badge: '#b7950b', badgeText: '#fff', text: '#fff' },      // Dark gold
-  7:  { bg: '#1e8449', border: '#27ae60', badge: '#1e8449', badgeText: '#fff', text: '#fff' },      // Green
-  8:  { bg: '#148f77', border: '#1abc9c', badge: '#148f77', badgeText: '#fff', text: '#fff' },      // Teal
-  9:  { bg: '#117a65', border: '#16a085', badge: '#117a65', badgeText: '#fff', text: '#fff' },      // Dark teal
-  10: { bg: '#1a6e8e', border: '#2e86c1', badge: '#1a6e8e', badgeText: '#fff', text: '#fff' },     // Cyan-blue
-  11: { bg: '#1f618d', border: '#2980b9', badge: '#1f618d', badgeText: '#fff', text: '#fff' },     // Blue
-  12: { bg: '#1a5276', border: '#2471a3', badge: '#1a5276', badgeText: '#fff', text: '#fff' },     // Dark blue
-  13: { bg: '#154360', border: '#1b4f72', badge: '#154360', badgeText: '#fff', text: '#fff' },     // Navy
-  14: { bg: '#1b2631', border: '#2c3e50', badge: '#1b2631', badgeText: '#fff', text: '#fff' },     // Dark slate
+  1:  { bg: '#8b0000', border: '#ffd700', badge: '#a52a2a', badgeText: '#ffd700', text: '#ffd700' },  // Đời 1: đỏ đậm, chữ vàng kim
+  2:  { bg: '#a52a2a', border: '#daa520', badge: '#b22222', badgeText: '#ffd700', text: '#fff5e1' },  // Đời 2: nâu đỏ, chữ vàng nhạt
+  3:  { bg: '#b22222', border: '#cd853f', badge: '#c0392b', badgeText: '#fff', text: '#fff' },       // Đời 3: đỏ gạch, chữ trắng
+  4:  { bg: '#c0392b', border: '#e74c3c', badge: '#d4503a', badgeText: '#fff', text: '#fff' },       // Đời 4: đỏ tươi
+  5:  { bg: '#cc3333', border: '#e05555', badge: '#cc3333', badgeText: '#fff', text: '#fff' },       // Đời 5
+  6:  { bg: '#d44444', border: '#e86666', badge: '#d44444', badgeText: '#fff', text: '#fff' },       // Đời 6
+  7:  { bg: '#c94040', border: '#dd6060', badge: '#c94040', badgeText: '#fff', text: '#fff' },       // Đời 7
+  8:  { bg: '#b33636', border: '#cc5555', badge: '#b33636', badgeText: '#fff', text: '#fff' },       // Đời 8
+  9:  { bg: '#a03030', border: '#bb4e4e', badge: '#a03030', badgeText: '#fff', text: '#fff' },       // Đời 9
+  10: { bg: '#8d2a2a', border: '#aa4444', badge: '#8d2a2a', badgeText: '#fff', text: '#fff' },      // Đời 10
+  11: { bg: '#7a2424', border: '#993d3d', badge: '#7a2424', badgeText: '#fff', text: '#fff' },      // Đời 11
+  12: { bg: '#6b1f1f', border: '#883636', badge: '#6b1f1f', badgeText: '#fff', text: '#fff' },      // Đời 12
+  13: { bg: '#5c1a1a', border: '#773030', badge: '#5c1a1a', badgeText: '#fff', text: '#fff' },      // Đời 13
+  14: { bg: '#4d1515', border: '#662a2a', badge: '#4d1515', badgeText: '#fff', text: '#fff' },      // Đời 14
 };
 
 function getGenerationColor(generation: number | null | undefined) {
   const gen = generation ?? 1;
   const idx = ((gen - 1) % 14) + 1;
   return GENERATION_COLORS[idx] ?? GENERATION_COLORS[1];
+}
+
+// Helper: Get card scale based on generation (gen 1-3 are larger)
+function getGenScale(generation: number | null | undefined): number {
+  const gen = generation ?? 1;
+  if (gen === 1) return 1.4;
+  if (gen === 2) return 1.25;
+  if (gen === 3) return 1.1;
+  return 1;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -232,7 +241,7 @@ const PersonCard = memo(function PersonCard({
     return (
       <div
         className={`absolute rounded-lg border-[1.5px] cursor-pointer hover:shadow-md transition-all ${selectedRing} ${person.is_patrilineal === false ? 'border-dashed' : ''}`}
-        style={{ left: x, top: y, width: CARD_W, height: 40, background: genColor.bg, borderColor: genColor.border, opacity: person.is_living === false ? 0.7 : 1, overflow: 'visible' }}
+        style={{ left: x, top: y, width: CARD_W, height: 40, background: genColor.bg, borderColor: genColor.border, opacity: person.is_living === false ? 0.7 : 1, overflow: 'visible', transform: `scale(${getGenScale(person.generation)})`, transformOrigin: 'center top', zIndex: person.generation && person.generation <= 3 ? 10 - person.generation : 0 }}
         onClick={() => onSelect(person, x, y)}
       >
         {spouseBadge && (
@@ -264,8 +273,8 @@ const PersonCard = memo(function PersonCard({
   return (
     <>
       <div
-        className={`absolute rounded-xl border-[1.5px] cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all ${selectedRing} ${person.is_patrilineal === false ? 'border-dashed' : ''}`}
-        style={{ left: x, top: y, width: CARD_W, height: CARD_H, background: genColor.bg, borderColor: genColor.border, opacity: person.is_living === false ? 0.7 : 1, overflow: 'visible' }}
+        className={`absolute rounded-xl border-[2px] cursor-pointer hover:shadow-lg hover:-translate-y-0.5 transition-all ${selectedRing} ${person.is_patrilineal === false ? 'border-dashed' : ''}`}
+        style={{ left: x, top: y, width: CARD_W, height: CARD_H, background: genColor.bg, borderColor: genColor.border, opacity: person.is_living === false ? 0.7 : 1, overflow: 'visible', transform: `scale(${getGenScale(person.generation)})`, transformOrigin: 'center top', zIndex: person.generation && person.generation <= 3 ? 10 - person.generation : 0 }}
         onClick={() => onSelect(person, x, y)}
       >
         {spouseBadge && (
