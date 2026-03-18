@@ -189,6 +189,9 @@ interface PersonCardProps {
   onSelect: (person: TreePerson, nodeX: number, nodeY: number) => void;
   onToggleCollapse: (personId: string) => void;
   branchSummary?: BranchSummary;
+  customSize?: { w: number; h: number };
+  onResize?: (personId: string, w: number, h: number) => void;
+  treeScale?: number;
 }
 
 const PersonCard = memo(function PersonCard({
@@ -198,6 +201,9 @@ const PersonCard = memo(function PersonCard({
   onSelect,
   onToggleCollapse,
   branchSummary,
+  customSize,
+  onResize,
+  treeScale = 1,
 }: PersonCardProps) {
   const { person, x, y, isCollapsed, hasChildren } = node;
   const style = getCardStyle(person);
@@ -270,11 +276,46 @@ const PersonCard = memo(function PersonCard({
   }
 
   // Full zoom level
+  const cardW = customSize?.w ?? CARD_W;
+  const cardH = customSize?.h ?? CARD_H;
+  const fontScale = Math.min(cardW / CARD_W, cardH / CARD_H);
+  const fontSize = Math.max(9, Math.min(18, 11 * fontScale));
+  const genFontSize = Math.max(7, Math.min(14, 8 * fontScale));
+
+  // Resize handler
+  const handleResizeStart = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (!onResize) return;
+    const startX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const startY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    const startW = cardW;
+    const startH = cardH;
+
+    const onMove = (ev: MouseEvent | TouchEvent) => {
+      const curX = 'touches' in ev ? ev.touches[0].clientX : ev.clientX;
+      const curY = 'touches' in ev ? ev.touches[0].clientY : ev.clientY;
+      const newW = Math.max(100, startW + (curX - startX) / treeScale);
+      const newH = Math.max(40, startH + (curY - startY) / treeScale);
+      onResize(person.id, Math.round(newW), Math.round(newH));
+    };
+    const onUp = () => {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      document.removeEventListener('touchmove', onMove);
+      document.removeEventListener('touchend', onUp);
+    };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+    document.addEventListener('touchmove', onMove, { passive: false });
+    document.addEventListener('touchend', onUp);
+  }, [onResize, cardW, cardH, person.id, treeScale]);
+
   return (
     <>
       <div
-        className={`absolute rounded-xl border-[2px] cursor-pointer hover:shadow-lg hover:-translate-y-0.5 transition-all ${selectedRing} ${person.is_patrilineal === false ? 'border-dashed' : ''}`}
-        style={{ left: x, top: y, width: CARD_W, height: CARD_H, background: genColor.bg, borderColor: genColor.border, opacity: person.is_living === false ? 0.7 : 1, overflow: 'visible', transform: `scale(${getGenScale(person.generation)})`, transformOrigin: 'center top', zIndex: person.generation && person.generation <= 3 ? 10 - person.generation : 0 }}
+        className={`absolute rounded-xl border-[2px] cursor-pointer hover:shadow-lg hover:-translate-y-0.5 transition-all ${selectedRing} ${person.is_patrilineal === false ? 'border-dashed' : ''} group`}
+        style={{ left: x, top: y, width: cardW, height: cardH, background: genColor.bg, borderColor: genColor.border, opacity: person.is_living === false ? 0.7 : 1, overflow: 'visible', transformOrigin: 'center top', zIndex: person.generation && person.generation <= 3 ? 10 - person.generation : 0 }}
         onClick={() => onSelect(person, x, y)}
       >
         {spouseBadge && (
@@ -283,15 +324,26 @@ const PersonCard = memo(function PersonCard({
           </div>
         )}
         <div className="flex flex-col items-center justify-center p-1.5 h-full gap-0.5 overflow-visible">
-          <span className="text-[11px] font-bold text-center" style={{ color: genColor.text, lineHeight: 1.5, overflow: 'visible', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const }}>
+          <span className="font-bold text-center" style={{ fontSize: `${fontSize}px`, color: genColor.text, lineHeight: 1.4, overflow: 'visible', display: '-webkit-box', WebkitLineClamp: cardH > 100 ? 4 : 2, WebkitBoxOrient: 'vertical' as const }}>
             {person.display_name}
           </span>
           {person.generation && (
-            <span className="text-[8px] rounded px-1 py-0.5 leading-none font-medium" style={{ color: genColor.text, opacity: 0.8 }}>
+            <span className="rounded px-1 py-0.5 leading-none font-medium" style={{ fontSize: `${genFontSize}px`, color: genColor.text, opacity: 0.8 }}>
               Đời {person.generation}
             </span>
           )}
         </div>
+
+        {/* Resize handle - bottom right corner */}
+        {onResize && (
+          <div
+            className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize opacity-0 group-hover:opacity-100 transition-opacity z-20"
+            style={{ borderRight: `3px solid ${genColor.text}`, borderBottom: `3px solid ${genColor.text}`, borderRadius: '0 0 6px 0', opacity: undefined }}
+            onMouseDown={handleResizeStart}
+            onTouchStart={handleResizeStart}
+            title="Kéo để thay đổi kích thước"
+          />
+        )}
 
         {/* Collapse/Expand button */}
         {hasChildren && (
@@ -1256,6 +1308,25 @@ export function FamilyTree() {
   const [filterDropdownOpen, setFilterDropdownOpen] = useState(false);
   const [contextMenu, setContextMenu] = useState<ContextMenuData | null>(null);
 
+  // Resizable card sizes - persisted to localStorage
+  const [resizedNodes, setResizedNodes] = useState<Map<string, { w: number; h: number }>>(() => {
+    if (typeof window === 'undefined') return new Map();
+    try {
+      const saved = localStorage.getItem('tree-card-sizes');
+      if (saved) return new Map(JSON.parse(saved));
+    } catch { /* ignore */ }
+    return new Map();
+  });
+
+  const handleCardResize = useCallback((personId: string, w: number, h: number) => {
+    setResizedNodes(prev => {
+      const next = new Map(prev);
+      next.set(personId, { w, h });
+      try { localStorage.setItem('tree-card-sizes', JSON.stringify([...next])); } catch { /* ignore */ }
+      return next;
+    });
+  }, []);
+
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerSize, setContainerSize] = useState({ width: 800, height: 600 });
 
@@ -1769,6 +1840,9 @@ export function FamilyTree() {
                       onSelect={handleNodeSelect}
                       onToggleCollapse={handleToggleCollapse}
                       branchSummary={branchSummaries.get(node.person.id)}
+                      customSize={resizedNodes.get(node.person.id)}
+                      onResize={handleCardResize}
+                      treeScale={scale}
                     />
                   ))}
 
