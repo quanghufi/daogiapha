@@ -1027,14 +1027,15 @@ export function buildTreeLayout(
   const subtreeWidths = new Map<string, number>();
   const computeSubtreeWidth = (personId: string): number => {
     if (subtreeWidths.has(personId)) return subtreeWidths.get(personId)!;
+    const personW = getW(personId);
     const familyGroupsWithSlots = getPositionedFamilyGroupsAsFather(personId);
     const wives = familyGroupsWithSlots.filter(({ spouseId }) => spouseId !== null);
     const familyGroups = collapsedNodes.has(personId)
       ? []
       : familyGroupsWithSlots.filter(({ childIds }) => childIds.length > 0);
     const spouseRowWidth = wives.length > 1
-      ? CARD_W + Math.max(...wives.map(({ slot }) => Math.abs(slot)), 0) * 2 * (COUPLE_GAP + CARD_W)
-      : CARD_W + wives.length * (COUPLE_GAP + CARD_W);
+      ? personW + Math.max(...wives.map(({ slot }) => Math.abs(slot)), 0) * 2 * (COUPLE_GAP + CARD_W)
+      : personW + wives.length * (COUPLE_GAP + (wives[0]?.spouseId ? getW(wives[0].spouseId) : CARD_W));
     const childrenWidth = familyGroups.length > 0
       ? familyGroups.reduce((sum, group, index) => {
           const groupWidth =
@@ -1053,27 +1054,26 @@ export function buildTreeLayout(
   const xPositions = new Map<string, number>();
   const familyCenterById = new Map<string, number>();
   const assignPositions = (personId: string, startX: number) => {
-    const sw = subtreeWidths.get(personId) || CARD_W;
+    const sw = subtreeWidths.get(personId) || getW(personId);
+    const personW = getW(personId);
     const familyGroupsWithSlots = getPositionedFamilyGroupsAsFather(personId);
     const wives = familyGroupsWithSlots.filter(({ spouseId }) => spouseId !== null);
     const familyChildren = collapsedNodes.has(personId)
       ? []
       : familyGroupsWithSlots.filter(({ childIds }) => childIds.length > 0);
     const hasMultipleSpouses = wives.length > 1;
-    const spouseRowWidth = hasMultipleSpouses
-      ? CARD_W + Math.max(...wives.map(({ slot }) => Math.abs(slot)), 0) * 2 * (CARD_W + COUPLE_GAP)
-      : CARD_W + wives.length * (CARD_W + COUPLE_GAP);
     const centerX = startX + sw / 2;
 
     // Father always centered — wives placed to the right (patrilineal alignment)
-    const fatherX = centerX - CARD_W / 2;
+    const fatherX = centerX - personW / 2;
     xPositions.set(personId, fatherX);
     wives.forEach(({ spouseId, slot }) => {
       if (!spouseId) return;
+      const spouseW = getW(spouseId);
       if (hasMultipleSpouses) {
-        xPositions.set(spouseId, fatherX + slot * (CARD_W + COUPLE_GAP));
+        xPositions.set(spouseId, fatherX + personW / 2 - spouseW / 2 + slot * (CARD_W + COUPLE_GAP));
       } else {
-        xPositions.set(spouseId, fatherX + (CARD_W + COUPLE_GAP));
+        xPositions.set(spouseId, fatherX + personW + COUPLE_GAP);
       }
     });
 
@@ -1081,20 +1081,20 @@ export function buildTreeLayout(
     if (familyChildren.length > 0) {
       const totalChildW = familyChildren.reduce((sum, group, index) => {
         const groupWidth =
-          group.childIds.reduce((groupSum, childId) => groupSum + (subtreeWidths.get(childId) || CARD_W), 0) +
+          group.childIds.reduce((groupSum, childId) => groupSum + (subtreeWidths.get(childId) || getW(childId)), 0) +
           (group.childIds.length - 1) * SIBLING_GAP;
         return sum + groupWidth + (index > 0 ? FAMILY_GAP : 0);
       }, 0);
       let childX = centerX - totalChildW / 2;
       familyChildren.forEach(({ family, childIds }, groupIndex) => {
         const groupWidth =
-          childIds.reduce((groupSum, childId) => groupSum + (subtreeWidths.get(childId) || CARD_W), 0) +
+          childIds.reduce((groupSum, childId) => groupSum + (subtreeWidths.get(childId) || getW(childId)), 0) +
           (childIds.length - 1) * SIBLING_GAP;
         familyCenterById.set(family.id, childX + groupWidth / 2);
 
         childIds.forEach((child, childIndex) => {
           assignPositions(child, childX);
-          childX += (subtreeWidths.get(child) || CARD_W);
+          childX += (subtreeWidths.get(child) || getW(child));
           if (childIndex < childIds.length - 1) childX += SIBLING_GAP;
         });
         if (groupIndex < familyChildren.length - 1) childX += FAMILY_GAP;
@@ -1105,7 +1105,7 @@ export function buildTreeLayout(
   let rootStartX = 0;
   for (const root of roots) {
     assignPositions(root, rootStartX);
-    rootStartX += (subtreeWidths.get(root) || CARD_W) + SIBLING_GAP * 2;
+    rootStartX += (subtreeWidths.get(root) || getW(root)) + SIBLING_GAP * 2;
   }
 
   // Keep generation lanes anchored to the clan's first generation,
