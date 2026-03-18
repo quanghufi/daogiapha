@@ -115,10 +115,10 @@ export function PersonForm({ person, defaultValues: extraDefaults, lockedGenerat
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Handle *</FormLabel>
+                    <FormDescription className="text-xs mt-0">URL-friendly, không dấu</FormDescription>
                     <FormControl>
                       <Input placeholder="dao-van-a" {...field} />
                     </FormControl>
-                    <FormDescription>URL-friendly, không dấu</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
