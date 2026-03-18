@@ -1103,7 +1103,28 @@ export function buildTreeLayout(
     rootStartX += (subtreeWidths.get(root) || getW(root)) + SIBLING_GAP * 2;
   }
 
-  // Post-process: re-center each father over the midpoint of direct children's visual positions.
+  // Helper: recursively shift a person and ALL their descendants + spouses
+  const shiftSubtree = (personId: string, deltaX: number) => {
+    if (!xPositions.has(personId) || Math.abs(deltaX) < 0.5) return;
+    xPositions.set(personId, xPositions.get(personId)! + deltaX);
+    // Shift spouses
+    const groups = getPositionedFamilyGroupsAsFather(personId);
+    for (const { spouseId } of groups) {
+      if (spouseId && xPositions.has(spouseId)) {
+        xPositions.set(spouseId, xPositions.get(spouseId)! + deltaX);
+      }
+    }
+    // Shift children recursively
+    if (!collapsedNodes.has(personId)) {
+      for (const g of groups) {
+        for (const cid of g.childIds) {
+          shiftSubtree(cid, deltaX);
+        }
+      }
+    }
+  };
+
+  // Post-process: evenly distribute children + re-center parent.
   // Process BOTTOM-UP (deepest generation first) so children are in final position before parent re-centers.
   const sortedByGenDesc = [...visiblePeople].sort((a, b) => (b.generation || 1) - (a.generation || 1));
   for (const person of sortedByGenDesc) {
@@ -1116,10 +1137,48 @@ export function buildTreeLayout(
         if (xPositions.has(cid)) allChildIds.push(cid);
       }
     }
-    if (allChildIds.length === 0) continue;
+    if (allChildIds.length < 2) {
+      // Single child: just center parent over it
+      if (allChildIds.length === 1) {
+        const childCenter = xPositions.get(allChildIds[0])! + getW(allChildIds[0]) / 2;
+        const personW = getW(person.id);
+        const newX = childCenter - personW / 2;
+        const delta = newX - xPositions.get(person.id)!;
+        if (Math.abs(delta) > 1) {
+          xPositions.set(person.id, newX);
+          for (const { spouseId } of familyGroupsWithSlots) {
+            if (spouseId && xPositions.has(spouseId)) {
+              xPositions.set(spouseId, xPositions.get(spouseId)! + delta);
+            }
+          }
+        }
+      }
+      continue;
+    }
 
-    const childCenters = allChildIds.map(id => xPositions.get(id)! + getW(id) / 2);
-    const childMid = (Math.min(...childCenters) + Math.max(...childCenters)) / 2;
+    // Sort children by their current x position (left to right)
+    const sortedChildren = allChildIds
+      .map(id => ({ id, center: xPositions.get(id)! + getW(id) / 2 }))
+      .sort((a, b) => a.center - b.center);
+
+    // Even redistribution: keep total span, distribute centers evenly
+    const leftMost = sortedChildren[0].center;
+    const rightMost = sortedChildren[sortedChildren.length - 1].center;
+    const span = rightMost - leftMost;
+    const evenGap = span / (sortedChildren.length - 1);
+
+    for (let i = 0; i < sortedChildren.length; i++) {
+      const idealCenter = leftMost + i * evenGap;
+      const delta = idealCenter - sortedChildren[i].center;
+      if (Math.abs(delta) > 1) {
+        shiftSubtree(sortedChildren[i].id, delta);
+      }
+    }
+
+    // Re-center parent over children midpoint
+    const newLeftMost = leftMost; // unchanged — anchor point
+    const newRightMost = leftMost + span; // unchanged — same span
+    const childMid = (newLeftMost + newRightMost) / 2;
     const personW = getW(person.id);
     const oldFatherX = xPositions.get(person.id)!;
     const newFatherX = childMid - personW / 2;
@@ -1127,7 +1186,6 @@ export function buildTreeLayout(
 
     if (Math.abs(delta) > 1) {
       xPositions.set(person.id, newFatherX);
-      // Also shift wives by the same delta
       const wives = familyGroupsWithSlots.filter(({ spouseId }) => spouseId !== null);
       for (const { spouseId } of wives) {
         if (spouseId && xPositions.has(spouseId)) {
