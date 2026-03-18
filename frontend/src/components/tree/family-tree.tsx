@@ -1161,24 +1161,35 @@ export function buildTreeLayout(
       .map(id => ({ id, center: xPositions.get(id)! + getW(id) / 2 }))
       .sort((a, b) => a.center - b.center);
 
-    // Even redistribution: keep total span, distribute centers evenly
-    const leftMost = sortedChildren[0].center;
-    const rightMost = sortedChildren[sortedChildren.length - 1].center;
-    const span = rightMost - leftMost;
-    const evenGap = span / (sortedChildren.length - 1);
+    // Compute minimum center-to-center gap for each adjacent pair (based on subtree widths)
+    const minGaps: number[] = [];
+    for (let i = 0; i < sortedChildren.length - 1; i++) {
+      const leftHalf = (subtreeWidths.get(sortedChildren[i].id) || getW(sortedChildren[i].id)) / 2;
+      const rightHalf = (subtreeWidths.get(sortedChildren[i + 1].id) || getW(sortedChildren[i + 1].id)) / 2;
+      minGaps.push(leftHalf + SIBLING_GAP + rightHalf);
+    }
 
-    for (let i = 0; i < sortedChildren.length; i++) {
-      const idealCenter = leftMost + i * evenGap;
+    const totalMinSpan = minGaps.reduce((s, g) => s + g, 0);
+    const currentSpan = sortedChildren[sortedChildren.length - 1].center - sortedChildren[0].center;
+    const extraSpace = Math.max(0, currentSpan - totalMinSpan);
+    const extraPerGap = sortedChildren.length > 1 ? extraSpace / (sortedChildren.length - 1) : 0;
+
+    // Redistribute: first child stays, subsequent children placed at minGap + even extra
+    let curCenter = sortedChildren[0].center;
+    for (let i = 1; i < sortedChildren.length; i++) {
+      const idealCenter = curCenter + minGaps[i - 1] + extraPerGap;
       const delta = idealCenter - sortedChildren[i].center;
       if (Math.abs(delta) > 1) {
         shiftSubtree(sortedChildren[i].id, delta);
+        sortedChildren[i].center = idealCenter;
       }
+      curCenter = sortedChildren[i].center;
     }
 
     // Re-center parent over children midpoint
-    const newLeftMost = leftMost; // unchanged — anchor point
-    const newRightMost = leftMost + span; // unchanged — same span
-    const childMid = (newLeftMost + newRightMost) / 2;
+    const finalLeft = sortedChildren[0].center;
+    const finalRight = sortedChildren[sortedChildren.length - 1].center;
+    const childMid = (finalLeft + finalRight) / 2;
     const personW = getW(person.id);
     const oldFatherX = xPositions.get(person.id)!;
     const newFatherX = childMid - personW / 2;

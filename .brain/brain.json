@@ -2,7 +2,7 @@
     "meta": {
         "schema_version": "1.1.0",
         "awf_version": "4.0.2",
-        "updated_at": "2026-03-10T13:44:00+07:00"
+        "updated_at": "2026-03-18T13:43:00+07:00"
     },
     "project": {
         "name": "Gia Phả (Họ Đào)",
@@ -33,16 +33,22 @@
             {
                 "name": "MCP Bridge Architecture",
                 "description": "codex_bridge_mcp.py acts as MCP server exposing 7 tools: codex_ask, codex_delegate, claude_ask, provide_context, get_session_status, run_codex_review, get_last_codex_review",
-                "files": [
-                    "scripts/codex_bridge_mcp.py"
-                ]
+                "files": ["scripts/codex_bridge_mcp.py"]
             },
             {
                 "name": "Multi-AI Review Loop",
                 "description": "3 AI review: Codex + Claude + Antigravity. Dual mode (both available) or Single+Debate (one fails, Antigravity plays devil's advocate). Max 5 rounds.",
-                "files": [
-                    ".agent/workflows/codex-review-loop.md"
-                ]
+                "files": [".agent/workflows/codex-review-loop.md"]
+            },
+            {
+                "name": "Tree Layout Post-Processing",
+                "description": "After initial buildTreeLayout (computeSubtreeWidth + assignPositions), a bottom-up post-process: 1) evenly redistributes sibling centers, 2) re-centers parent over children midpoint. Uses shiftSubtree recursive helper to move entire subtrees.",
+                "files": ["frontend/src/components/tree/family-tree.tsx"]
+            },
+            {
+                "name": "Resizable Cards with Persistent Sizes",
+                "description": "PersonCard has drag handle for resize. Sizes stored in resizedNodes Map, persisted to localStorage 'tree-card-sizes'. Layout uses getW()/getH() helpers. Reset button in toolbar clears all custom sizes.",
+                "files": ["frontend/src/components/tree/family-tree.tsx"]
             }
         ],
         "gotchas": [
@@ -64,6 +70,11 @@
                 "detail": "Prompts starting with - parsed as CLI flags when passed as positional arg",
                 "solution": "Insert -- before prompt in command array",
                 "status": "resolved"
+            },
+            {
+                "issue": "Tree centering post-process must be bottom-up",
+                "detail": "Processing top-down causes parents to center over children BEFORE children have been finalized. Sort by generation DESC before post-processing.",
+                "status": "resolved"
             }
         ],
         "conventions": [
@@ -74,6 +85,14 @@
             {
                 "name": "Bridge registration",
                 "detail": "Run scripts/register_antigravity_codex_bridge.ps1 after any bridge code change"
+            },
+            {
+                "name": "Tree layout principle",
+                "detail": "Cha luon nam giua, con phan bo deu 2 ben (Parent always centered, children distributed evenly on both sides). Traditional Vietnamese gia pha rule."
+            },
+            {
+                "name": "Generation colors",
+                "detail": "Gen1-3: red bg; Gen4: light red; Gen5: orange; Gen6: yellow-white/blue text; Gen7: green; Gen8: light blue; Gen9+: blue. Defined in GENERATION_COLORS constant in family-tree.tsx."
             }
         ]
     }
