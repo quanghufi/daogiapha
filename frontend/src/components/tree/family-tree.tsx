@@ -1104,8 +1104,9 @@ export function buildTreeLayout(
   }
 
   // Post-process: re-center each father over the midpoint of direct children's visual positions.
-  // This makes the tree look more natural when one child has a much wider subtree than siblings.
-  for (const person of visiblePeople) {
+  // Process BOTTOM-UP (deepest generation first) so children are in final position before parent re-centers.
+  const sortedByGenDesc = [...visiblePeople].sort((a, b) => (b.generation || 1) - (a.generation || 1));
+  for (const person of sortedByGenDesc) {
     if (collapsedNodes.has(person.id)) continue;
     if (!xPositions.has(person.id)) continue;
     const familyGroupsWithSlots = getPositionedFamilyGroupsAsFather(person.id);
