@@ -1103,6 +1103,39 @@ export function buildTreeLayout(
     rootStartX += (subtreeWidths.get(root) || getW(root)) + SIBLING_GAP * 2;
   }
 
+  // Post-process: re-center each father over the midpoint of direct children's visual positions.
+  // This makes the tree look more natural when one child has a much wider subtree than siblings.
+  for (const person of visiblePeople) {
+    if (collapsedNodes.has(person.id)) continue;
+    if (!xPositions.has(person.id)) continue;
+    const familyGroupsWithSlots = getPositionedFamilyGroupsAsFather(person.id);
+    const allChildIds: string[] = [];
+    for (const g of familyGroupsWithSlots) {
+      for (const cid of g.childIds) {
+        if (xPositions.has(cid)) allChildIds.push(cid);
+      }
+    }
+    if (allChildIds.length === 0) continue;
+
+    const childCenters = allChildIds.map(id => xPositions.get(id)! + getW(id) / 2);
+    const childMid = (Math.min(...childCenters) + Math.max(...childCenters)) / 2;
+    const personW = getW(person.id);
+    const oldFatherX = xPositions.get(person.id)!;
+    const newFatherX = childMid - personW / 2;
+    const delta = newFatherX - oldFatherX;
+
+    if (Math.abs(delta) > 1) {
+      xPositions.set(person.id, newFatherX);
+      // Also shift wives by the same delta
+      const wives = familyGroupsWithSlots.filter(({ spouseId }) => spouseId !== null);
+      for (const { spouseId } of wives) {
+        if (spouseId && xPositions.has(spouseId)) {
+          xPositions.set(spouseId, xPositions.get(spouseId)! + delta);
+        }
+      }
+    }
+  }
+
   // Keep generation lanes anchored to the clan's first generation,
   // so Đời 1 always stays right below the temple header.
   const rootGeneration = Math.min(...people.map((p) => p.generation || 1));
