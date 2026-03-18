@@ -327,11 +327,6 @@ const PersonCard = memo(function PersonCard({
           <span className="font-bold text-center" style={{ fontSize: `${fontSize}px`, color: genColor.text, lineHeight: 1.4, overflow: 'visible', display: '-webkit-box', WebkitLineClamp: cardH > 100 ? 4 : 2, WebkitBoxOrient: 'vertical' as const }}>
             {person.display_name}
           </span>
-          {person.generation && (
-            <span className="rounded px-1 py-0.5 leading-none font-medium" style={{ fontSize: `${genFontSize}px`, color: genColor.text, opacity: 0.8 }}>
-              Đời {person.generation}
-            </span>
-          )}
         </div>
 
         {/* Resize handle - bottom right corner */}
