@@ -1253,6 +1253,61 @@ export function buildTreeLayout(
     }
   }
 
+  // Final pass: keep root subtrees from overlapping each other after post-processing.
+  const getRootSubtreeBounds = (rootId: string): { left: number; right: number } | null => {
+    if (!xPositions.has(rootId)) return null;
+
+    let left = Infinity;
+    let right = -Infinity;
+    const visited = new Set<string>();
+
+    const visit = (personId: string) => {
+      if (visited.has(personId) || !xPositions.has(personId)) return;
+      visited.add(personId);
+
+      const x = xPositions.get(personId)!;
+      left = Math.min(left, getVisualLeft(personId, x));
+      right = Math.max(right, getVisualRight(personId, x));
+
+      const groups = getPositionedFamilyGroupsAsFather(personId);
+      for (const { spouseId, childIds } of groups) {
+        if (spouseId && xPositions.has(spouseId)) {
+          const spouseX = xPositions.get(spouseId)!;
+          left = Math.min(left, getVisualLeft(spouseId, spouseX));
+          right = Math.max(right, getVisualRight(spouseId, spouseX));
+        }
+
+        if (!collapsedNodes.has(personId)) {
+          childIds.forEach(visit);
+        }
+      }
+    };
+
+    visit(rootId);
+    return Number.isFinite(left) && Number.isFinite(right) ? { left, right } : null;
+  };
+
+  const rootsByX = [...roots]
+    .filter((rootId) => xPositions.has(rootId))
+    .sort((a, b) => (xPositions.get(a) ?? 0) - (xPositions.get(b) ?? 0));
+
+  let previousRootRight = -Infinity;
+  for (const rootId of rootsByX) {
+    const bounds = getRootSubtreeBounds(rootId);
+    if (!bounds) continue;
+
+    if (previousRootRight > -Infinity) {
+      const overlap = previousRootRight + ROOT_GAP - bounds.left;
+      if (overlap > 0) {
+        shiftSubtree(rootId, overlap);
+        bounds.left += overlap;
+        bounds.right += overlap;
+      }
+    }
+
+    previousRootRight = bounds.right;
+  }
+
   // Keep generation lanes anchored to the clan's first generation,
   // so Đời 1 always stays right below the temple header.
   const rootGeneration = Math.min(...visiblePeople.map((p) => p.generation || 1));
