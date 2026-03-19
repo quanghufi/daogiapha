@@ -1044,6 +1044,12 @@ export function buildTreeLayout(
     const widths = [getEffectiveW(personId), ...spouseIds.map((spouseId) => getEffectiveW(spouseId))];
     return Math.max(...widths) + COUPLE_GAP;
   };
+  const getAdaptiveRootGap = (leftRootId: string, rightRootId: string): number => {
+    const leftWidth = subtreeWidths.get(leftRootId) || getEffectiveW(leftRootId);
+    const rightWidth = subtreeWidths.get(rightRootId) || getEffectiveW(rightRootId);
+    const breadthBuffer = Math.min(240, Math.round(Math.max(leftWidth, rightWidth) * 0.12));
+    return ROOT_GAP + breadthBuffer;
+  };
   const subtreeWidths = new Map<string, number>();
   const computeSubtreeWidth = (personId: string): number => {
     if (subtreeWidths.has(personId)) return subtreeWidths.get(personId)!;
@@ -1145,9 +1151,14 @@ export function buildTreeLayout(
   };
 
   let rootStartX = 0;
-  for (const root of roots) {
+  for (let rootIndex = 0; rootIndex < roots.length; rootIndex++) {
+    const root = roots[rootIndex];
     assignPositions(root, rootStartX);
-    rootStartX += (subtreeWidths.get(root) || getEffectiveW(root)) + ROOT_GAP;
+
+    if (rootIndex < roots.length - 1) {
+      const nextRoot = roots[rootIndex + 1];
+      rootStartX += (subtreeWidths.get(root) || getEffectiveW(root)) + getAdaptiveRootGap(root, nextRoot);
+    }
   }
 
   // Helper: recursively shift a person and ALL their descendants + spouses
@@ -1251,61 +1262,6 @@ export function buildTreeLayout(
         }
       }
     }
-  }
-
-  // Final pass: keep root subtrees from overlapping each other after post-processing.
-  const getRootSubtreeBounds = (rootId: string): { left: number; right: number } | null => {
-    if (!xPositions.has(rootId)) return null;
-
-    let left = Infinity;
-    let right = -Infinity;
-    const visited = new Set<string>();
-
-    const visit = (personId: string) => {
-      if (visited.has(personId) || !xPositions.has(personId)) return;
-      visited.add(personId);
-
-      const x = xPositions.get(personId)!;
-      left = Math.min(left, getVisualLeft(personId, x));
-      right = Math.max(right, getVisualRight(personId, x));
-
-      const groups = getPositionedFamilyGroupsAsFather(personId);
-      for (const { spouseId, childIds } of groups) {
-        if (spouseId && xPositions.has(spouseId)) {
-          const spouseX = xPositions.get(spouseId)!;
-          left = Math.min(left, getVisualLeft(spouseId, spouseX));
-          right = Math.max(right, getVisualRight(spouseId, spouseX));
-        }
-
-        if (!collapsedNodes.has(personId)) {
-          childIds.forEach(visit);
-        }
-      }
-    };
-
-    visit(rootId);
-    return Number.isFinite(left) && Number.isFinite(right) ? { left, right } : null;
-  };
-
-  const rootsByX = [...roots]
-    .filter((rootId) => xPositions.has(rootId))
-    .sort((a, b) => (xPositions.get(a) ?? 0) - (xPositions.get(b) ?? 0));
-
-  let previousRootRight = -Infinity;
-  for (const rootId of rootsByX) {
-    const bounds = getRootSubtreeBounds(rootId);
-    if (!bounds) continue;
-
-    if (previousRootRight > -Infinity) {
-      const overlap = previousRootRight + ROOT_GAP - bounds.left;
-      if (overlap > 0) {
-        shiftSubtree(rootId, overlap);
-        bounds.left += overlap;
-        bounds.right += overlap;
-      }
-    }
-
-    previousRootRight = bounds.right;
   }
 
   // Keep generation lanes anchored to the clan's first generation,
