@@ -182,6 +182,14 @@ function getGenScale(generation: number | null | undefined): number {
   return 1;
 }
 
+function getDenseGenerationCompactFactor(count: number): number {
+  if (count >= 10) return 0.68;
+  if (count >= 8) return 0.76;
+  if (count >= 7) return 0.82;
+  if (count >= 6) return 0.88;
+  return 1;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // PersonCard — 3 zoom levels
 // ═══════════════════════════════════════════════════════════════════════════
@@ -1642,10 +1650,52 @@ export function FamilyTree() {
 
   // Layout — focusPersonId only matters for ancestors/descendants view modes
   const focusPersonId = viewMode !== 'all' ? selectedPerson?.id || null : null;
+  const effectiveNodeSizes = useMemo(() => {
+    if (!data || data.people.length === 0) return resizedNodes;
+
+    const draftLayout = buildTreeLayout(
+      data,
+      activeCollapsedNodes,
+      viewMode,
+      focusPersonId,
+      filterRootId,
+      hideNgoaiToc,
+      resizedNodes
+    );
+
+    if (!draftLayout || draftLayout.nodes.length === 0) return resizedNodes;
+
+    const next = new Map(resizedNodes);
+    const generationCounts = new Map<number, number>();
+
+    for (const node of draftLayout.nodes) {
+      const generation = node.person.generation || 1;
+      generationCounts.set(generation, (generationCounts.get(generation) ?? 0) + 1);
+    }
+
+    for (const node of draftLayout.nodes) {
+      const generation = node.person.generation || 1;
+      const count = generationCounts.get(generation) ?? 0;
+      const compactFactor = getDenseGenerationCompactFactor(count);
+      if (compactFactor >= 1) continue;
+
+      const currentSize = resizedNodes.get(node.person.id) ?? { w: CARD_W, h: CARD_H };
+      const targetW = Math.max(128, Math.round(CARD_W * compactFactor));
+      const targetH = Math.max(62, Math.round(CARD_H * Math.min(0.92, compactFactor + 0.08)));
+
+      next.set(node.person.id, {
+        w: Math.min(currentSize.w, targetW),
+        h: Math.min(currentSize.h, targetH),
+      });
+    }
+
+    return next;
+  }, [data, activeCollapsedNodes, viewMode, focusPersonId, filterRootId, hideNgoaiToc, resizedNodes]);
+
   const layout = useMemo(() => {
     if (!data || data.people.length === 0) return null;
-    return buildTreeLayout(data, activeCollapsedNodes, viewMode, focusPersonId, filterRootId, hideNgoaiToc, resizedNodes);
-  }, [data, activeCollapsedNodes, viewMode, focusPersonId, filterRootId, hideNgoaiToc, resizedNodes]);
+    return buildTreeLayout(data, activeCollapsedNodes, viewMode, focusPersonId, filterRootId, hideNgoaiToc, effectiveNodeSizes);
+  }, [data, activeCollapsedNodes, viewMode, focusPersonId, filterRootId, hideNgoaiToc, effectiveNodeSizes]);
 
   // No autoAlignPanX needed — layout.offsetX already centers first gen at x=0.
   // CSS left:50% on the content div centers it in the container.
@@ -2134,7 +2184,7 @@ export function FamilyTree() {
                       onSelect={handleNodeSelect}
                       onToggleCollapse={handleToggleCollapse}
                       branchSummary={branchSummaries.get(node.person.id)}
-                      customSize={resizedNodes.get(node.person.id)}
+                      customSize={effectiveNodeSizes.get(node.person.id)}
                       onResize={handleCardResize}
                       treeScale={scale}
                     />
