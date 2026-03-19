@@ -1867,7 +1867,7 @@ export function FamilyTree() {
       )}
 
       {/* Tree container */}
-      <TraditionalBorder>
+      <>
         <div
           className={`relative overflow-hidden bg-amber-50 rounded-xl ${
             showDecorations ? 'h-[74vh] min-h-[640px]' : 'h-[76vh] min-h-[620px]'
@@ -1916,8 +1916,6 @@ export function FamilyTree() {
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
             >
-              {/* Generation headers */}
-              <GenerationHeaders nodes={layout.nodes} offsetX={layout.offsetX} />
 
               {/* Transformed content */}
               <div
@@ -1989,7 +1987,7 @@ export function FamilyTree() {
             <LegendBar hideNgoaiToc={hideNgoaiToc} />
           </div>
         </div>
-      </TraditionalBorder>
+      </>
     </div>
   );
 }
