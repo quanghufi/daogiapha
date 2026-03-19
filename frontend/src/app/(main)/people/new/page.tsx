@@ -54,8 +54,10 @@ export default function NewPersonPage() {
 
       toast.success('Đã thêm thành công');
       router.push(`/people/${person.id}`);
-    } catch {
-      toast.error('Lỗi khi thêm mới');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error('Create person error:', err);
+      toast.error(`Lỗi khi thêm mới: ${message}`);
     }
   };
 
