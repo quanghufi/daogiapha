@@ -53,7 +53,11 @@ const LEVEL_HEIGHT = 140;
 const FIRST_GENERATION_TOP_OFFSET = 96;
 const SIBLING_GAP = 24;
 const FAMILY_GAP = 72;
+const ROOT_GAP = 144;
 const COUPLE_GAP = 12;
+const COLLAPSED_SUMMARY_GAP = 24;
+const COLLAPSED_SUMMARY_H = 40;
+const GENERATION_VERTICAL_PADDING = 24;
 const MINIMAP_WIDTH = 160;
 const MINIMAP_HEIGHT = 100;
 const AUTO_COLLAPSE_GEN = 8;
@@ -361,9 +365,9 @@ const PersonCard = memo(function PersonCard({
           className="absolute bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-300 rounded-lg cursor-pointer hover:shadow-md transition-all"
           style={{
             left: x + CARD_W / 2 - 60,
-            top: y + CARD_H + 24,
+            top: y + CARD_H + COLLAPSED_SUMMARY_GAP,
             width: 120,
-            height: 40,
+            height: COLLAPSED_SUMMARY_H,
           }}
           onClick={(e) => {
             e.stopPropagation();
@@ -1019,18 +1023,57 @@ export function buildTreeLayout(
   }
 
   // Bottom-up: subtree widths
+  // Use effective width that accounts for CSS genScale transform (gen 1-3 look bigger visually)
+  const peopleById = new Map(people.map((person) => [person.id, person]));
+  const getScale = (personId: string): number => {
+    const gen = peopleById.get(personId)?.generation ?? 99;
+    return gen === 1 ? 1.4 : gen === 2 ? 1.25 : gen === 3 ? 1.1 : 1;
+  };
+  const getEffectiveW = (personId: string): number => getW(personId) * getScale(personId);
+  const getVisualLeft = (personId: string, x: number): number => {
+    const baseW = getW(personId);
+    const effectiveW = getEffectiveW(personId);
+    return x - (effectiveW - baseW) / 2;
+  };
+  const getVisualRight = (personId: string, x: number): number => {
+    const baseW = getW(personId);
+    const effectiveW = getEffectiveW(personId);
+    return x + baseW + (effectiveW - baseW) / 2;
+  };
+  const getSpouseRowStep = (personId: string, spouseIds: string[]): number => {
+    const widths = [getEffectiveW(personId), ...spouseIds.map((spouseId) => getEffectiveW(spouseId))];
+    return Math.max(...widths) + COUPLE_GAP;
+  };
   const subtreeWidths = new Map<string, number>();
   const computeSubtreeWidth = (personId: string): number => {
     if (subtreeWidths.has(personId)) return subtreeWidths.get(personId)!;
-    const personW = getW(personId);
+    const personW = getEffectiveW(personId);
     const familyGroupsWithSlots = getPositionedFamilyGroupsAsFather(personId);
     const wives = familyGroupsWithSlots.filter(({ spouseId }) => spouseId !== null);
+    const wifeIds = wives.flatMap(({ spouseId }) => spouseId ? [spouseId] : []);
     const familyGroups = collapsedNodes.has(personId)
       ? []
       : familyGroupsWithSlots.filter(({ childIds }) => childIds.length > 0);
-    const spouseRowWidth = wives.length > 1
-      ? personW + Math.max(...wives.map(({ slot }) => Math.abs(slot)), 0) * 2 * (COUPLE_GAP + CARD_W)
-      : personW + wives.length * (COUPLE_GAP + (wives[0]?.spouseId ? getW(wives[0].spouseId) : CARD_W));
+    const spouseRowWidth = (() => {
+      if (wifeIds.length === 0) return personW;
+      if (wifeIds.length === 1) {
+        return personW + COUPLE_GAP + getEffectiveW(wifeIds[0]);
+      }
+
+      const rowStep = getSpouseRowStep(personId, wifeIds);
+      let minLeft = -personW / 2;
+      let maxRight = personW / 2;
+
+      wives.forEach(({ spouseId, slot }) => {
+        if (!spouseId) return;
+        const spouseW = getEffectiveW(spouseId);
+        const spouseCenter = slot * rowStep;
+        minLeft = Math.min(minLeft, spouseCenter - spouseW / 2);
+        maxRight = Math.max(maxRight, spouseCenter + spouseW / 2);
+      });
+
+      return maxRight - minLeft;
+    })();
     const childrenWidth = familyGroups.length > 0
       ? familyGroups.reduce((sum, group, index) => {
           const groupWidth =
@@ -1049,10 +1092,11 @@ export function buildTreeLayout(
   const xPositions = new Map<string, number>();
   const familyCenterById = new Map<string, number>();
   const assignPositions = (personId: string, startX: number) => {
-    const sw = subtreeWidths.get(personId) || getW(personId);
+    const sw = subtreeWidths.get(personId) || getEffectiveW(personId);
     const personW = getW(personId);
     const familyGroupsWithSlots = getPositionedFamilyGroupsAsFather(personId);
     const wives = familyGroupsWithSlots.filter(({ spouseId }) => spouseId !== null);
+    const wifeIds = wives.flatMap(({ spouseId }) => spouseId ? [spouseId] : []);
     const familyChildren = collapsedNodes.has(personId)
       ? []
       : familyGroupsWithSlots.filter(({ childIds }) => childIds.length > 0);
@@ -1066,9 +1110,12 @@ export function buildTreeLayout(
       if (!spouseId) return;
       const spouseW = getW(spouseId);
       if (hasMultipleSpouses) {
-        xPositions.set(spouseId, fatherX + personW / 2 - spouseW / 2 + slot * (CARD_W + COUPLE_GAP));
+        const spouseCenter = centerX + slot * getSpouseRowStep(personId, wifeIds);
+        xPositions.set(spouseId, spouseCenter - spouseW / 2);
       } else {
-        xPositions.set(spouseId, fatherX + personW + COUPLE_GAP);
+        const spouseVisualLeft = getVisualRight(personId, fatherX) + COUPLE_GAP;
+        const spouseX = spouseVisualLeft + (getEffectiveW(spouseId) - spouseW) / 2;
+        xPositions.set(spouseId, spouseX);
       }
     });
 
@@ -1076,20 +1123,20 @@ export function buildTreeLayout(
     if (familyChildren.length > 0) {
       const totalChildW = familyChildren.reduce((sum, group, index) => {
         const groupWidth =
-          group.childIds.reduce((groupSum, childId) => groupSum + (subtreeWidths.get(childId) || getW(childId)), 0) +
+          group.childIds.reduce((groupSum, childId) => groupSum + (subtreeWidths.get(childId) || getEffectiveW(childId)), 0) +
           (group.childIds.length - 1) * SIBLING_GAP;
         return sum + groupWidth + (index > 0 ? FAMILY_GAP : 0);
       }, 0);
       let childX = centerX - totalChildW / 2;
       familyChildren.forEach(({ family, childIds }, groupIndex) => {
         const groupWidth =
-          childIds.reduce((groupSum, childId) => groupSum + (subtreeWidths.get(childId) || getW(childId)), 0) +
+          childIds.reduce((groupSum, childId) => groupSum + (subtreeWidths.get(childId) || getEffectiveW(childId)), 0) +
           (childIds.length - 1) * SIBLING_GAP;
         familyCenterById.set(family.id, childX + groupWidth / 2);
 
         childIds.forEach((child, childIndex) => {
           assignPositions(child, childX);
-          childX += (subtreeWidths.get(child) || getW(child));
+          childX += (subtreeWidths.get(child) || getEffectiveW(child));
           if (childIndex < childIds.length - 1) childX += SIBLING_GAP;
         });
         if (groupIndex < familyChildren.length - 1) childX += FAMILY_GAP;
@@ -1100,7 +1147,7 @@ export function buildTreeLayout(
   let rootStartX = 0;
   for (const root of roots) {
     assignPositions(root, rootStartX);
-    rootStartX += (subtreeWidths.get(root) || getW(root)) + SIBLING_GAP * 2;
+    rootStartX += (subtreeWidths.get(root) || getEffectiveW(root)) + ROOT_GAP;
   }
 
   // Helper: recursively shift a person and ALL their descendants + spouses
@@ -1164,8 +1211,8 @@ export function buildTreeLayout(
     // Compute minimum center-to-center gap for each adjacent pair (based on subtree widths)
     const minGaps: number[] = [];
     for (let i = 0; i < sortedChildren.length - 1; i++) {
-      const leftHalf = (subtreeWidths.get(sortedChildren[i].id) || getW(sortedChildren[i].id)) / 2;
-      const rightHalf = (subtreeWidths.get(sortedChildren[i + 1].id) || getW(sortedChildren[i + 1].id)) / 2;
+      const leftHalf = (subtreeWidths.get(sortedChildren[i].id) || getEffectiveW(sortedChildren[i].id)) / 2;
+      const rightHalf = (subtreeWidths.get(sortedChildren[i + 1].id) || getEffectiveW(sortedChildren[i + 1].id)) / 2;
       minGaps.push(leftHalf + SIBLING_GAP + rightHalf);
     }
 
@@ -1208,7 +1255,25 @@ export function buildTreeLayout(
 
   // Keep generation lanes anchored to the clan's first generation,
   // so Đời 1 always stays right below the temple header.
-  const rootGeneration = Math.min(...people.map((p) => p.generation || 1));
+  const rootGeneration = Math.min(...visiblePeople.map((p) => p.generation || 1));
+  const maxGeneration = Math.max(...visiblePeople.map((p) => p.generation || rootGeneration));
+  const generationTopByGen = new Map<number, number>();
+  let currentGenerationTop = FIRST_GENERATION_TOP_OFFSET;
+
+  for (let generation = rootGeneration; generation <= maxGeneration; generation++) {
+    generationTopByGen.set(generation, currentGenerationTop);
+
+    const peopleInGeneration = visiblePeople.filter((person) => (person.generation || rootGeneration) === generation);
+    const maxLaneContentHeight = peopleInGeneration.reduce((maxHeight, person) => {
+      const cardHeight = getH(person.id);
+      const summaryHeight = collapsedNodes.has(person.id) && getVisibleChildrenAsFather(person.id).length > 0
+        ? COLLAPSED_SUMMARY_GAP + COLLAPSED_SUMMARY_H
+        : 0;
+      return Math.max(maxHeight, cardHeight + summaryHeight);
+    }, CARD_H);
+
+    currentGenerationTop += Math.max(LEVEL_HEIGHT, maxLaneContentHeight + GENERATION_VERTICAL_PADDING);
+  }
   const nodes: TreeNodeData[] = [];
   for (const person of visiblePeople) {
     if (!xPositions.has(person.id)) continue;
@@ -1216,7 +1281,7 @@ export function buildTreeLayout(
     nodes.push({
       person,
       x: xPositions.get(person.id)!,
-      y: (personGeneration - rootGeneration) * LEVEL_HEIGHT + FIRST_GENERATION_TOP_OFFSET,
+      y: generationTopByGen.get(personGeneration) ?? FIRST_GENERATION_TOP_OFFSET,
       isCollapsed: collapsedNodes.has(person.id),
       hasChildren: getVisibleChildrenAsFather(person.id).length > 0,
       isVisible: true,
@@ -1248,9 +1313,9 @@ export function buildTreeLayout(
       const fatherToRight = fatherPos.x < motherPos.x;
       connections.push({
         id: `couple-${family.id}`,
-        x1: fatherToRight ? fatherPos.x + fatherW : fatherPos.x,
+        x1: fatherToRight ? getVisualRight(family.father_id!, fatherPos.x) : getVisualLeft(family.father_id!, fatherPos.x),
         y1: fatherPos.y + fatherH / 2,
-        x2: fatherToRight ? motherPos.x : motherPos.x + motherW,
+        x2: fatherToRight ? getVisualLeft(family.mother_id!, motherPos.x) : getVisualRight(family.mother_id!, motherPos.x),
         y2: motherPos.y + motherH / 2,
         type: 'couple',
         isVisible: true,
@@ -1290,13 +1355,16 @@ export function buildTreeLayout(
   for (const n of nodes) {
     const nW = getW(n.person.id);
     const nH = getH(n.person.id);
-    minX = Math.min(minX, n.x);
-    maxX = Math.max(maxX, n.x + nW);
-    maxY = Math.max(maxY, n.y + nH);
+    const summaryBottom = n.isCollapsed && n.hasChildren
+      ? COLLAPSED_SUMMARY_GAP + COLLAPSED_SUMMARY_H
+      : 0;
+    minX = Math.min(minX, getVisualLeft(n.person.id, n.x));
+    maxX = Math.max(maxX, getVisualRight(n.person.id, n.x));
+    maxY = Math.max(maxY, n.y + nH + summaryBottom);
     const generation = n.person.generation || rootGeneration;
     if (generation === rootGeneration) {
-      firstGenerationMinX = Math.min(firstGenerationMinX, n.x);
-      firstGenerationMaxX = Math.max(firstGenerationMaxX, n.x + nW);
+      firstGenerationMinX = Math.min(firstGenerationMinX, getVisualLeft(n.person.id, n.x));
+      firstGenerationMaxX = Math.max(firstGenerationMaxX, getVisualRight(n.person.id, n.x));
     }
   }
   if (!isFinite(minX)) { minX = 0; maxX = 0; }

@@ -1,92 +1,103 @@
 {
-    "updated_at": "2026-03-18T13:43:00+07:00",
+    "updated_at": "2026-03-18T13:55:00+07:00",
     "working_on": {
         "feature": "Family Tree Layout & Styling",
-        "task": "Even distribution of siblings + resizable cards",
+        "task": "Even distribution with overlap prevention",
         "status": "completed",
         "files": [
             "frontend/src/components/tree/family-tree.tsx"
         ],
         "blockers": [],
-        "notes": "Layout engine now re-centers parents over children midpoint (bottom-up post-process) and evenly distributes siblings with shiftSubtree helper"
+        "notes": "Layout engine post-process now uses subtree-width-aware min gaps to prevent overlap while still distributing siblings as evenly as possible"
     },
     "pending_tasks": [
         {
-            "task": "Test even distribution with larger trees (more generations)",
-            "priority": "medium",
-            "notes": "Current fix works for 4 generations, need to verify with deeper trees"
+            "task": "Verify layout with all generations expanded",
+            "priority": "high",
+            "notes": "User saw overlap when many generations visible - need to confirm fix works across all levels"
         },
         {
-            "task": "Check for overlapping cards when subtrees are redistributed",
+            "task": "Test with resized cards + even distribution",
             "priority": "medium",
-            "notes": "Even redistribution might cause descendant overlap in edge cases"
+            "notes": "Custom card sizes affect subtree widths - verify no overlap when cards are enlarged"
         }
     ],
     "recent_changes": [
         {
             "timestamp": "2026-03-18T10:00:00+07:00",
             "type": "feature",
-            "description": "Generation-specific colors: red->orange->yellow-white->green->blue gradient matching traditional Vietnamese gia pha",
+            "description": "Generation-specific colors matching traditional Vietnamese gia pha",
             "files": ["frontend/src/components/tree/family-tree.tsx"]
         },
         {
             "timestamp": "2026-03-18T10:30:00+07:00",
             "type": "feature",
-            "description": "Resizable cards: drag handle on hover, text auto-scales, sizes persist to localStorage (key: tree-card-sizes)",
+            "description": "Resizable cards with drag handle, localStorage persistence, Reset button",
             "files": ["frontend/src/components/tree/family-tree.tsx"]
         },
         {
             "timestamp": "2026-03-18T11:00:00+07:00",
             "type": "feature",
-            "description": "Layout engine uses custom card sizes (getW/getH helpers) in computeSubtreeWidth, assignPositions, and connection calculations",
-            "files": ["frontend/src/components/tree/family-tree.tsx"]
-        },
-        {
-            "timestamp": "2026-03-18T10:47:00+07:00",
-            "type": "feature",
-            "description": "Added 'Reset o' button to toolbar - appears when cards have been resized, clears localStorage and resets all card sizes",
+            "description": "Layout engine uses getW/getH helpers for custom card dimensions",
             "files": ["frontend/src/components/tree/family-tree.tsx"]
         },
         {
             "timestamp": "2026-03-18T10:53:00+07:00",
             "type": "feature",
-            "description": "Removed 'Doi X' generation badge from inside cards (info already shown in sidebar labels)",
+            "description": "Removed 'Doi X' generation badge from inside cards",
             "files": ["frontend/src/components/tree/family-tree.tsx"]
         },
         {
             "timestamp": "2026-03-18T13:10:00+07:00",
             "type": "feature",
-            "description": "Post-process: re-center parents over children midpoint (bottom-up). shiftSubtree helper recursively shifts person + all descendants + spouses",
+            "description": "Post-process: re-center parents over children midpoint (bottom-up). shiftSubtree recursive helper",
             "files": ["frontend/src/components/tree/family-tree.tsx"]
         },
         {
             "timestamp": "2026-03-18T13:35:00+07:00",
             "type": "feature",
-            "description": "Even distribution: after initial layout, redistribute sibling centers evenly within their span, then center parent. Eliminates visual 1-3 grouping",
+            "description": "Even distribution of siblings with subtree width constraints",
+            "files": ["frontend/src/components/tree/family-tree.tsx"]
+        },
+        {
+            "timestamp": "2026-03-18T13:50:00+07:00",
+            "type": "bugfix",
+            "description": "Fixed overlap: even redistribution now respects minimum gap = subtreeWidth_left/2 + SIBLING_GAP + subtreeWidth_right/2. Extra space distributed evenly across all gaps.",
             "files": ["frontend/src/components/tree/family-tree.tsx"]
         }
     ],
-    "errors_encountered": [],
+    "errors_encountered": [
+        {
+            "error": "Even redistribution caused card overlap - naive even spacing ignored subtree widths",
+            "solution": "Compute minimum center-to-center gap for each adjacent pair based on subtree widths. Only distribute EXTRA space (beyond minimums) evenly.",
+            "resolved": true
+        },
+        {
+            "error": "Top-down post-processing gave wrong centering",
+            "solution": "Sort by generation DESC (bottom-up) before post-processing",
+            "resolved": true
+        }
+    ],
     "decisions_made": [
         {
             "decision": "Use post-processing pass (not modify core algorithm) for centering and redistribution",
-            "reason": "Core algorithm (computeSubtreeWidth + assignPositions) handles space allocation. Post-process adjusts visual positions without risking overlap."
+            "reason": "Core algorithm handles space allocation. Post-process adjusts visual positions."
         },
         {
-            "decision": "Process bottom-up (deepest generation first) in post-processing",
-            "reason": "When re-centering parent, children must already be in their final positions. Top-down processing gave incorrect results."
+            "decision": "Process bottom-up (deepest generation first)",
+            "reason": "Children must be in final positions before parent re-centers."
         },
         {
-            "decision": "shiftSubtree recursively shifts person + descendants + spouses",
-            "reason": "When redistributing siblings evenly, moving a person must also move their entire subtree to maintain tree integrity."
+            "decision": "Minimum gap = subtreeWidth_left/2 + SIBLING_GAP + subtreeWidth_right/2",
+            "reason": "Prevents overlap while allowing even distribution of any extra space."
         },
         {
             "decision": "Remove generation badge from cards",
-            "reason": "User requested cleaner cards. Generation info is already visible in sidebar labels (Doi 1, Doi 2...)."
+            "reason": "User requested cleaner cards. Info visible in sidebar labels."
         },
         {
-            "decision": "Card sizes persist to localStorage under key 'tree-card-sizes'",
-            "reason": "User resizes cards for custom layout, should survive page reloads. Reset button provided to clear."
+            "decision": "Card sizes persist to localStorage key 'tree-card-sizes'",
+            "reason": "User resizes cards, should survive reloads. Reset button to clear."
         }
     ]
 }
