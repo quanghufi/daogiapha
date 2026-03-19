@@ -1253,6 +1253,49 @@ export function buildTreeLayout(
     }
   }
 
+  // Same-generation collision pass: split overlaps symmetrically so siblings/cousins
+  // do not stack on top of each other after subtree re-centering.
+  const visibleGenerations = [...new Set(visiblePeople.map((person) => person.generation || 1))].sort((a, b) => a - b);
+  for (let pass = 0; pass < 4; pass++) {
+    let moved = false;
+
+    for (const generation of visibleGenerations) {
+      const generationNodes = visiblePeople
+        .filter((person) => (person.generation || 1) === generation && xPositions.has(person.id))
+        .map((person) => {
+          const x = xPositions.get(person.id)!;
+          return {
+            id: person.id,
+            left: getVisualLeft(person.id, x),
+            right: getVisualRight(person.id, x),
+          };
+        })
+        .sort((a, b) => a.left - b.left);
+
+      for (let index = 0; index < generationNodes.length - 1; index++) {
+        const leftNode = generationNodes[index];
+        const rightNode = generationNodes[index + 1];
+        const overlap = leftNode.right + SIBLING_GAP - rightNode.left;
+
+        if (overlap > 0.5) {
+          const leftShift = overlap / 2;
+          const rightShift = overlap - leftShift;
+
+          shiftSubtree(leftNode.id, -leftShift);
+          shiftSubtree(rightNode.id, rightShift);
+
+          leftNode.left -= leftShift;
+          leftNode.right -= leftShift;
+          rightNode.left += rightShift;
+          rightNode.right += rightShift;
+          moved = true;
+        }
+      }
+    }
+
+    if (!moved) break;
+  }
+
   // Final pass: keep root subtrees from overlapping each other after post-processing.
   const getRootSubtreeBounds = (rootId: string): { left: number; right: number } | null => {
     if (!xPositions.has(rootId)) return null;
