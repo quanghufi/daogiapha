@@ -1424,6 +1424,7 @@ export function FamilyTree() {
     setFilterRootId(person?.id ?? null);
     setFilterSearch('');
     setFilterDropdownOpen(false);
+    setPan({ x: 0, y: 0 });
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       if (person) params.set('root', person.id);
