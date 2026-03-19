@@ -182,14 +182,6 @@ function getGenScale(generation: number | null | undefined): number {
   return 1;
 }
 
-function getDenseGenerationCompactFactor(count: number): number {
-  if (count >= 10) return 0.68;
-  if (count >= 8) return 0.76;
-  if (count >= 7) return 0.82;
-  if (count >= 6) return 0.88;
-  return 1;
-}
-
 // ═══════════════════════════════════════════════════════════════════════════
 // PersonCard — 3 zoom levels
 // ═══════════════════════════════════════════════════════════════════════════
@@ -1261,49 +1253,6 @@ export function buildTreeLayout(
     }
   }
 
-  // Same-generation collision pass: split overlaps symmetrically so siblings/cousins
-  // do not stack on top of each other after subtree re-centering.
-  const visibleGenerations = [...new Set(visiblePeople.map((person) => person.generation || 1))].sort((a, b) => a - b);
-  for (let pass = 0; pass < 4; pass++) {
-    let moved = false;
-
-    for (const generation of visibleGenerations) {
-      const generationNodes = visiblePeople
-        .filter((person) => (person.generation || 1) === generation && xPositions.has(person.id))
-        .map((person) => {
-          const x = xPositions.get(person.id)!;
-          return {
-            id: person.id,
-            left: getVisualLeft(person.id, x),
-            right: getVisualRight(person.id, x),
-          };
-        })
-        .sort((a, b) => a.left - b.left);
-
-      for (let index = 0; index < generationNodes.length - 1; index++) {
-        const leftNode = generationNodes[index];
-        const rightNode = generationNodes[index + 1];
-        const overlap = leftNode.right + SIBLING_GAP - rightNode.left;
-
-        if (overlap > 0.5) {
-          const leftShift = overlap / 2;
-          const rightShift = overlap - leftShift;
-
-          shiftSubtree(leftNode.id, -leftShift);
-          shiftSubtree(rightNode.id, rightShift);
-
-          leftNode.left -= leftShift;
-          leftNode.right -= leftShift;
-          rightNode.left += rightShift;
-          rightNode.right += rightShift;
-          moved = true;
-        }
-      }
-    }
-
-    if (!moved) break;
-  }
-
   // Final pass: keep root subtrees from overlapping each other after post-processing.
   const getRootSubtreeBounds = (rootId: string): { left: number; right: number } | null => {
     if (!xPositions.has(rootId)) return null;
@@ -1650,52 +1599,10 @@ export function FamilyTree() {
 
   // Layout — focusPersonId only matters for ancestors/descendants view modes
   const focusPersonId = viewMode !== 'all' ? selectedPerson?.id || null : null;
-  const effectiveNodeSizes = useMemo(() => {
-    if (!data || data.people.length === 0) return resizedNodes;
-
-    const draftLayout = buildTreeLayout(
-      data,
-      activeCollapsedNodes,
-      viewMode,
-      focusPersonId,
-      filterRootId,
-      hideNgoaiToc,
-      resizedNodes
-    );
-
-    if (!draftLayout || draftLayout.nodes.length === 0) return resizedNodes;
-
-    const next = new Map(resizedNodes);
-    const generationCounts = new Map<number, number>();
-
-    for (const node of draftLayout.nodes) {
-      const generation = node.person.generation || 1;
-      generationCounts.set(generation, (generationCounts.get(generation) ?? 0) + 1);
-    }
-
-    for (const node of draftLayout.nodes) {
-      const generation = node.person.generation || 1;
-      const count = generationCounts.get(generation) ?? 0;
-      const compactFactor = getDenseGenerationCompactFactor(count);
-      if (compactFactor >= 1) continue;
-
-      const currentSize = resizedNodes.get(node.person.id) ?? { w: CARD_W, h: CARD_H };
-      const targetW = Math.max(128, Math.round(CARD_W * compactFactor));
-      const targetH = Math.max(62, Math.round(CARD_H * Math.min(0.92, compactFactor + 0.08)));
-
-      next.set(node.person.id, {
-        w: Math.min(currentSize.w, targetW),
-        h: Math.min(currentSize.h, targetH),
-      });
-    }
-
-    return next;
-  }, [data, activeCollapsedNodes, viewMode, focusPersonId, filterRootId, hideNgoaiToc, resizedNodes]);
-
   const layout = useMemo(() => {
     if (!data || data.people.length === 0) return null;
-    return buildTreeLayout(data, activeCollapsedNodes, viewMode, focusPersonId, filterRootId, hideNgoaiToc, effectiveNodeSizes);
-  }, [data, activeCollapsedNodes, viewMode, focusPersonId, filterRootId, hideNgoaiToc, effectiveNodeSizes]);
+    return buildTreeLayout(data, activeCollapsedNodes, viewMode, focusPersonId, filterRootId, hideNgoaiToc, resizedNodes);
+  }, [data, activeCollapsedNodes, viewMode, focusPersonId, filterRootId, hideNgoaiToc, resizedNodes]);
 
   // No autoAlignPanX needed — layout.offsetX already centers first gen at x=0.
   // CSS left:50% on the content div centers it in the container.
@@ -2184,7 +2091,7 @@ export function FamilyTree() {
                       onSelect={handleNodeSelect}
                       onToggleCollapse={handleToggleCollapse}
                       branchSummary={branchSummaries.get(node.person.id)}
-                      customSize={effectiveNodeSizes.get(node.person.id)}
+                      customSize={resizedNodes.get(node.person.id)}
                       onResize={handleCardResize}
                       treeScale={scale}
                     />
