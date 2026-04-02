@@ -127,7 +127,7 @@ export default function AdminDocumentsPage() {
         file_url: urlData.publicUrl,
         file_type: selectedFile.type || ext,
         file_size: selectedFile.size,
-        uploaded_by: profile.user_id,
+        uploaded_by: profile.id,
       };
 
       await createDoc.mutateAsync(input);
