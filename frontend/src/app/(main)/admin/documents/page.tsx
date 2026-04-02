@@ -134,8 +134,15 @@ export default function AdminDocumentsPage() {
       toast.success('Đã tải lên tài liệu thành công');
       setUploadOpen(false);
       resetUploadForm();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Lỗi khi tải lên');
+    } catch (err: unknown) {
+      console.error('[DocumentUpload] Upload failed:', err);
+      const message =
+        err instanceof Error
+          ? err.message
+          : typeof err === 'object' && err !== null && 'message' in err
+            ? String((err as { message: unknown }).message)
+            : 'Lỗi khi tải lên';
+      toast.error(message);
     } finally {
       setIsUploading(false);
     }
