@@ -7,9 +7,7 @@
  */
 
 import { supabase } from './supabase';
-import { STORAGE_BUCKET, MAX_UPLOAD_SIZE_BYTES } from '@/lib/constants';
-
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+import { STORAGE_BUCKET, MAX_UPLOAD_SIZE_BYTES, ALLOWED_IMAGE_TYPES } from '@/lib/constants';
 
 export class StorageError extends Error {
   constructor(message: string) {
@@ -23,7 +21,7 @@ export async function uploadFile(file: File, personId: string): Promise<string> 
     throw new StorageError('File quá lớn. Tối đa 5MB.');
   }
 
-  if (!ALLOWED_TYPES.includes(file.type)) {
+  if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
     throw new StorageError('Định dạng không hỗ trợ. Chấp nhận: JPEG, PNG, WebP, GIF.');
   }
 

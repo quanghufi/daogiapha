@@ -8,8 +8,8 @@
 -- Settings:
 --   Name: media
 --   Public: true
---   File size limit: 5MB (5242880 bytes)
---   Allowed MIME types: image/jpeg, image/png, image/webp, image/gif
+--   File size limit: 100MB (104857600 bytes)
+--   Allowed MIME types: image/jpeg, image/png, image/webp, image/gif, application/pdf
 
 -- 2. Storage RLS policies
 

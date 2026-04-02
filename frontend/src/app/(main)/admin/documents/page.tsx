@@ -40,6 +40,7 @@ import { toast } from 'sonner';
 import { formatDate } from '@/lib/format';
 import type { DocumentCategory, ClanDocument, CreateClanDocumentInput } from '@/types';
 import { DOCUMENT_CATEGORY_LABELS } from '@/types';
+import { MAX_DOCUMENT_UPLOAD_SIZE_BYTES, ALLOWED_DOCUMENT_TYPES } from '@/lib/constants';
 
 const CATEGORY_COLORS: Record<DocumentCategory, string> = {
   gia_pha: 'bg-purple-100 text-purple-800',
@@ -91,6 +92,16 @@ export default function AdminDocumentsPage() {
   const handleUpload = async () => {
     if (!title.trim() || !selectedFile || !profile) return;
 
+    // Client-side validation
+    if (selectedFile.size > MAX_DOCUMENT_UPLOAD_SIZE_BYTES) {
+      toast.error(`File quá lớn. Tối đa ${MAX_DOCUMENT_UPLOAD_SIZE_BYTES / 1024 / 1024}MB.`);
+      return;
+    }
+    if (!ALLOWED_DOCUMENT_TYPES.includes(selectedFile.type)) {
+      toast.error('Định dạng không hỗ trợ. Chấp nhận: PDF, JPEG, PNG, WebP, GIF.');
+      return;
+    }
+
     setIsUploading(true);
     try {
       // Upload file to Supabase storage
@@ -99,7 +110,11 @@ export default function AdminDocumentsPage() {
 
       const { error: uploadError } = await supabase.storage
         .from('media')
-        .upload(path, selectedFile, { cacheControl: '3600', upsert: false });
+        .upload(path, selectedFile, {
+          cacheControl: '3600',
+          upsert: false,
+          contentType: selectedFile.type,
+        });
 
       if (uploadError) throw uploadError;
 
@@ -350,6 +365,7 @@ export default function AdminDocumentsPage() {
               <input
                 ref={fileInputRef}
                 type="file"
+                accept=".pdf,.jpg,.jpeg,.png,.webp,.gif"
                 className="hidden"
                 onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
               />
