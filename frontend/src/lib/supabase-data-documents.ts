@@ -81,6 +81,18 @@ export async function archiveDocument(id: string): Promise<ClanDocument> {
   return data;
 }
 
+export async function restoreDocument(id: string): Promise<ClanDocument> {
+  const { data, error } = await supabase
+    .from('clan_documents')
+    .update({ is_active: true, updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
 export async function deleteDocument(id: string): Promise<void> {
   const { error } = await supabase
     .from('clan_documents')

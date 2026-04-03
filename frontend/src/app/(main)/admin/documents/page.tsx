@@ -9,7 +9,7 @@
 
 import { useState, useRef } from 'react';
 import { useAuth } from '@/components/auth/auth-provider';
-import { useAllDocuments, useCreateDocument, useUpdateDocument, useArchiveDocument, useDeleteDocument } from '@/hooks/use-documents';
+import { useAllDocuments, useCreateDocument, useUpdateDocument, useArchiveDocument, useRestoreDocument, useDeleteDocument } from '@/hooks/use-documents';
 import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -33,7 +33,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import {
-  ArrowLeft, Plus, FileText, Loader2, Pencil, Archive, Trash2, Upload, FolderOpen,
+  ArrowLeft, Plus, FileText, Loader2, Pencil, Archive, Trash2, Upload, FolderOpen, Eye,
 } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
@@ -61,6 +61,7 @@ export default function AdminDocumentsPage() {
   const createDoc = useCreateDocument();
   const updateDoc = useUpdateDocument();
   const archiveDoc = useArchiveDocument();
+  const restoreDoc = useRestoreDocument();
   const deleteDoc = useDeleteDocument();
 
   // Upload dialog
@@ -172,6 +173,15 @@ export default function AdminDocumentsPage() {
       toast.success(`Đã lưu trữ "${doc.title}"`);
     } catch {
       toast.error('Lỗi khi lưu trữ');
+    }
+  };
+
+  const handleRestore = async (doc: ClanDocument) => {
+    try {
+      await restoreDoc.mutateAsync(doc.id);
+      toast.success(`Đã hiển thị lại "${doc.title}"`);
+    } catch {
+      toast.error('Lỗi khi hiển thị lại');
     }
   };
 
@@ -295,7 +305,7 @@ export default function AdminDocumentsPage() {
                         <Button variant="outline" size="sm" className="h-8 px-2" onClick={() => openEdit(doc)} title="Sửa">
                           <Pencil className="h-3.5 w-3.5" />
                         </Button>
-                        {doc.is_active && (
+                        {doc.is_active ? (
                           <Button
                             variant="outline"
                             size="sm"
@@ -305,6 +315,17 @@ export default function AdminDocumentsPage() {
                             title="Lưu trữ"
                           >
                             <Archive className="h-3.5 w-3.5" />
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 px-2 text-green-600 hover:text-green-700"
+                            onClick={() => handleRestore(doc)}
+                            disabled={restoreDoc.isPending}
+                            title="Hiển thị lại"
+                          >
+                            <Eye className="h-3.5 w-3.5" />
                           </Button>
                         )}
                         <Button

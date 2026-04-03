@@ -8,6 +8,7 @@ import {
   createDocument,
   updateDocument,
   archiveDocument,
+  restoreDocument,
   deleteDocument,
 } from '@/lib/supabase-data-documents';
 import type { DocumentCategory, CreateClanDocumentInput, UpdateClanDocumentInput } from '@/types';
@@ -72,6 +73,17 @@ export function useArchiveDocument() {
 
   return useMutation({
     mutationFn: (id: string) => archiveDocument(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: documentKeys.all });
+    },
+  });
+}
+
+export function useRestoreDocument() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => restoreDocument(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: documentKeys.all });
     },
