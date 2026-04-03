@@ -85,8 +85,25 @@ export default function DocumentRepositoryPage() {
       ) : documents && documents.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {documents.map((doc: ClanDocument) => (
-            <Card key={doc.id} className="hover:shadow-md transition-shadow">
-              <CardHeader className="pb-3">
+            <Card key={doc.id} className="hover:shadow-md transition-shadow overflow-hidden group flex flex-col">
+              {doc.file_url && (doc.file_type?.toLowerCase().startsWith('image/') || doc.category === 'hinh_anh') && (
+                <div
+                  className="aspect-video relative overflow-hidden bg-muted border-b flex items-center justify-center cursor-zoom-in"
+                  onClick={() => window.open(doc.file_url, '_blank')}
+                  title="Nhấn để xem ảnh gốc"
+                >
+                  <img
+                    src={doc.file_url}
+                    alt={doc.title}
+                    className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
+                    loading="lazy"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
+                </div>
+              )}
+              <CardHeader className="pb-3 flex-grow">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0">
                     <FileText className="h-5 w-5 text-muted-foreground shrink-0" />
