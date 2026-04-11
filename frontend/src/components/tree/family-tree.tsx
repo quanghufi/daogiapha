@@ -196,6 +196,8 @@ interface PersonCardProps {
   customSize?: { w: number; h: number };
   onResize?: (personId: string, w: number, h: number) => void;
   treeScale?: number;
+  /** Offset to compute relative generation for color/scale (rootPerson.generation - 1 when viewing branch, 0 otherwise) */
+  generationOffset?: number;
 }
 
 const PersonCard = memo(function PersonCard({
@@ -208,10 +210,13 @@ const PersonCard = memo(function PersonCard({
   customSize,
   onResize,
   treeScale = 1,
+  generationOffset = 0,
 }: PersonCardProps) {
   const { person, x, y, isCollapsed, hasChildren } = node;
   const style = getCardStyle(person);
-  const genColor = getGenerationColor(person.generation);
+  // Use relative generation for color/scale when viewing a branch
+  const relativeGeneration = Math.max(1, (person.generation ?? 1) - generationOffset);
+  const genColor = getGenerationColor(relativeGeneration);
   const initials = getInitials(person.display_name);
   const selectedRing = isSelected ? 'ring-2 ring-primary ring-offset-2' : '';
   const spouseBadge = node.spouseOrder ? `Vợ ${node.spouseOrder}` : null;
@@ -251,7 +256,7 @@ const PersonCard = memo(function PersonCard({
     return (
       <div
         className={`absolute rounded-lg border-[1.5px] cursor-pointer hover:shadow-md transition-all ${selectedRing} ${person.is_patrilineal === false ? 'border-dashed' : ''}`}
-        style={{ left: x, top: y, width: CARD_W, height: 40, background: genColor.bg, borderColor: genColor.border, opacity: person.is_living === false ? 0.7 : 1, overflow: 'visible', transform: `scale(${getGenScale(person.generation)})`, transformOrigin: 'center top', zIndex: person.generation && person.generation <= 3 ? 10 - person.generation : 0 }}
+        style={{ left: x, top: y, width: CARD_W, height: 40, background: genColor.bg, borderColor: genColor.border, opacity: person.is_living === false ? 0.7 : 1, overflow: 'visible', transform: `scale(${getGenScale(relativeGeneration)})`, transformOrigin: 'center top', zIndex: relativeGeneration <= 3 ? 10 - relativeGeneration : 0 }}
         onClick={() => onSelect(person, x, y)}
       >
         {spouseBadge && (
@@ -319,7 +324,7 @@ const PersonCard = memo(function PersonCard({
     <>
       <div
         className={`absolute rounded-xl border-[2px] cursor-pointer hover:shadow-lg hover:-translate-y-0.5 transition-all ${selectedRing} ${person.is_patrilineal === false ? 'border-dashed' : ''} group`}
-        style={{ left: x, top: y, width: cardW, height: cardH, background: genColor.bg, borderColor: genColor.border, opacity: person.is_living === false ? 0.7 : 1, overflow: 'visible', transformOrigin: 'center top', zIndex: person.generation && person.generation <= 3 ? 10 - person.generation : 0 }}
+        style={{ left: x, top: y, width: cardW, height: cardH, background: genColor.bg, borderColor: genColor.border, opacity: person.is_living === false ? 0.7 : 1, overflow: 'visible', transformOrigin: 'center top', zIndex: relativeGeneration <= 3 ? 10 - relativeGeneration : 0 }}
         onClick={() => onSelect(person, x, y)}
       >
         {spouseBadge && (
@@ -1437,6 +1442,9 @@ export function FamilyTree() {
     ? data?.people.find((p) => p.id === filterRootId) ?? null
     : null;
 
+  // Generation offset for relative coloring when viewing a branch
+  const generationOffset = filterRootPerson ? (filterRootPerson.generation ?? 1) - 1 : 0;
+
   // Track container size via ResizeObserver with proper cleanup
   useEffect(() => {
     const node = containerRef.current;
@@ -1946,6 +1954,7 @@ export function FamilyTree() {
                       customSize={resizedNodes.get(node.person.id)}
                       onResize={handleCardResize}
                       treeScale={scale}
+                      generationOffset={generationOffset}
                     />
                   ))}
 
