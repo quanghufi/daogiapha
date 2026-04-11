@@ -15,6 +15,7 @@ import {
   usePersonRelations,
   useCreateSpouseFamily,
   useAddChildToFamilyMutation,
+  useCreateSingleParentFamily,
 } from '@/hooks/use-families';
 import { useSearchPeople, useCreatePerson } from '@/hooks/use-people';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -261,6 +262,7 @@ function AddRelationDialog({
   const createPersonMutation = useCreatePerson();
   const createSpouseFamilyMutation = useCreateSpouseFamily();
   const addChildMutation = useAddChildToFamilyMutation(currentPerson.id);
+  const createSingleParentFamilyMutation = useCreateSingleParentFamily();
 
   const defaultGender: 1 | 2 = mode === 'spouse'
     ? (currentPerson.gender === GENDER.MALE ? GENDER.FEMALE : GENDER.MALE)
@@ -293,14 +295,21 @@ function AddRelationDialog({
           personGender: currentPerson.gender,
           spouseId: newPerson.id,
         });
-      } else if (targetFamilyId) {
+      } else {
+        let familyId = targetFamilyId;
+        if (!familyId) {
+          // Auto-create single-parent family when no family exists yet
+          const newFamily = await createSingleParentFamilyMutation.mutateAsync({
+            personId: currentPerson.id,
+            personGender: currentPerson.gender,
+          });
+          familyId = newFamily.id;
+        }
         await addChildMutation.mutateAsync({
-          familyId: targetFamilyId,
+          familyId,
           childPersonId: newPerson.id,
           sortOrder: 99,
         });
-      } else {
-        throw new Error('Thiếu thông tin gia đình để thêm con');
       }
 
       toast.success(mode === 'spouse' ? 'Đã thêm vợ/chồng' : 'Đã thêm con');
@@ -322,14 +331,21 @@ function AddRelationDialog({
           personGender: currentPerson.gender,
           spouseId: person.id,
         });
-      } else if (targetFamilyId) {
+      } else {
+        let familyId = targetFamilyId;
+        if (!familyId) {
+          // Auto-create single-parent family when no family exists yet
+          const newFamily = await createSingleParentFamilyMutation.mutateAsync({
+            personId: currentPerson.id,
+            personGender: currentPerson.gender,
+          });
+          familyId = newFamily.id;
+        }
         await addChildMutation.mutateAsync({
-          familyId: targetFamilyId,
+          familyId,
           childPersonId: person.id,
           sortOrder: 99,
         });
-      } else {
-        throw new Error('Thiếu thông tin gia đình để thêm con');
       }
 
       toast.success(mode === 'spouse' ? 'Đã liên kết vợ/chồng' : 'Đã liên kết con');
@@ -597,9 +613,22 @@ export function FamilyRelationsCard({ person, canEdit }: FamilyRelationsCardProp
             <div className="space-y-2">
               <p className="text-sm text-muted-foreground">Chưa có gia đình riêng</p>
               {canEdit && (
-                <p className="text-xs text-muted-foreground">
-                  Thêm vợ/chồng để tạo gia đình, sau đó có thể thêm con.
-                </p>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setDialogMode('child');
+                      setTargetFamilyId(undefined);
+                    }}
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Thêm con
+                  </Button>
+                  <span className="text-xs text-muted-foreground">
+                    hoặc thêm vợ/chồng ở trên
+                  </span>
+                </div>
               )}
             </div>
           )}

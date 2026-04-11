@@ -21,6 +21,7 @@ import {
   getPersonRelations,
   addPersonToParentFamily,
   createSpouseFamily,
+  createSingleParentFamily,
 } from '@/lib/supabase-data';
 import type { Family } from '@/types';
 
@@ -183,6 +184,23 @@ export function useAddChildToFamilyMutation(personId?: string) {
       if (personId) {
         queryClient.invalidateQueries({ queryKey: familyKeys.relations(personId) });
       }
+    },
+  });
+}
+
+export function useCreateSingleParentFamily() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      personId,
+      personGender,
+    }: {
+      personId: string;
+      personGender: 1 | 2;
+    }) => createSingleParentFamily(personId, personGender),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: familyKeys.all });
+      queryClient.invalidateQueries({ queryKey: familyKeys.tree() });
     },
   });
 }

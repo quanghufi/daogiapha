@@ -460,6 +460,38 @@ export async function createSpouseFamily(
   return data;
 }
 
+// Create a family with only one parent (single-parent family, no spouse required).
+export async function createSingleParentFamily(
+  personId: string,
+  personGender: 1 | 2
+): Promise<Family> {
+  const fatherId = personGender === 1 ? personId : null;
+  const motherId = personGender === 2 ? personId : null;
+
+  // Check if a single-parent family already exists for this person
+  let query = supabase.from('families').select('*');
+  if (fatherId) {
+    query = query.eq('father_id', fatherId).is('mother_id', null);
+  } else {
+    query = query.is('father_id', null).eq('mother_id', motherId!);
+  }
+  const { data: existing } = await query.maybeSingle();
+  if (existing) return existing as Family;
+
+  const handle = `fam-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+  const insertData: Record<string, unknown> = { handle, sort_order: 0 };
+  if (fatherId) insertData.father_id = fatherId;
+  if (motherId) insertData.mother_id = motherId;
+
+  const { data, error } = await supabase
+    .from('families')
+    .insert(insertData)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // Profiles (Users)
 // ═══════════════════════════════════════════════════════════════════════════
