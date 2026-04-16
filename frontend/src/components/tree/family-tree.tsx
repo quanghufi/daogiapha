@@ -169,18 +169,18 @@ const GENERATION_COLORS: Record<number, { bg: string; border: string; badge: str
 
 // Branch view colors: distinct per relative generation (Đỏ → Cam → Vàng → Xanh lá → Xanh dương)
 const BRANCH_GENERATION_COLORS: Record<number, { bg: string; border: string; badge: string; badgeText: string; text: string }> = {
-  1: { bg: '#cc0000', border: '#a00000', badge: '#b30000', badgeText: '#ffd700', text: '#ffd700' },  // Đời gốc: Đỏ đậm, chữ vàng
-  2: { bg: '#e87020', border: '#c85a10', badge: '#d06010', badgeText: '#fff', text: '#ffffff' },     // Đời 2: Cam
-  3: { bg: '#d4a800', border: '#b89000', badge: '#c09000', badgeText: '#fff', text: '#1a1a00' },     // Đời 3: Vàng đậm, chữ tối
-  4: { bg: '#1a8a3a', border: '#15702e', badge: '#15602e', badgeText: '#fff', text: '#ffffff' },     // Đời 4: Xanh lá
-  5: { bg: '#2070b0', border: '#185a90', badge: '#185a90', badgeText: '#fff', text: '#ffffff' },     // Đời 5: Xanh dương
-  6: { bg: '#6a5acd', border: '#5a4abd', badge: '#4a3aad', badgeText: '#fff', text: '#ffffff' },     // Đời 6: Tím
-  7: { bg: '#cc0000', border: '#a00000', badge: '#b30000', badgeText: '#ffd700', text: '#ffd700' },  // Đời 7: Đỏ (lặp lại)
+  1: { bg: '#cc0000', border: '#a00000', badge: '#b30000', badgeText: '#ffd700', text: '#ffd700' },  // Đời 1: Đỏ, chữ Vàng
+  2: { bg: '#e87020', border: '#c85a10', badge: '#d06010', badgeText: '#fff', text: '#ffffff' },     // Đời 2: Cam, chữ Trắng
+  3: { bg: '#2eaa4a', border: '#228a38', badge: '#1e8a34', badgeText: '#fff', text: '#1e3a8a' },     // Đời 3: Xanh lá, chữ Xanh dương
+  4: { bg: '#7dd3fc', border: '#38bdf8', badge: '#0ea5e9', badgeText: '#fff', text: '#fffffe' },     // Đời 4: Xanh nhạt, chữ Trắng
+  5: { bg: '#2563eb', border: '#1d4ed8', badge: '#1e40af', badgeText: '#fff', text: '#ffffff' },     // Đời 5: Xanh dương, chữ Trắng
+  6: { bg: '#7b68cd', border: '#6a58bd', badge: '#5a48ad', badgeText: '#fff', text: '#ffffff' },     // Đời 6: Tím
+  7: { bg: '#cc0000', border: '#a00000', badge: '#b30000', badgeText: '#ffd700', text: '#ffd700' },  // Đời 7: Đỏ
   8: { bg: '#e87020', border: '#c85a10', badge: '#d06010', badgeText: '#fff', text: '#ffffff' },     // Đời 8: Cam
-  9: { bg: '#d4a800', border: '#b89000', badge: '#c09000', badgeText: '#fff', text: '#1a1a00' },     // Đời 9: Vàng
-  10: { bg: '#1a8a3a', border: '#15702e', badge: '#15602e', badgeText: '#fff', text: '#ffffff' },     // Đời 10: Xanh lá
-  11: { bg: '#2070b0', border: '#185a90', badge: '#185a90', badgeText: '#fff', text: '#ffffff' },     // Đời 11: Xanh dương
-  12: { bg: '#6a5acd', border: '#5a4abd', badge: '#4a3aad', badgeText: '#fff', text: '#ffffff' },     // Đời 12: Tím
+  9: { bg: '#2eaa4a', border: '#228a38', badge: '#1e8a34', badgeText: '#fff', text: '#1e3a8a' },     // Đời 9: Xanh lá
+  10: { bg: '#7dd3fc', border: '#38bdf8', badge: '#0ea5e9', badgeText: '#fff', text: '#fffffe' },     // Đời 10: Xanh nhạt
+  11: { bg: '#2563eb', border: '#1d4ed8', badge: '#1e40af', badgeText: '#fff', text: '#ffffff' },     // Đời 11: Xanh dương
+  12: { bg: '#7b68cd', border: '#6a58bd', badge: '#5a48ad', badgeText: '#fff', text: '#ffffff' },     // Đời 12: Tím
   13: { bg: '#cc0000', border: '#a00000', badge: '#b30000', badgeText: '#ffd700', text: '#ffd700' },  // Đời 13: Đỏ
   14: { bg: '#e87020', border: '#c85a10', badge: '#d06010', badgeText: '#fff', text: '#ffffff' },     // Đời 14: Cam
 };
@@ -1929,8 +1929,8 @@ export function FamilyTree() {
 
           <div
             className={`absolute rounded-lg overflow-hidden ${showDecorations
-                ? 'left-2 right-2 top-[120px] bottom-6 md:left-3 md:right-3 lg:left-[76px] lg:right-[76px]'
-                : 'left-2 right-2 top-2 bottom-8 md:left-3 md:right-3 md:top-3 md:bottom-9'
+              ? 'left-2 right-2 top-[120px] bottom-6 md:left-3 md:right-3 lg:left-[76px] lg:right-[76px]'
+              : 'left-2 right-2 top-2 bottom-8 md:left-3 md:right-3 md:top-3 md:bottom-9'
               }`}
           >
             <div
