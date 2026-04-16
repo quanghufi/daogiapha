@@ -151,15 +151,15 @@ function getCardStyle(person: TreePerson) {
 // 
 
 const GENERATION_COLORS: Record<number, { bg: string; border: string; badge: string; badgeText: string; text: string }> = {
-  1:  { bg: '#cc0000', border: '#ffd700', badge: '#b30000', badgeText: '#ffd700', text: '#ffd700' },  // Đời 1: nền đỏ, chữ vàng
-  2:  { bg: '#cc0000', border: '#e6c200', badge: '#b30000', badgeText: '#ffe066', text: '#ffe066' },  // Đời 2: nền đỏ, chữ hơi vàng
-  3:  { bg: '#cc0000', border: '#ff4444', badge: '#b30000', badgeText: '#fff', text: '#ffffff' },     // Đời 3: nền đỏ, chữ trắng
-  4:  { bg: '#e06050', border: '#f08070', badge: '#d05040', badgeText: '#fff', text: '#ffffff' },     // Đời 4: nền đỏ nhạt, chữ trắng
-  5:  { bg: '#e07020', border: '#f09030', badge: '#d06010', badgeText: '#fff', text: '#ffffff' },     // Đời 5: nền cam, chữ trắng
-  6:  { bg: '#fff8dc', border: '#1a5276', badge: '#1a5276', badgeText: '#fff', text: '#1a3a6a' },     // Đời 6: nền trắng vàng, chữ xanh dương đậm
-  7:  { bg: '#1a7a3a', border: '#25a050', badge: '#15602e', badgeText: '#fff', text: '#ffffff' },     // Đời 7: nền xanh lá đậm, chữ trắng
-  8:  { bg: '#b0d4f1', border: '#1a5276', badge: '#1a5276', badgeText: '#fff', text: '#1a3a6a' },     // Đời 8: nền xanh dương nhạt, chữ xanh dương đậm
-  9:  { bg: '#2070b0', border: '#3090d0', badge: '#185a90', badgeText: '#fff', text: '#ffffff' },     // Đời 9: nền xanh dương, chữ trắng
+  1: { bg: '#cc0000', border: '#ffd700', badge: '#b30000', badgeText: '#ffd700', text: '#ffd700' },  // Đời 1: nền đỏ, chữ vàng
+  2: { bg: '#cc0000', border: '#e6c200', badge: '#b30000', badgeText: '#ffe066', text: '#ffe066' },  // Đời 2: nền đỏ, chữ hơi vàng
+  3: { bg: '#cc0000', border: '#ff4444', badge: '#b30000', badgeText: '#fff', text: '#ffffff' },     // Đời 3: nền đỏ, chữ trắng
+  4: { bg: '#e06050', border: '#f08070', badge: '#d05040', badgeText: '#fff', text: '#ffffff' },     // Đời 4: nền đỏ nhạt, chữ trắng
+  5: { bg: '#e07020', border: '#f09030', badge: '#d06010', badgeText: '#fff', text: '#ffffff' },     // Đời 5: nền cam, chữ trắng
+  6: { bg: '#fff8dc', border: '#1a5276', badge: '#1a5276', badgeText: '#fff', text: '#1a3a6a' },     // Đời 6: nền trắng vàng, chữ xanh dương đậm
+  7: { bg: '#1a7a3a', border: '#25a050', badge: '#15602e', badgeText: '#fff', text: '#ffffff' },     // Đời 7: nền xanh lá đậm, chữ trắng
+  8: { bg: '#b0d4f1', border: '#1a5276', badge: '#1a5276', badgeText: '#fff', text: '#1a3a6a' },     // Đời 8: nền xanh dương nhạt, chữ xanh dương đậm
+  9: { bg: '#2070b0', border: '#3090d0', badge: '#185a90', badgeText: '#fff', text: '#ffffff' },     // Đời 9: nền xanh dương, chữ trắng
   10: { bg: '#185a90', border: '#2070b0', badge: '#144a78', badgeText: '#fff', text: '#ffffff' },     // Đời 10: xanh dương đậm
   11: { bg: '#144a78', border: '#185a90', badge: '#103c62', badgeText: '#fff', text: '#ffffff' },     // Đời 11
   12: { bg: '#103c62', border: '#144a78', badge: '#0c2e4c', badgeText: '#fff', text: '#ffffff' },     // Đời 12
@@ -167,9 +167,30 @@ const GENERATION_COLORS: Record<number, { bg: string; border: string; badge: str
   14: { bg: '#082236', border: '#0c2e4c', badge: '#041620', badgeText: '#fff', text: '#ffffff' },     // Đời 14
 };
 
-function getGenerationColor(generation: number | null | undefined) {
+// Branch view colors: distinct per relative generation (Đỏ → Cam → Vàng → Xanh lá → Xanh dương)
+const BRANCH_GENERATION_COLORS: Record<number, { bg: string; border: string; badge: string; badgeText: string; text: string }> = {
+  1: { bg: '#cc0000', border: '#a00000', badge: '#b30000', badgeText: '#ffd700', text: '#ffd700' },  // Đời gốc: Đỏ đậm, chữ vàng
+  2: { bg: '#e87020', border: '#c85a10', badge: '#d06010', badgeText: '#fff', text: '#ffffff' },     // Đời 2: Cam
+  3: { bg: '#d4a800', border: '#b89000', badge: '#c09000', badgeText: '#fff', text: '#1a1a00' },     // Đời 3: Vàng đậm, chữ tối
+  4: { bg: '#1a8a3a', border: '#15702e', badge: '#15602e', badgeText: '#fff', text: '#ffffff' },     // Đời 4: Xanh lá
+  5: { bg: '#2070b0', border: '#185a90', badge: '#185a90', badgeText: '#fff', text: '#ffffff' },     // Đời 5: Xanh dương
+  6: { bg: '#6a5acd', border: '#5a4abd', badge: '#4a3aad', badgeText: '#fff', text: '#ffffff' },     // Đời 6: Tím
+  7: { bg: '#cc0000', border: '#a00000', badge: '#b30000', badgeText: '#ffd700', text: '#ffd700' },  // Đời 7: Đỏ (lặp lại)
+  8: { bg: '#e87020', border: '#c85a10', badge: '#d06010', badgeText: '#fff', text: '#ffffff' },     // Đời 8: Cam
+  9: { bg: '#d4a800', border: '#b89000', badge: '#c09000', badgeText: '#fff', text: '#1a1a00' },     // Đời 9: Vàng
+  10: { bg: '#1a8a3a', border: '#15702e', badge: '#15602e', badgeText: '#fff', text: '#ffffff' },     // Đời 10: Xanh lá
+  11: { bg: '#2070b0', border: '#185a90', badge: '#185a90', badgeText: '#fff', text: '#ffffff' },     // Đời 11: Xanh dương
+  12: { bg: '#6a5acd', border: '#5a4abd', badge: '#4a3aad', badgeText: '#fff', text: '#ffffff' },     // Đời 12: Tím
+  13: { bg: '#cc0000', border: '#a00000', badge: '#b30000', badgeText: '#ffd700', text: '#ffd700' },  // Đời 13: Đỏ
+  14: { bg: '#e87020', border: '#c85a10', badge: '#d06010', badgeText: '#fff', text: '#ffffff' },     // Đời 14: Cam
+};
+
+function getGenerationColor(generation: number | null | undefined, isBranch: boolean = false) {
   const gen = generation ?? 1;
   const idx = ((gen - 1) % 14) + 1;
+  if (isBranch) {
+    return BRANCH_GENERATION_COLORS[idx] ?? BRANCH_GENERATION_COLORS[1];
+  }
   return GENERATION_COLORS[idx] ?? GENERATION_COLORS[1];
 }
 
@@ -215,8 +236,9 @@ const PersonCard = memo(function PersonCard({
   const { person, x, y, isCollapsed, hasChildren } = node;
   const style = getCardStyle(person);
   // Use relative generation for color/scale when viewing a branch
+  const isBranch = generationOffset > 0;
   const relativeGeneration = Math.max(1, (person.generation ?? 1) - generationOffset);
-  const genColor = getGenerationColor(relativeGeneration);
+  const genColor = getGenerationColor(relativeGeneration, isBranch);
   const initials = getInitials(person.display_name);
   const selectedRing = isSelected ? 'ring-2 ring-primary ring-offset-2' : '';
   const spouseBadge = node.spouseOrder ? `Vợ ${node.spouseOrder}` : null;
@@ -1087,11 +1109,11 @@ export function buildTreeLayout(
     })();
     const childrenWidth = familyGroups.length > 0
       ? familyGroups.reduce((sum, group, index) => {
-          const groupWidth =
-            group.childIds.reduce((groupSum, childId) => groupSum + computeSubtreeWidth(childId), 0) +
-            (group.childIds.length - 1) * SIBLING_GAP;
-          return sum + groupWidth + (index > 0 ? FAMILY_GAP : 0);
-        }, 0)
+        const groupWidth =
+          group.childIds.reduce((groupSum, childId) => groupSum + computeSubtreeWidth(childId), 0) +
+          (group.childIds.length - 1) * SIBLING_GAP;
+        return sum + groupWidth + (index > 0 ? FAMILY_GAP : 0);
+      }, 0)
       : 0;
     const result = Math.max(spouseRowWidth, childrenWidth);
     subtreeWidths.set(personId, result);
@@ -1878,9 +1900,8 @@ export function FamilyTree() {
       {/* Tree container */}
       <>
         <div
-          className={`relative overflow-hidden bg-amber-50 rounded-xl ${
-            showDecorations ? 'h-[74vh] min-h-[640px]' : 'h-[76vh] min-h-[620px]'
-          }`}
+          className={`relative overflow-hidden bg-amber-50 rounded-xl ${showDecorations ? 'h-[74vh] min-h-[640px]' : 'h-[76vh] min-h-[620px]'
+            }`}
           style={{
             backgroundImage: 'url(/tree-assets/bg-pattern.png)',
             backgroundRepeat: 'repeat',
@@ -1907,11 +1928,10 @@ export function FamilyTree() {
           )}
 
           <div
-            className={`absolute rounded-lg overflow-hidden ${
-              showDecorations
+            className={`absolute rounded-lg overflow-hidden ${showDecorations
                 ? 'left-2 right-2 top-[120px] bottom-6 md:left-3 md:right-3 lg:left-[76px] lg:right-[76px]'
                 : 'left-2 right-2 top-2 bottom-8 md:left-3 md:right-3 md:top-3 md:bottom-9'
-            }`}
+              }`}
           >
             <div
               ref={containerRef}
