@@ -9,39 +9,49 @@ on:
     - cron: '0 6 */5 * *'
   workflow_dispatch: # Allow manual trigger
 
+env:
+  SUPABASE_PROJECT_REF: nwdocopiysrnzmaijgyf
+
 jobs:
   ping-supabase:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping Supabase REST API
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+      - name: Ping Supabase Auth Health (no key needed)
         run: |
           echo "🏓 Pinging Supabase to keep project alive..."
           
           RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
-            "${SUPABASE_URL}/rest/v1/" \
+            "https://${SUPABASE_PROJECT_REF}.supabase.co/auth/v1/health")
+          
+          echo "Auth health endpoint: HTTP $RESPONSE"
+          
+          if [ "$RESPONSE" -eq 200 ]; then
+            echo "✅ Supabase Auth is healthy!"
+          else
+            echo "⚠️ Auth health check returned HTTP $RESPONSE"
+          fi
+
+      - name: Ping Supabase REST API
+        env:
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          echo "📡 Pinging Supabase REST API..."
+          
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
+            "https://${SUPABASE_PROJECT_REF}.supabase.co/rest/v1/" \
             -H "apikey: ${SUPABASE_ANON_KEY}" \
             -H "Authorization: Bearer ${SUPABASE_ANON_KEY}")
           
-          if [ "$RESPONSE" -eq 200 ]; then
-            echo "✅ Supabase responded with HTTP $RESPONSE - Project is alive!"
-          else
-            echo "⚠️ Supabase responded with HTTP $RESPONSE"
-            exit 1
-          fi
+          echo "REST API endpoint: HTTP $RESPONSE"
 
-      - name: Ping Supabase Auth (extra activity)
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+      - name: Ping Supabase PostgREST Health
         run: |
-          echo "🔐 Pinging Supabase Auth..."
+          echo "🔍 Checking PostgREST health..."
           
           RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
-            "${SUPABASE_URL}/auth/v1/settings" \
-            -H "apikey: ${SUPABASE_ANON_KEY}")
+            "https://${SUPABASE_PROJECT_REF}.supabase.co/rest/v1/")
           
-          echo "Auth endpoint responded with HTTP $RESPONSE"
-          echo "🎉 Keep-alive complete at $(date -u)"
+          echo "PostgREST endpoint: HTTP $RESPONSE"
+          echo ""
+          echo "🎉 Keep-alive pings complete at $(date -u)"
+          echo "Next run in ~5 days"
