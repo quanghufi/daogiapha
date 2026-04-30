@@ -1,0 +1,47 @@
+name: Keep Supabase Alive
+
+# Ping Supabase every 5 days to prevent auto-pause on free tier
+# Supabase pauses projects with no activity for 7+ days
+
+on:
+  schedule:
+    # Run every 5 days at 06:00 UTC (13:00 Vietnam time)
+    - cron: '0 6 */5 * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  ping-supabase:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase REST API
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          echo "🏓 Pinging Supabase to keep project alive..."
+          
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
+            "${SUPABASE_URL}/rest/v1/" \
+            -H "apikey: ${SUPABASE_ANON_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_ANON_KEY}")
+          
+          if [ "$RESPONSE" -eq 200 ]; then
+            echo "✅ Supabase responded with HTTP $RESPONSE - Project is alive!"
+          else
+            echo "⚠️ Supabase responded with HTTP $RESPONSE"
+            exit 1
+          fi
+
+      - name: Ping Supabase Auth (extra activity)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          echo "🔐 Pinging Supabase Auth..."
+          
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
+            "${SUPABASE_URL}/auth/v1/settings" \
+            -H "apikey: ${SUPABASE_ANON_KEY}")
+          
+          echo "Auth endpoint responded with HTTP $RESPONSE"
+          echo "🎉 Keep-alive complete at $(date -u)"
