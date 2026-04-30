@@ -10,7 +10,6 @@
 import { useMemo, useState, useRef, useCallback, useEffect, memo } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTreeData } from '@/hooks/use-families';
-import { useClanSettings } from '@/hooks/use-clan-settings';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -33,15 +32,12 @@ import {
   Crosshair,
   Eye,
   EyeOff,
-  Sparkles,
   UserX,
 } from 'lucide-react';
 import type { TreePerson } from '@/types';
 import type { TreeData } from '@/lib/supabase-data';
 import Link from 'next/link';
 import { GENDER } from '@/lib/constants';
-import { DEFAULT_CLAN_MOTTO, DEFAULT_CLAN_NAME } from '@/lib/clan-defaults';
-import { TraditionalBorder, TraditionalHeader, TraditionalScroll, TraditionalFooter } from './traditional-header';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Constants
@@ -1396,9 +1392,6 @@ function computeAutoCollapsedNodes(data: TreeData | null | undefined): Set<strin
 
 export function FamilyTree() {
   const { data, isLoading, error } = useTreeData();
-  const { data: clanSettings } = useClanSettings();
-  const clanName = clanSettings?.clan_name?.trim() || DEFAULT_CLAN_NAME;
-  const clanMotto = clanSettings?.clan_motto?.trim() || DEFAULT_CLAN_MOTTO;
 
   // State
   const [scale, setScale] = useState(() =>
@@ -1412,7 +1405,6 @@ export function FamilyTree() {
   const [viewMode, setViewMode] = useState<ViewMode>('all');
   const [hideNgoaiToc, setHideNgoaiToc] = useState(true);
   const [showMinimap, setShowMinimap] = useState(true);
-  const [showDecorations, setShowDecorations] = useState(false);
   const [filterRootId, setFilterRootId] = useState<string | null>(() =>
     typeof window !== 'undefined'
       ? new URLSearchParams(window.location.search).get('root')
@@ -1856,15 +1848,6 @@ export function FamilyTree() {
           {hideNgoaiToc ? <EyeOff className="h-3.5 w-3.5 mr-1" /> : <UserX className="h-3.5 w-3.5 mr-1" />}
           Ngoại tộc
         </Button>
-        <Button
-          variant={showDecorations ? 'secondary' : 'ghost'}
-          size="sm"
-          onClick={() => setShowDecorations(!showDecorations)}
-          className="h-8"
-        >
-          <Sparkles className="h-3.5 w-3.5 mr-1" />
-          Trang trí
-        </Button>
         {resizedNodes.size > 0 && (
           <Button
             variant="ghost"
@@ -1900,38 +1883,11 @@ export function FamilyTree() {
       {/* Tree container */}
       <>
         <div
-          className={`relative overflow-hidden bg-amber-50 rounded-xl ${showDecorations ? 'h-[74vh] min-h-[640px]' : 'h-[76vh] min-h-[620px]'
-            }`}
-          style={{
-            backgroundImage: 'url(/tree-assets/bg-pattern.png)',
-            backgroundRepeat: 'repeat',
-            backgroundSize: '320px 320px',
-          }}
+          className="relative h-[76vh] min-h-[620px] overflow-hidden rounded-xl border bg-background"
         >
-          {/* Subtle overlay */}
-          <div className="absolute inset-0 pointer-events-none z-0" style={{ background: "linear-gradient(to bottom, #f5e6d3, #f0dcc8, #f5e6d3)" }} />
-          <div className="absolute inset-0 pointer-events-none z-0 bg-[radial-gradient(circle_at_top,rgba(255,240,200,0.35),transparent_55%)]" />
-
-          {/* Fixed Traditional Overlays */}
-          {showDecorations && (
-            <>
-              <div className="absolute inset-x-0 top-2 h-[108px] z-[1] pointer-events-none">
-                <TraditionalHeader familyName={clanName} subtitle={clanMotto} />
-              </div>
-              <TraditionalScroll text="Phúc Đức Tổ Tiên" side="left" />
-              <TraditionalScroll text="Con Cháu Thảo Hiền" side="right" />
-              <div className="absolute inset-x-0 bottom-7 h-[56px] z-[1] pointer-events-none opacity-80">
-                <TraditionalFooter />
-              </div>
-              <div className="absolute left-3 right-3 top-[122px] border-t border-amber-700/30 z-[2] pointer-events-none" />
-            </>
-          )}
 
           <div
-            className={`absolute rounded-lg overflow-hidden ${showDecorations
-              ? 'left-2 right-2 top-[120px] bottom-6 md:left-3 md:right-3 lg:left-[76px] lg:right-[76px]'
-              : 'left-2 right-2 top-2 bottom-8 md:left-3 md:right-3 md:top-3 md:bottom-9'
-              }`}
+            className="absolute inset-x-2 top-2 bottom-8 overflow-hidden rounded-lg md:inset-x-3 md:top-3 md:bottom-9"
           >
             <div
               ref={containerRef}
@@ -2021,3 +1977,4 @@ export function FamilyTree() {
     </div>
   );
 }
+
