@@ -1,57 +1,96 @@
 name: Keep Supabase Alive
 
-# Ping Supabase every 5 days to prevent auto-pause on free tier
-# Supabase pauses projects with no activity for 7+ days
+# Thực hiện database query thật để tránh Supabase tự đình chỉ dự án
+# Supabase chỉ tính "activity" khi có database query thật, KHÔNG tính health check ping
+# Free tier: tự đình chỉ sau 7 ngày không có database activity
 
 on:
   schedule:
-    # Run every 5 days at 06:00 UTC (13:00 Vietnam time)
+    # Chạy mỗi 5 ngày lúc 06:00 UTC (13:00 giờ Việt Nam)
     - cron: '0 6 */5 * *'
-  workflow_dispatch: # Allow manual trigger
+  workflow_dispatch: # Cho phép chạy thủ công
 
 env:
   SUPABASE_PROJECT_REF: nwdocopiysrnzmaijgyf
+  SUPABASE_URL: https://nwdocopiysrnzmaijgyf.supabase.co
 
 jobs:
-  ping-supabase:
+  keep-alive:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping Supabase Auth Health (no key needed)
-        run: |
-          echo "🏓 Pinging Supabase to keep project alive..."
-          
-          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
-            "https://${SUPABASE_PROJECT_REF}.supabase.co/auth/v1/health")
-          
-          echo "Auth health endpoint: HTTP $RESPONSE"
-          
-          if [ "$RESPONSE" -eq 200 ]; then
-            echo "✅ Supabase Auth is healthy!"
-          else
-            echo "⚠️ Auth health check returned HTTP $RESPONSE"
-          fi
-
-      - name: Ping Supabase REST API
+      - name: Query database (people table - public records)
         env:
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
-          echo "📡 Pinging Supabase REST API..."
-          
-          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
-            "https://${SUPABASE_PROJECT_REF}.supabase.co/rest/v1/" \
+          echo "🏓 Pinging Supabase với real database query..."
+          echo "⏰ Time: $(date -u)"
+
+          # Query thật vào bảng people (public records, không cần auth)
+          # Đây là cách DUY NHẤT để reset timer đình chỉ của Supabase
+          RESPONSE=$(curl -s -w "\n%{http_code}" \
+            "${SUPABASE_URL}/rest/v1/people?privacy_level=eq.0&select=id&limit=1" \
+            -H "apikey: ${SUPABASE_ANON_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
+            -H "Range: 0-0")
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | head -n-1)
+
+          echo "📊 HTTP Status: $HTTP_CODE"
+          echo "📦 Response: $BODY"
+
+          if [ "$HTTP_CODE" -eq 200 ] || [ "$HTTP_CODE" -eq 206 ]; then
+            echo "✅ Database query thành công! Supabase sẽ không bị đình chỉ."
+          else
+            echo "❌ Query thất bại với HTTP $HTTP_CODE"
+            exit 1
+          fi
+
+      - name: Query database (families table)
+        env:
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          echo "📡 Query bảng families..."
+
+          RESPONSE=$(curl -s -w "\n%{http_code}" \
+            "${SUPABASE_URL}/rest/v1/families?select=id&limit=1" \
             -H "apikey: ${SUPABASE_ANON_KEY}" \
             -H "Authorization: Bearer ${SUPABASE_ANON_KEY}")
-          
-          echo "REST API endpoint: HTTP $RESPONSE"
 
-      - name: Ping Supabase PostgREST Health
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          echo "📊 families HTTP Status: $HTTP_CODE"
+
+          if [ "$HTTP_CODE" -eq 200 ] || [ "$HTTP_CODE" -eq 206 ]; then
+            echo "✅ families query OK"
+          else
+            echo "⚠️ families query returned HTTP $HTTP_CODE (non-fatal)"
+          fi
+
+      - name: Query database (events table)
+        env:
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
-          echo "🔍 Checking PostgREST health..."
-          
-          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
-            "https://${SUPABASE_PROJECT_REF}.supabase.co/rest/v1/")
-          
-          echo "PostgREST endpoint: HTTP $RESPONSE"
+          echo "📅 Query bảng events..."
+
+          RESPONSE=$(curl -s -w "\n%{http_code}" \
+            "${SUPABASE_URL}/rest/v1/events?select=id&limit=1" \
+            -H "apikey: ${SUPABASE_ANON_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_ANON_KEY}")
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          echo "📊 events HTTP Status: $HTTP_CODE"
+
+          if [ "$HTTP_CODE" -eq 200 ] || [ "$HTTP_CODE" -eq 206 ]; then
+            echo "✅ events query OK"
+          else
+            echo "⚠️ events query returned HTTP $HTTP_CODE (non-fatal)"
+          fi
+
+      - name: Summary
+        run: |
           echo ""
-          echo "🎉 Keep-alive pings complete at $(date -u)"
-          echo "Next run in ~5 days"
+          echo "═══════════════════════════════════════"
+          echo "🎉 Keep-alive hoàn tất: $(date -u)"
+          echo "📋 Đã query 3 bảng: people, families, events"
+          echo "⏭️  Lần chạy tiếp theo: sau ~5 ngày"
+          echo "═══════════════════════════════════════"
